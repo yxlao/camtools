@@ -73,6 +73,12 @@ def R_t_to_T(R, t):
     return T
 
 
+def T_to_R_t(T):
+    R = T[:3, :3]
+    t = T[:3, 3]
+    return R, t
+
+
 def P_to_K_R_t(P):
     (camera_matrix, rot_matrix, trans_vect, rot_matrix_x, rot_matrix_y,
      rot_matrix_z, euler_angles) = cv2.decomposeProjectionMatrix(P)
