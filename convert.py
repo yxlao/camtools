@@ -16,12 +16,14 @@ def R_to_quat(R):
     q /= np.linalg.norm(q, axis=1, keepdims=True)
     return q.squeeze()
 
+
 def T_to_C(T):
     """
     Convert T to camera center.
     """
     R, t = T[:3, :3], T[:3, 3]
     return R_t_to_C(R, t)
+
 
 def R_t_to_C(R, t):
     """
@@ -88,3 +90,42 @@ def P_to_K_R_t(P):
     t = -rot_matrix @ (trans_vect[:3] / trans_vect[3])
 
     return K, R, t.squeeze()
+
+
+def K_R_t_to_P(K, R, t):
+    T = R_t_to_T(R, t)
+    P = K @ T[:3, :]
+    return P
+
+
+def K_R_t_to_world_mat(K, R, t):
+    return P_to_world_mat(K_R_t_to_P(K, R, t))
+
+
+def K_T_to_world_mat(K, T):
+    R, t = T_to_R_t(T)
+    return K_R_t_to_world_mat(K, R, t)
+
+
+def P_to_world_mat(P):
+    world_mat = np.vstack((P, np.array([[0, 0, 0, 1]])))
+    return world_mat
+
+
+def fx_fy_cx_cy_to_K(fx, fy, cx, cy):
+    K = np.zeros((3, 3))
+    K[0, 0] = fx
+    K[1, 1] = fy
+    K[0, 2] = cx
+    K[1, 2] = cy
+    K[2, 2] = 1
+    return K
+
+
+def K_to_fx_fy_cx_cy(K):
+    fx = K[0, 0]
+    fy = K[1, 1]
+    cx = K[0, 2]
+    cy = K[1, 2]
+    # <class 'numpy.float64'> to <class 'float'>
+    return float(fx), float(fy), float(cx), float(cy)
