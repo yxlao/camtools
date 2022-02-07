@@ -79,8 +79,9 @@ def get_camera_ray_frame(T, K, size=0.1, color=[0, 0, 1]):
 
     # Pick 4 corner points
     # Assumes that the camera offset is exactly at the center of the image.
-    w = (K[0, 2] + 0.5) * 2
-    h = (K[1, 2] + 0.5) * 2
+    # The rays are plotted in the center of each corner pixel.
+    w = (K[0, 2] + 0.5) * 2 - 1
+    h = (K[1, 2] + 0.5) * 2 - 1
     points = np.array([
         [0, 0, 1],
         [w, 0, 1],
