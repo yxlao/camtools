@@ -29,7 +29,7 @@ pose     : (4, 4) # Camera pose. pose = T.inv(). pose[:3, :3] = R.T = Rc. pose[:
 C        : (3,)   # Camera center.
 ```
 
-## Notes on vector v.s. matrix
+## Notes on vector vs. matrix
 
 We choose to use 1D array for vector values like `t` and `C`.  For example, `t`
 is of shape `(3, )` instead of `(3, 1)`.
