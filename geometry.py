@@ -122,7 +122,7 @@ def get_camera_ray_frame(T, K, size=0.1, color=[0, 0, 1]):
 def get_camera_ray_frames(Ts,
                           Ks,
                           size=0.1,
-                          color=[1, 0, 0],
+                          color=[0, 0, 1],
                           center_line=True,
                           center_line_color=[1, 0, 0]):
     assert len(Ts) == len(Ks)
