@@ -91,6 +91,11 @@ def P_to_K_R_t(P):
 
     return K, R, t.squeeze()
 
+def P_to_K_T(P):
+    K, R, t = P_to_K_R_t(P)
+    T = R_t_to_T(R, t)
+    return K, T
+
 
 def K_R_t_to_P(K, R, t):
     T = R_t_to_T(R, t)
@@ -111,6 +116,9 @@ def P_to_world_mat(P):
     world_mat = np.vstack((P, np.array([[0, 0, 0, 1]])))
     return world_mat
 
+def world_mat_to_P(world_mat):
+    P = world_mat[:3, :4]
+    return P
 
 def fx_fy_cx_cy_to_K(fx, fy, cx, cy):
     K = np.zeros((3, 3))
