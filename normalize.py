@@ -10,16 +10,22 @@ def compute_normalize_mat(points):
         Returns normalize_mat, where `normalize_mat @ points_homo` is centered
         at the origin and is scaled within the unit sphere (max norm equals 1).
 
-        In NeuS setting, normalize_mat == scale_mat.inv(). The point is
-        projected by:
-        pixels_x_y_1 = world_mat @ scale_mat @ normalize_mat @ points_X_Y_Z_1
-
-        You can check the correctness of compute_normalize_mat by
-
+        You can check the correctness of compute_normalize_mat by:
         ```python
         normalize_mat = ct.normalize.compute_normalize_mat(points)
         points_normalized = ct.project.homo_project(normalize_mat, points)
         ct.stat.report_points_range(points_normalized)
+        ```
+
+        Typically, we also scale the camera after normalizing points. Given
+        the camera parameter `K` and `T`, we can calculate `K_new` and `T_new`:
+        ```python
+        K_new = K
+        C = ct.convert.T_to_C(T)
+        C_new = ct.project.homo_project(normalize_mat, C.reshape((-1, 3))).flatten()
+        pose_new = np.linalg.inv(T)
+        pose_new[:3, 3] = C_new
+        T_new = np.linalg.inv(pose_new)
         ```
     """
     if points.ndim != 2 or points.shape[1] != 3:
