@@ -188,13 +188,21 @@ def get_camera_ray_frames(Ts,
                           Ks,
                           size=0.1,
                           color=[0, 0, 1],
+                          start_color=[0, 1, 0],
+                          end_color=[1, 0, 0],
                           center_line=True,
                           center_line_color=[1, 0, 0]):
     assert len(Ts) == len(Ks)
 
     camera_frames = o3d.geometry.LineSet()
-    for T, K in zip(Ts, Ks):
-        camera_frame = get_camera_ray_frame(T, K, size=size, color=color)
+    for index, (T, K) in enumerate(zip(Ts, Ks)):
+        if index == 0:
+            frame_color = start_color
+        elif index == len(Ts) - 1:
+            frame_color = end_color
+        else:
+            frame_color = color
+        camera_frame = get_camera_ray_frame(T, K, size=size, color=frame_color)
         camera_frames += camera_frame
 
     if len(Ts) > 1 and center_line:
