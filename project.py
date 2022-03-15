@@ -33,9 +33,6 @@ def world_to_pixel_with_world_mat(world_mat, points):
     N = len(points)
     points_homo = np.hstack((points, np.ones((N, 1))))
 
-    # import ipdb
-    # ipdb.set_trace()
-
     # points_out: (N, 4)
     # points_out = (world_mat @ points_homo.T).T
     #              = points_homo @ world_mat.T
