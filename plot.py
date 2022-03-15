@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from . import convert
+from . import sanity
 
 
 def ax3d(fig=None):
@@ -13,20 +14,19 @@ def ax3d(fig=None):
 
 # TODO: adjust order of ax for other functions
 def plot_points(points, color="k", ax=None, **kwargs):
+    sanity.check_shape_Nx3(points)
     if ax is None:
         ax = plt.gca()
-    assert points.ndim == 2 and points.shape[1] == 3
     ax.scatter3D(points[:, 0], points[:, 1], points[:, 2], color=color)
 
 
 # TODO: adjust order of ax for other functions
 def plot_mesh(vertices, triangles, alpha=0.5, ax=None, **kwargs):
+    sanity.check_shape_Nx3(vertices)
+    sanity.check_shape_Nx3(triangles)
+
     if ax is None:
         ax = plt.gca()
-
-    assert vertices.ndim == 2 and vertices.shape[1] == 3
-    assert triangles.ndim == 2 and triangles.shape[1] == 3
-
     ax.plot_trisurf(vertices[:, 0],
                     vertices[:, 1],
                     vertices[:, 2],
@@ -38,7 +38,6 @@ def plot_mesh(vertices, triangles, alpha=0.5, ax=None, **kwargs):
 def plot_sphere(radius=1, ax=None):
     if ax is None:
         ax = plt.gca()
-
     u, v = np.mgrid[0:2 * np.pi:30j, 0:np.pi:20j]
     x = radius * np.cos(u) * np.sin(v)
     y = radius * np.sin(u) * np.sin(v)

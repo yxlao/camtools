@@ -1,6 +1,7 @@
 import open3d as o3d
 import numpy as np
 from . import convert
+from . import sanity
 
 
 def get_camera_center_line(Ts, color=np.array([1, 0, 0])):
@@ -18,7 +19,6 @@ def get_camera_center_line(Ts, color=np.array([1, 0, 0])):
 
 
 def get_camera_frame(T, size=0.1, color=[0, 0, 1]):
-
     R, t = T[:3, :3], T[:3, 3]
 
     C0 = convert.R_t_to_C(R, t).ravel()
@@ -68,13 +68,8 @@ def get_camera_center_ray(T, K, size=0.1, color=[0, 0, 1]):
     Returns a linset of two points. The line starts the camera center and passes
     through the center of the image.
     """
-    if T.shape != (4, 4):
-        raise ValueError(f"T must has shape (4, 4), but got {T.shape}.")
-    if not np.allclose(T[3, :], [0, 0, 0, 1]):
-        raise ValueError(
-            f"T must has [0, 0, 0, 1] the bottom line, but got {T}.")
-    if K.shape != (3, 3):
-        raise ValueError(f"K must has shape (3, 3), but got {K.shape}.")
+    sanity.check_T(T)
+    sanity.check_K(K)
 
     # Pick point at the center of the image
     # Assumes that the camera offset is exactly at the center of the image.
@@ -131,15 +126,9 @@ def get_camera_ray_frame(T, K, size=0.1, color=[0, 0, 1]):
     K: 3x3
     """
     T, K, color = np.asarray(T), np.asarray(K), np.asarray(color)
-    if T.shape != (4, 4):
-        raise ValueError(f"T must has shape (4, 4), but got {T.shape}.")
-    if not np.allclose(T[3, :], [0, 0, 0, 1]):
-        raise ValueError(
-            f"T must has [0, 0, 0, 1] the bottom line, but got {T}.")
-    if K.shape != (3, 3):
-        raise ValueError(f"K must has shape (3, 3), but got {K.shape}.")
-    if color.shape != (3,):
-        raise ValueError(f"color must has shape (3,), but got {color.shape}.")
+    sanity.check_T(T)
+    sanity.check_K(K)
+    sanity.check_shape_3(color, "color")
 
     # Pick 4 corner points
     # Assumes that the camera offset is exactly at the center of the image.
