@@ -1,15 +1,20 @@
 import numpy as np
+import torch
+from . import sanity
 
 
 def homo_project(mat, points):
-    if mat.shape != (4, 4):
-        raise ValueError(f"mat must be (4, 4), but got {mat.shape}.")
-
-    if points.ndim != 2 or points.shape[1] != 3:
-        raise ValueError(f"points must be (N, 3), but got {points.shape}.")
+    sanity.assert_shape_4x4(mat, name="mat")
+    sanity.assert_shape_nx3(points, name="points")
+    sanity.assert_same_device(mat, points)
 
     N = len(points)
-    points_homo = np.hstack((points, np.ones((N, 1))))
+    if torch.is_tensor(mat):
+        ones = torch.ones((N, 1), dtype=points.dtype, device=points.device)
+        points_homo = torch.hstack((points, ones))
+    else:
+        ones = np.ones((N, 1))
+        points_homo = np.hstack((points, ones))
 
     # (mat @ points_homo.T).T
     points_out = points_homo @ mat.T
@@ -38,16 +43,17 @@ def world_to_pixel_with_world_mat(world_mat, points):
     Return:
         (N, 2) array, representing [cols, rows] by each column.
     """
-    if world_mat.shape != (4, 4):
-        raise ValueError(
-            f"world_mat must be (4, 4), but got {world_mat.shape}.")
-
-    if points.ndim != 2 or points.shape[1] != 3:
-        raise ValueError(f"points must be (N, 3), but got {points.shape}.")
+    sanity.assert_shape_4x4(world_mat, name="world_mat")
+    sanity.assert_shape_nx3(points, name="points")
 
     # points_homo: (N, 4)
     N = len(points)
-    points_homo = np.hstack((points, np.ones((N, 1))))
+    if torch.is_tensor(points):
+        ones = torch.ones((N, 1), dtype=points.dtype, device=points.device)
+        points_homo = torch.hstack((points, ones))
+    else:
+        ones = np.ones((N, 1))
+        points_homo = np.hstack((points, ones))
 
     # points_out: (N, 4)
     # points_out = (world_mat @ points_homo.T).T

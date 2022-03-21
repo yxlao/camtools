@@ -14,7 +14,7 @@ def ax3d(fig=None):
 
 # TODO: adjust order of ax for other functions
 def plot_points(points, color="k", ax=None, **kwargs):
-    sanity.check_shape_Nx3(points)
+    sanity.assert_shape_nx3(points)
     if ax is None:
         ax = plt.gca()
     ax.scatter3D(points[:, 0], points[:, 1], points[:, 2], color=color)
@@ -22,8 +22,8 @@ def plot_points(points, color="k", ax=None, **kwargs):
 
 # TODO: adjust order of ax for other functions
 def plot_mesh(vertices, triangles, alpha=0.5, ax=None, **kwargs):
-    sanity.check_shape_Nx3(vertices)
-    sanity.check_shape_Nx3(triangles)
+    sanity.assert_shape_nx3(vertices)
+    sanity.assert_shape_nx3(triangles)
 
     if ax is None:
         ax = plt.gca()

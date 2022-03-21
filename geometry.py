@@ -68,8 +68,8 @@ def get_camera_center_ray(T, K, size=0.1, color=[0, 0, 1]):
     Returns a linset of two points. The line starts the camera center and passes
     through the center of the image.
     """
-    sanity.check_T(T)
-    sanity.check_K(K)
+    sanity.assert_T(T)
+    sanity.assert_K(K)
 
     # Pick point at the center of the image
     # Assumes that the camera offset is exactly at the center of the image.
@@ -126,9 +126,9 @@ def get_camera_ray_frame(T, K, size=0.1, color=[0, 0, 1]):
     K: 3x3
     """
     T, K, color = np.asarray(T), np.asarray(K), np.asarray(color)
-    sanity.check_T(T)
-    sanity.check_K(K)
-    sanity.check_shape_3(color, "color")
+    sanity.assert_T(T)
+    sanity.assert_K(K)
+    sanity.assert_shape_3(color, "color")
 
     # Pick 4 corner points
     # Assumes that the camera offset is exactly at the center of the image.

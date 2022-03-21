@@ -1,5 +1,8 @@
-import numpy as np
 import cv2
+import numpy as np
+import torch
+
+from . import sanity
 
 
 def R_to_quat(R):
@@ -69,7 +72,11 @@ def roll_pitch_yaw_to_R(roll, pitch, yaw):
 
 
 def R_t_to_T(R, t):
-    T = np.eye(4)
+    sanity.assert_same_device(R, t)
+    if torch.is_tensor(R):
+        T = torch.eye(4, device=R.device, dtype=R.dtype)
+    else:
+        T = np.eye(4)
     T[:3, :3] = R
     T[:3, 3] = t
     return T
@@ -90,6 +97,7 @@ def P_to_K_R_t(P):
     t = -rot_matrix @ (trans_vect[:3] / trans_vect[3])
 
     return K, R, t.squeeze()
+
 
 def P_to_K_T(P):
     K, R, t = P_to_K_R_t(P)
@@ -113,12 +121,20 @@ def K_T_to_world_mat(K, T):
 
 
 def P_to_world_mat(P):
-    world_mat = np.vstack((P, np.array([[0, 0, 0, 1]])))
+    sanity.assert_shape_3x4(P, name="P")
+    if torch.is_tensor(P):
+        bottom_row = torch.tensor([0, 0, 0, 1], device=P.device, dtype=P.dtype)
+        world_mat = torch.vstack((P, bottom_row))
+    else:
+        bottom_row = np.array([[0, 0, 0, 1]])
+        world_mat = np.vstack((P, bottom_row))
     return world_mat
+
 
 def world_mat_to_P(world_mat):
     P = world_mat[:3, :4]
     return P
+
 
 def fx_fy_cx_cy_to_K(fx, fy, cx, cy):
     K = np.zeros((3, 3))

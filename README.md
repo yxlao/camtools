@@ -98,3 +98,9 @@ C = - R.T @ t
 pytest . -s
 pytest camtools -s
 ```
+
+
+## TODO
+
+- Full unit tests
+- PyTorch/Numpy wrapper (e.g. with `eagerpy`)
