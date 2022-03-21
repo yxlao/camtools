@@ -19,8 +19,24 @@ def homo_project(mat, points):
 
 def world_to_pixel_with_world_mat(world_mat, points):
     """
-    world_mat: consistent with the world_mat used in NeuS.
-    points: must be (N, 3) array.
+    Example usage:
+        pixels = ct.project.world_to_pixel_with_world_mat(world_mat, vertices)
+        cols = pixels[:, 0]  # cols, width, x, top-left to top-right
+        rows = pixels[:, 1]  # rows, height, y, top-left to bottom-left
+        cols = np.round(cols).astype(np.int32)
+        rows = np.round(rows).astype(np.int32)
+        cols[cols >= width] = width - 1
+        cols[cols < 0] = 0
+        rows[rows >= height] = height - 1
+        rows[rows < 0] = 0
+
+    Arguments:
+        world_mat: (4, 4) array, world-to-pixel projection matrix. It is P with
+            (0, 0, 0, 1) row below.
+        points: (N, 3) array, 3D points.
+
+    Return:
+        (N, 2) array, representing [cols, rows] by each column.
     """
     if world_mat.shape != (4, 4):
         raise ValueError(
