@@ -1,5 +1,5 @@
 import numpy as np
-from . import convert
+from .. import convert
 
 np.set_printoptions(formatter={'float': '{: 0.2f}'.format})
 

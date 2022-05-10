@@ -83,6 +83,7 @@ def R_t_to_T(R, t):
 
 
 def T_to_R_t(T):
+    sanity.assert_T(T)
     R = T[:3, :3]
     t = T[:3, 3]
     return R, t
@@ -111,28 +112,28 @@ def K_R_t_to_P(K, R, t):
     return P
 
 
-def K_R_t_to_world_mat(K, R, t):
-    return P_to_world_mat(K_R_t_to_P(K, R, t))
+def K_R_t_to_W2P(K, R, t):
+    return P_to_W2P(K_R_t_to_P(K, R, t))
 
 
-def K_T_to_world_mat(K, T):
+def K_T_to_W2P(K, T):
     R, t = T_to_R_t(T)
-    return K_R_t_to_world_mat(K, R, t)
+    return K_R_t_to_W2P(K, R, t)
 
 
-def P_to_world_mat(P):
+def P_to_W2P(P):
     sanity.assert_shape_3x4(P, name="P")
     if torch.is_tensor(P):
         bottom_row = torch.tensor([0, 0, 0, 1], device=P.device, dtype=P.dtype)
-        world_mat = torch.vstack((P, bottom_row))
+        W2P = torch.vstack((P, bottom_row))
     else:
         bottom_row = np.array([[0, 0, 0, 1]])
-        world_mat = np.vstack((P, bottom_row))
-    return world_mat
+        W2P = np.vstack((P, bottom_row))
+    return W2P
 
 
-def world_mat_to_P(world_mat):
-    P = world_mat[:3, :4]
+def W2P_to_P(W2P):
+    P = W2P[:3, :4]
     return P
 
 

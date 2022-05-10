@@ -26,8 +26,8 @@ T        : (4, 4) # Extrinsic matrix with (0, 0, 0, 1) row below.
                   #      [|],    [0],
                   #      [1]]    [1]]
 P        : (3, 4) # World-to-pixel projection matrix. P = K @ [R | t] = K @ T[:3, :].
-world_mat: (4, 4) # World-to-pixel projection matrix. It is P with (0, 0, 0, 1)
-                  # row below. When using world_mat @ point_homo, the last
+W2P      : (4, 4) # World-to-pixel projection matrix. It is P with (0, 0, 0, 1)
+                  # row below. When using W2P @ point_homo, the last
                   # element is always 1, thus it is ignored.
 pose     : (4, 4) # Camera pose. pose = T.inv(). pose[:3, :3] = R.T = Rc. pose[:3, 3] = C.
 C        : (3,)   # Camera center.
@@ -38,7 +38,7 @@ C        : (3,)   # Camera center.
 ### 3D to 2D projection
 
 Project 3D point `[X, Y, Z, 1]` to 2D `[x, y, 1]` pixel, e.g. with
-`pixels = ct.project.world_to_pixel_with_world_mat(world_mat, vertices)`.
+`pixels = ct.project.points_to_pixel(points, K, T)`.
 
 ```python
 # 0 -------> 1 (x)
@@ -57,6 +57,7 @@ rows[rows < 0] = 0
 ```
 
 It can be confusing to use `x, y, u, v`. Prefer `row` and `col`.
+
 
 ### UV coordinates
 
