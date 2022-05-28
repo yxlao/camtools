@@ -22,32 +22,39 @@ def assert_T(T):
             f"T must has [0, 0, 0, 1] the bottom row, but got {T}.")
 
 
-def assert_shape_nx3(x, name=None):
-    if x.ndim != 2 or x.shape[1] != 3:
+def assert_shape(x, expected_shape, name=None):
+    shape_valid = True
+
+    if shape_valid and x.ndim != len(expected_shape):
+        shape_valid = False
+
+    if shape_valid:
+        for i, s in enumerate(expected_shape):
+            if s is not None:
+                if x.shape[i] != s:
+                    shape_valid = False
+                    break
+
+    if not shape_valid:
         name_must = f"{name} must" if name is not None else "Must"
         raise ValueError(
-            f"{name_must} has shape (N, 3), but got shape {x.shape}.")
+            f"{name_must} has shape {expected_shape}, but got shape {x.shape}.")
+
+
+def assert_shape_nx3(x, name=None):
+    assert_shape(x, (None, 3), name=name)
 
 
 def assert_shape_4x4(x, name=None):
-    if x.ndim != 2 or x.shape[0] != 4 or x.shape[1] != 4:
-        name_must = f"{name} must" if name is not None else "Must"
-        raise ValueError(
-            f"{name_must} has shape (4, 4), but got shape {x.shape}.")
+    assert_shape(x, (4, 4), name=name)
 
 
 def assert_shape_3x4(x, name=None):
-    if x.ndim != 2 or x.shape[0] != 3 or x.shape[1] != 4:
-        name_must = f"{name} must" if name is not None else "Must"
-        raise ValueError(
-            f"{name_must} has shape (3, 4), but got shape {x.shape}.")
+    assert_shape(x, (3, 4), name=name)
 
 
 def assert_shape_3(x, name=None):
-    if x.shape != (3,):
-        name_must = f"{name} must" if name is not None else "Must"
-        raise ValueError(
-            f"{name_must} has shape (3,), but got shape {x.shape}.")
+    assert_shape(x, (3,), name=name)
 
 
 def assert_same_device(*tensors):
