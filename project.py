@@ -70,7 +70,7 @@ def points_to_pixel(points, K, T):
     points_out = points_homo @ W2P.T
 
     # points_out: (N, 3)
-    # points_out disgard last column
+    # points_out discard the last column
     points_out = points_out[:, :3]
 
     # points_out: (N, 2)
@@ -78,3 +78,49 @@ def points_to_pixel(points, K, T):
     points_out = points_out[:, :2] / points_out[:, 2:]
 
     return points_out
+
+
+def depth_to_points(im_depth, K, T):
+    """
+    Convert depth image to point cloud. Assumes valid depths > 0 and < inf.
+    Invalid depths are ignored. The depth image should already be in world
+    scale. That is, each pixel value represents the distance between the camera
+    center and the point in meters.
+
+    Args:
+        im_depth: depth image (H, W)
+        K: intrinsics (3, 3)
+        T: extrinsics (4, 4)
+        depth_scale: float
+
+    Returns:
+        points: (N, 3) points in world coordinates.
+    """
+    sanity.assert_K(K)
+    sanity.assert_T(T)
+
+    height, width = im_depth.shape
+    im_valid_mask = (im_depth.flatten() > 0) & (im_depth.flatten() < np.inf)
+    pose = np.linalg.inv(T)
+
+    # pixels.shape == (height, width, 2)
+    # pixels[r, c] == [c, r]  # Since x-axis goes from top-left to top-right.
+    pixels = np.transpose(np.indices((width, height)), (2, 1, 0))
+    # (height * width, 2)
+    pixels = pixels.reshape((-1, 2))
+    # (num_points, 2)
+    pixels = pixels[im_valid_mask]
+    # (num_points, 3)
+    pixels = np.hstack((pixels, np.ones((pixels.shape[0], 1))))
+    # (num_points, )
+    depths = im_depth.flatten()[im_valid_mask]
+    # C(num_points, 3)
+    points = depths.reshape((-1, 1)) * (np.linalg.inv(K) @ pixels.T).T
+    # (num_points, 4)
+    points = np.hstack((points, np.ones((points.shape[0], 1))))
+    # (num_points, 4)
+    points = (pose @ points.T).T
+    # (num_points, 3)
+    points = points[:, :3]
+
+    return points
