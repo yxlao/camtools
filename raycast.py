@@ -42,3 +42,28 @@ def mesh_to_depth(mesh, K, T, height, width):
     im_depth = ans['t_hit'].numpy()
 
     return im_depth
+
+
+def mesh_to_mask(mesh, K, T, height, width):
+    """
+    Cast mesh to mask image given camera parameters and image dimensions.
+
+    Args:
+        mesh: Open3D mesh.
+        K: (3, 3) array, camera intrinsic matrix.
+        T: (4, 4) array, camera extrinsic matrix, [R | t] with [0, 0, 0, 1].
+        height: int, image height.
+        width: int, image width.
+
+    Return:
+        (height, width) array, float32, representing depth image. Foreground
+        is set to 1.0. Background is set to 0.0.
+
+    Note: this is not meant to be used repeatedly with the same mesh. If you
+    need to perform ray casting of the same mesh multiple times, you should
+    create the scene object manually to perform ray casting.
+    """
+    im_depth = mesh_to_depth(mesh, K, T, height, width)
+    im_mask = (im_depth != np.inf).astype(np.float32)
+
+    return im_mask
