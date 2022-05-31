@@ -68,10 +68,10 @@ def get_camera_frames(Ts,
     return camera_frames
 
 
-def get_camera_center_ray(T, K, size=0.1, color=[0, 0, 1]):
+def get_camera_center_ray(K, T, size=0.1, color=[0, 0, 1]):
     """
-    T: 4x4
     K: 3x3
+    T: 4x4
 
     Returns a linset of two points. The line starts the camera center and passes
     through the center of the image.
@@ -110,10 +110,10 @@ def get_camera_center_ray(T, K, size=0.1, color=[0, 0, 1]):
     return ls
 
 
-def get_camera_center_rays(Ts, Ks, size=0.1, color=[0, 0, 1]):
+def get_camera_center_rays(Ks, Ts, size=0.1, color=[0, 0, 1]):
     """
-    T: 4x4
     K: 3x3
+    T: 4x4
 
     Returns a linset of two points. The line starts the camera center and passes
     through the center of the image.
@@ -128,10 +128,10 @@ def get_camera_center_rays(Ts, Ks, size=0.1, color=[0, 0, 1]):
     return camera_rays
 
 
-def get_camera_ray_frame(T, K, size=0.1, color=[0, 0, 1]):
+def get_camera_ray_frame(K, T, size=0.1, color=[0, 0, 1]):
     """
-    T: 4x4
     K: 3x3
+    T: 4x4
     """
     T, K, color = np.asarray(T), np.asarray(K), np.asarray(color)
     sanity.assert_T(T)
@@ -181,8 +181,8 @@ def get_camera_ray_frame(T, K, size=0.1, color=[0, 0, 1]):
     return ls
 
 
-def get_camera_ray_frames(Ts,
-                          Ks,
+def get_camera_ray_frames(Ks,
+                          Ts,
                           size=0.1,
                           color=[0, 0, 1],
                           start_color=[0, 1, 0],
@@ -199,7 +199,7 @@ def get_camera_ray_frames(Ts,
             frame_color = end_color
         else:
             frame_color = color
-        camera_frame = get_camera_ray_frame(T, K, size=size, color=frame_color)
+        camera_frame = get_camera_ray_frame(K, T, size=size, color=frame_color)
         camera_frames += camera_frame
 
     if len(Ts) > 1 and center_line:
