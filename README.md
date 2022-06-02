@@ -25,9 +25,9 @@ $$
 \begin{equation}
     \begin{split}
         \left[ \begin{array}
-                x \\
-                y \\
-                z \\
+                x\\
+                y\\
+                z\\
             \end{array} \right]
         & =
         \left[ \begin{array}
