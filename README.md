@@ -13,7 +13,7 @@ $$ \underbrace{
         y\\
         z\\
     \end{bmatrix}
-}_{(3,)} = \underbrace{
+}_{(3,)} = 123 \times \underbrace{
     \begin{bmatrix}
         x\\
         y\\
