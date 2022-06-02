@@ -8,10 +8,14 @@ and more.
 ### Overview
 
 $$
-\begin{bmatrix}
-1 & 2 & 3\\
-a & b & c
-\end{bmatrix}
+\underbrace{
+    \begin{bmatrix}
+        x\\
+        y\\
+        z\\
+    \end{bmatrix}
+}_{(3,)}
+
 $$
 
 ### $K$: intrinsic matrix
