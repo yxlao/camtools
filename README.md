@@ -13,7 +13,13 @@ $$ \underbrace{
         y\\
         z\\
     \end{bmatrix}
-}_{(3,)}=123 $$
+}_{(3,)} = \underbrace{
+    \begin{bmatrix}
+        x\\
+        y\\
+        z\\
+    \end{bmatrix}
+}_{(3,)} $$
 
 ### $K$: intrinsic matrix
 
