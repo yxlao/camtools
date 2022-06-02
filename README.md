@@ -31,9 +31,9 @@ $$
             \end{array} \right]
         & =
         \left[ \begin{array}{c c c}
-                \; & \; & \; \\
-                \; & K  & \; \\
-                \; & \; & \; \\
+                 &  & \\
+                 & K  &  \\
+                 &  &  \\
             \end{array} \right] \\
         & = \frac{1}{2} \pi r^2
     \end{split}
