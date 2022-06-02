@@ -25,15 +25,15 @@ $$
 \begin{equation}
     \begin{split}
         \left[ \begin{array}{c c c}
-                x\\
-                y\\
-                z\\
+                x \\
+                y \\
+                z \\
             \end{array} \right]
         & =
         \left[ \begin{array}{c c c}
                 \; & \; & \; \\
-                \multicolumn{3}{c}{K} \\
-                \; & \;  & \; \\
+                \; & K  & \; \\
+                \; & \; & \; \\
             \end{array} \right] \\
         & = \frac{1}{2} \pi r^2
     \end{split}
