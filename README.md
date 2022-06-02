@@ -22,41 +22,15 @@ $$ \underbrace{
 }_{(3,)} $$
 
 $$
-\left[ \begin{array}
-        x\\
-        y\\
-        z\\
-    \end{array} \right]
-$$
-
-
-$$
-\begin{split}
-    \left[ \begin{array}
-            x\\
-            y\\
-            z\\
-        \end{array} \right]
-    & =
-    \left[ \begin{array}
-            x \\
-            y \\
-            z \\
-        \end{array} \right] \\
-    & = \frac{1}{2} \pi r^2
-\end{split}
-$$
-
-$$
 \begin{equation}
     \begin{split}
-        \left[ \begin{array}
+        \left[ \begin{array}{ccc}
                 x\\
                 y\\
                 z\\
             \end{array} \right]
         & =
-        \left[ \begin{array}
+        \left[ \begin{array}{ccc}
                 x \\
                 y \\
                 z \\
