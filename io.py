@@ -50,6 +50,44 @@ def imwrite(im_path, im):
     cv2.imwrite(str(im_path), im)
 
 
+def imwrite_depth(im_path, im, depth_scale=1000.0):
+    """
+    Multiply depths by depth_scale and write depth image to a 16-bit .png file.
+
+    Args:
+        im_path: Path to image. Must be "*.png". Folders will be created if
+            necessary.
+        im: Numpy array. Must be float32 or float64.
+
+    Note:
+        The user is responsible for defining what is invalid depth. E.g.,
+        invalid depth can represented as np.nan, np.inf, 0, -1, etc. This
+        function simply multiplies the depth by depth_scale can convert to
+        uint16. For instance, with depth_scale = 1000,
+            - Input depths     : [np.nan, np.inf, -np.inf,   0,      -1,   3.14]
+            - Written to ".png": [     0,      0,       0,   0,   64536,   3140]
+            - Read from ".png" : [     0,      0,       0,   0,   64536,   3140]
+            - Convert to float : [     0,      0,       0,   0,  64.536,   3.14]
+                                                             ^
+                                                        Best practice.
+        Note that -1 is converted to 64536 / 1000 = 64.536 meters, therefore,
+        it is important to clip depth with min_depth and max_depth. The best
+        practice is to use 0 as invalid depth.
+    """
+    im_path = Path(im_path)
+
+    assert im_path.suffix == ".png"
+    assert isinstance(im, np.ndarray)
+    assert im.dtype in [np.float32, np.float64]
+    assert im.ndim == 2
+
+    im = (im * depth_scale).astype(np.uint16)
+
+    im_dir = im_path.parent
+    im_dir.mkdir(parents=True, exist_ok=True)
+    cv2.imwrite(str(im_path), im)
+
+
 def imread(im_path):
     """
     Read image, with no surprises. Float32 image [0, 1] will be returned.
@@ -109,5 +147,44 @@ def imread(im_path):
         pass
     else:
         raise ValueError(f"Unsupported image type: {im.dtype}")
+
+    return im
+
+
+def imread_depth(im_path, depth_scale=1000.0):
+    """
+    Read depth image from a 16-bit .png file and divide depths by depth_scale.
+
+    Args:
+        im_path: Path to image. Must be "*.png".
+
+    Returns:
+        Numpy array with dtype float32.
+
+    Note:
+        The user is responsible for defining what is invalid depth. E.g.,
+        invalid depth can represented as np.nan, np.inf, 0, -1, etc. This
+        function simply multiplies the depth by depth_scale can convert to
+        uint16. For instance, with depth_scale = 1000,
+            - Input depths     : [np.nan, np.inf, -np.inf,   0,      -1,   3.14]
+            - Written to ".png": [     0,      0,       0,   0,   64536,   3140]
+            - Read from ".png" : [     0,      0,       0,   0,   64536,   3140]
+            - Convert to float : [     0,      0,       0,   0,  64.536,   3.14]
+                                                             ^
+                                                        Best practice.
+        Note that -1 is converted to 64536 / 1000 = 64.536 meters, therefore,
+        it is important to clip depth with min_depth and max_depth. The best
+        practice is to use 0 as invalid depth.
+    """
+    im_path = Path(im_path)
+    assert im_path.suffix == ".png"
+    assert im_path.is_file()
+
+    im = cv2.imread(str(im_path), cv2.IMREAD_UNCHANGED)
+
+    if im.dtype != np.uint16:
+        raise ValueError(f"Unexpected image type: {im.dtype}")
+
+    im = im.astype(np.float32) / depth_scale
 
     return im
