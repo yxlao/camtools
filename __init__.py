@@ -1,6 +1,8 @@
+from . import camera
 from . import convert
 from . import geometry
 from . import image
+from . import io
 from . import normalize
 from . import plot
 from . import project
@@ -8,4 +10,3 @@ from . import raycast
 from . import sanity
 from . import solver
 from . import stat
-from . import io
