@@ -34,7 +34,7 @@ $$
                  &  & \\
                  & K  &  \\
                  &  &  \\
-            \end{array} \right] \\
+            \end{array} \right]_{3 \times 3} \\
         & = \frac{1}{2} \pi r^2
     \end{split}
 \end{equation}
