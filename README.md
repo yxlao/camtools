@@ -23,8 +23,6 @@ $$ \underbrace{
 
 ### $K$: intrinsic matrix
 
-$$$$
-
 ```
 K        : (3, 3) # Camera intrinsic matrix.
                   # [[fx,  s, cx],
