@@ -24,18 +24,20 @@ $$ \underbrace{
 $$
 \begin{equation}
     \begin{split}
-            \begin{bmatrix}
-                x\\
-                y\\
-                z\\
-            \end{bmatrix}
-            & =
-            \begin{bmatrix}
-                x\\
-                y\\
-                z\\
-            \end{bmatrix} \\
-            & = \frac{1}{2} \pi r^2
+        \left[
+        \begin{array}
+            x\\
+            y\\
+            z\\
+        \end{array}_((3,))
+        \right]
+        & =
+        \begin{array}
+            x\\
+            y\\
+            z\\
+        \end{array} \\
+        & = \frac{1}{2} \pi r^2
     \end{split}
 \end{equation}
 $$
