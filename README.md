@@ -24,17 +24,17 @@ $$ \underbrace{
 $$
 \begin{equation}
     \begin{split}
-        \left[ \begin{array}{c c c}
+        \underbrace{\left[ \begin{array}{c c c}
                 x \\
                 y \\
                 z \\
-            \end{array} \right]
+            \end{array} \right]}_{hello}
         & =
-        \left[ \begin{array}{c c c}
+        \underbrace{\left[ \begin{array}{c c c}
                  &  & \\
                  & K  &  \\
                  &  &  \\
-            \end{array} \right] \\
+            \end{array} \right]}_{hello} \\
         & = \frac{1}{2} \pi r^2
     \end{split}
 \end{equation}
