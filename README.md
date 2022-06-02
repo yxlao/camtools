@@ -15,7 +15,6 @@ $$
         z\\
     \end{bmatrix}
 }_{(3,)}
-
 $$
 
 ### $K$: intrinsic matrix
