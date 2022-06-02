@@ -22,26 +22,22 @@ $$ \underbrace{
 }_{(3,)} $$
 
 $$
-    \begin{equation}
-        \begin{split}
-            \left[ \begin{array}
-                    x \\
-                    y \\
-                    z \\
-                \end{array}
-                \right]
-            & =
-            \left[ \begin{array}{ *{4}{c} }
-                                         &        &   & 1      \\
-                                         &        &   & \vdots \\
-                    \multicolumn{3}{c}
-                    {\raisebox{\dimexpr\normalbaselineskip+.7\ht\strutbox-.5\height}[0pt][0pt]
-                    {\scalebox{3}{$A$}}} & 1                   \\
-                    1                    & \cdots & 1 & 0
-                \end{array} \right] \\
-            & = \frac{1}{2} \pi r^2
-        \end{split}
-    \end{equation}
+\begin{equation}
+    \begin{split}
+        \left[ \begin{array}
+                x \\
+                y \\
+                z \\
+            \end{array} \right]
+        & =
+        \left[ \begin{array}
+                x \\
+                y \\
+                z \\
+            \end{array} \right] \\
+        & = \frac{1}{2} \pi r^2
+    \end{split}
+\end{equation}
 $$
 
 ### $K$: intrinsic matrix
