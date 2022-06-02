@@ -34,7 +34,11 @@ $$
                 & K  &  \\
                 &  &  \\
         \end{array} \right] \\
-    & = \frac{1}{2} \pi r^2
+    & = \underbrace{\left[ \begin{array}{c c c}
+            x \\
+            y \\
+            z \\
+        \end{array} \right]}_{hello}
 \end{split}
 $$
 
