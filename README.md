@@ -22,22 +22,20 @@ $$ \underbrace{
 }_{(3,)} $$
 
 $$
-\begin{equation}
-    \begin{split}
-        \underbrace{\left[ \begin{array}{c c c}
-                x \\
-                y \\
-                z \\
-            \end{array} \right]}_{hello}
-        & =
-        \left[ \begin{array}{c c c}
-                 &  & \\
-                 & K  &  \\
-                 &  &  \\
-            \end{array} \right] \\
-        & = \frac{1}{2} \pi r^2
-    \end{split}
-\end{equation}
+\begin{split}
+    \underbrace{\left[ \begin{array}{c c c}
+            x \\
+            y \\
+            z \\
+        \end{array} \right]}_{hello}
+    & =
+    \left[ \begin{array}{c c c}
+                &  & \\
+                & K  &  \\
+                &  &  \\
+        \end{array} \right] \\
+    & = \frac{1}{2} \pi r^2
+\end{split}
 $$
 
 ### $K$: intrinsic matrix
