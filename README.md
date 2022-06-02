@@ -35,9 +35,9 @@ $$
             \  & \  & \ \\
         \end{array} \right]
     \left[ \begin{array}{c c c c}
-            \  & \  & \ & \ \\
-            \  & R  & \ & t \\
-            \  & \  & \ & \ \\
+            \  & \  & \  & | \\
+            \  & R  & \  & t \\
+            \  & \  & \  & | \\
         \end{array} \right]
     \\
     & = \frac{1}{2} \pi r^2
