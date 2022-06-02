@@ -23,22 +23,18 @@ $$ \underbrace{
 
 $$
 \begin{split}
-    \underbrace{\left[ \begin{array}{c c c}
+    \left[ \begin{array}{c c c}
             x \\
             y \\
             z \\
-        \end{array} \right]}_{hello}
+        \end{array} \right]
     & =
     \left[ \begin{array}{c c c}
-                &  & \\
-                & K  &  \\
-                &  &  \\
+            \  & \  & \ \\
+            \  & K  & \ \\
+            \  & \  & \ \\
         \end{array} \right] \\
-    & = \underbrace{\left[ \begin{array}{c c c}
-            x \\
-            y \\
-            z \\
-        \end{array} \right]}_{hello}
+    & = \frac{1}{2} \pi r^2
 \end{split}
 $$
 
