@@ -24,20 +24,17 @@ $$ \underbrace{
 $$
 \begin{equation}
     \begin{split}
-        \underbrace{
             \begin{bmatrix}
                 x\\
                 y\\
                 z\\
             \end{bmatrix}
-        }_{(3,)}
-            & = \underbrace{
+            & =
             \begin{bmatrix}
                 x\\
                 y\\
                 z\\
-            \end{bmatrix}
-        }_{(3,)} \\
+            \end{bmatrix} \\
             & = \frac{1}{2} \pi r^2
     \end{split}
 \end{equation}
