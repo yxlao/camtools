@@ -22,40 +22,26 @@ $$ \underbrace{
 }_{(3,)} $$
 
 $$
-\begin{equation}
-    \begin{split}
-        \left[
-        \begin{array}
-            x\\
-            y\\
-            z\\
-        \end{array}
-        \right]
-        & =
-        \begin{array}
-            x\\
-            y\\
-            z\\
-        \end{array} \\
-        & = \frac{1}{2} \pi r^2
-    \end{split}
-\end{equation}
-$$
-
-$$
-\left[\begin{array}{c}
-x\\
-y\\
-z
-\end{array}\right]=\underbrace{\left[\begin{array}{ccc}
-f_{x} &  & c_{x}\\
- & f_{y} & c_{y}\\
-\\
-\end{array}\right]}_{(3,3)}\underbrace{\left[\begin{array}{ccc}
-f_{x} &  & c_{x}\\
- & f_{y} & c_{y}\\
-\\
-\end{array}\right]}_{(3,3)}
+    \begin{equation}
+        \begin{split}
+            \left[ \begin{array}
+                    x \\
+                    y \\
+                    z \\
+                \end{array}
+                \right]
+            & =
+            \left[ \begin{array}{ *{4}{c} }
+                                         &        &   & 1      \\
+                                         &        &   & \vdots \\
+                    \multicolumn{3}{c}
+                    {\raisebox{\dimexpr\normalbaselineskip+.7\ht\strutbox-.5\height}[0pt][0pt]
+                    {\scalebox{3}{$A$}}} & 1                   \\
+                    1                    & \cdots & 1 & 0
+                \end{array} \right] \\
+            & = \frac{1}{2} \pi r^2
+        \end{split}
+    \end{equation}
 $$
 
 ### $K$: intrinsic matrix
