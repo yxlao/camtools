@@ -24,16 +24,16 @@ $$ \underbrace{
 $$
 \begin{equation}
     \begin{split}
-        \left[ \begin{array}{ccc}
+        \left[ \begin{array}{c c c}
                 x\\
                 y\\
                 z\\
             \end{array} \right]
         & =
-        \left[ \begin{array}{ccc}
-                x \\
-                y \\
-                z \\
+        \left[ \begin{array}{c c c}
+                \; & \; & \; \\
+                \multicolumn{3}{c}{K} \\
+                \; & \;  & \; \\
             \end{array} \right] \\
         & = \frac{1}{2} \pi r^2
     \end{split}
