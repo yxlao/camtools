@@ -22,11 +22,17 @@ $$ \underbrace{
 }_{(3,)} $$
 
 $$
-\begin{equation} \label{eq1}
-\begin{split}
-A & = \frac{\pi r^2}{2} \\
- & = \frac{1}{2} \pi r^2
-\end{split}
+\begin{equation}
+    \begin{split}
+        \underbrace{
+            \begin{bmatrix}
+                x\\
+                y\\
+                z\\
+            \end{bmatrix}
+        }_{(3,)} & = \frac{\pi r^2}{2} \\
+                 & = \frac{1}{2} \pi r^2
+    \end{split}
 \end{equation}
 $$
 
