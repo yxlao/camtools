@@ -29,7 +29,7 @@ $$
             x\\
             y\\
             z\\
-        \end{array}_((3,))
+        \end{array}
         \right]
         & =
         \begin{array}
@@ -40,6 +40,22 @@ $$
         & = \frac{1}{2} \pi r^2
     \end{split}
 \end{equation}
+$$
+
+$$
+\left[\begin{array}{c}
+x\\
+y\\
+z
+\end{array}\right]=\underbrace{\left[\begin{array}{ccc}
+f_{x} &  & c_{x}\\
+ & f_{y} & c_{y}\\
+\\
+\end{array}\right]}_{(3,3)}\underbrace{\left[\begin{array}{ccc}
+f_{x} &  & c_{x}\\
+ & f_{y} & c_{y}\\
+\\
+\end{array}\right]}_{(3,3)}
 $$
 
 ### $K$: intrinsic matrix
