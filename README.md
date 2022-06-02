@@ -14,15 +14,13 @@ $$
         y\\
         z\\
     \end{bmatrix}
-}_{(3,)}
-=
-\underbrace{
+}_{(3,)}=\underbrace{
     \begin{bmatrix}
-        f_x & s   & c_x\\
-        0   & f_y & c_y\\
-        0   & 0   & 1  \\
+        x\\
+        y\\
+        z\\
     \end{bmatrix}
-}_{K: (3, 3)}
+}_{(3,)}
 $$
 
 ### $K$: intrinsic matrix
