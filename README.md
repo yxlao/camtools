@@ -1,8 +1,22 @@
 # CamTools
 
-Tools for handling pinhole camera parameters and plotting cameras.
+Tools for converting pinhole camera parameters, plotting cameras, 3D projection,
+and more.
 
 ## Matrix conventions
+
+### Overview
+
+$$
+\begin{bmatrix}
+1 & 2 & 3\\
+a & b & c
+\end{bmatrix}
+$$
+
+### $K$: intrinsic matrix
+
+$$$$
 
 ```
 K        : (3, 3) # Camera intrinsic matrix.
@@ -99,7 +113,6 @@ C = - R.T @ t
 pytest . -s
 pytest camtools -s
 ```
-
 
 ## TODO
 
