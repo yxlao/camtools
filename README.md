@@ -30,11 +30,11 @@ $$
                 z \\
             \end{array} \right]}_{hello}
         & =
-        \underbrace{\left[ \begin{array}{c c c}
+        \left[ \begin{array}{c c c}
                  &  & \\
                  & K  &  \\
                  &  &  \\
-            \end{array} \right]}_{hello} \\
+            \end{array} \right] \\
         & = \frac{1}{2} \pi r^2
     \end{split}
 \end{equation}
