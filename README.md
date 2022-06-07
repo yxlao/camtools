@@ -7,6 +7,32 @@ and more.
 
 ### Overview
 
+$$
+w\left[\begin{array}{l}
+u \\
+v \\
+1
+\end{array}\right]=K[R, t]\left[\begin{array}{l}
+x \\
+y \\
+z \\
+1
+\end{array}\right]=\left[\begin{array}{ccc}
+f_{x} & 0 & u_{0} \\
+0 & f_{y} & v_{0} \\
+0 & 0 & 1
+\end{array}\right]\left[\begin{array}{llll}
+r_{11} & r_{12} & r_{13} & t_{x} \\
+r_{21} & r_{22} & r_{23} & t_{y} \\
+r_{31} & r_{32} & r_{33} & t_{z}
+\end{array}\right]\left[\begin{array}{c}
+x \\
+y \\
+z \\
+1
+\end{array}\right]
+$$
+
 $$ \underbrace{
     \begin{bmatrix}
         x\\
