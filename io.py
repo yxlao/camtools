@@ -99,12 +99,13 @@ def imread(im_path):
         Float32 image with range from 0 to 1.
 
     Notes:
+        - If the image has 3 channels, the order will be R, G, B.
         - If image dtype is uint16, an exception will be thrown.
         - Alpha channel will be ignored, a warning will be printed.
     """
     im_path = Path(im_path)
     assert im_path.suffix in (".jpg", ".png")
-    assert im_path.is_file()
+    assert im_path.is_file(), f"{im_path} is not a file."
 
     # Read.
     im = cv2.imread(str(im_path), cv2.IMREAD_UNCHANGED)
@@ -178,7 +179,7 @@ def imread_depth(im_path, depth_scale=1000.0):
     """
     im_path = Path(im_path)
     assert im_path.suffix == ".png"
-    assert im_path.is_file()
+    assert im_path.is_file(), f"{im_path} is not a file."
 
     im = cv2.imread(str(im_path), cv2.IMREAD_UNCHANGED)
 
