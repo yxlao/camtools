@@ -1,5 +1,6 @@
 from . import camera
 from . import colmap
+from . import colormap
 from . import convert
 from . import geometry
 from . import image
