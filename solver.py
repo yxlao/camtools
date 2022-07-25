@@ -1,5 +1,7 @@
 import numpy as np
 
+from camtools import sanity
+
 
 def line_intersection_3d(src_points=None, dst_points=None):
     """
@@ -57,3 +59,56 @@ def line_intersection_3d(src_points=None, dst_points=None):
     # yapf: enable
 
     return np.linalg.solve(s, c)
+
+
+def closest_points_of_lines(src_o, src_d, dst_o, dst_d):
+    """
+    Find the closest points of two lines. The distance between the closest
+    points is the shortest distance between the two lines.
+
+    Args:
+        src_o: (3,), origin of the src line
+        src_d: (3,), direction of the src line
+        dst_o: (3,), origin of the dst line
+        dst_d: (3,), direction of the dst line
+
+    Returns:
+        (src_p, dst_p), where
+        - src_p: (3,), closest point of the src line
+        - dst_p: (3,), closest point of the dst line
+
+    TODO:
+        Batched version.
+    """
+    sanity.assert_shape_3(src_o, "src_o")
+    sanity.assert_shape_3(src_d, "src_d")
+    sanity.assert_shape_3(dst_o, "dst_o")
+    sanity.assert_shape_3(dst_d, "dst_d")
+
+    # Normalize direction vectors.
+    src_d = src_d / np.linalg.norm(src_d)
+    dst_d = dst_d / np.linalg.norm(dst_d)
+
+    # Find the closest points of the two lines.
+    # - src_p = src_o + src_t * src_d is the closest point in src line.
+    # - dst_p = dst_o + dst_t * dst_d is the closest point in dst line.
+    # - src_p + mid_t * mid_d == dst_d connects the two points, this expands to:
+    #   src_o + src_t * src_d + mid_t * mid_d == dst_o + dst_t * dst_d
+    # - mid_d = cross(src_d, dst_d).
+    #
+    # Solve the following linear system:
+    #   src_t * src_d - dst_t * dst_d + mid_t * mid_d == dst_o - src_o
+    #   ┌                  ┐ ┌       ┐   ┌       ┐   ┌       ┐
+    #   │  │     │     │   │ │ src_t │   │   │   │   │   │   │
+    #   │src_d -dst_d mid_d│ │ dst_t │ = │ dst_o │ - │ src_o │
+    #   │  │     │     │   │ │ mid_t │   │   │   │   │   │   │
+    #   └                  ┘ └       ┘   └       ┘   └       ┘
+    mid_d = np.cross(src_d, dst_d)
+    mid_d = mid_d / np.linalg.norm(mid_d)
+    lhs = np.vstack((src_d, -dst_d, mid_d)).T
+    rhs = dst_o - src_o
+    src_t, dst_t, mid_t = np.linalg.solve(lhs, rhs)
+    src_p = src_o + src_t * src_d
+    dst_p = dst_o + dst_t * dst_d
+
+    return src_p, dst_p
