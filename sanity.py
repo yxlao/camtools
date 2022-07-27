@@ -45,6 +45,10 @@ def assert_shape_nx3(x, name=None):
     assert_shape(x, (None, 3), name=name)
 
 
+def assert_shape_nx2(x, name=None):
+    assert_shape(x, (None, 2), name=name)
+
+
 def assert_shape_4x4(x, name=None):
     assert_shape(x, (4, 4), name=name)
 

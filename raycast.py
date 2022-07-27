@@ -2,6 +2,41 @@ import numpy as np
 import open3d as o3d
 
 from . import sanity
+from . import convert
+
+
+def gen_rays(K, T, pixels):
+    """
+    Args:
+        pixels: image coordinates, (N, 2), order (col, row).
+
+    Return:
+        (centers, dirs)
+        centers: camera center, (N, 3).
+        dirs: ray directions, (N, 3), normalized to unit length.
+    """
+    sanity.assert_K(K)
+    sanity.assert_T(T)
+    sanity.assert_shape_nx2(pixels, name="pixels")
+
+    # Concat xs_ys into homogeneous coordinates.
+    points = np.concatenate([pixels, np.ones_like(pixels[:, :1])], axis=1)
+
+    # Transform to camera space
+    points = (np.linalg.inv(K) @ points.T).T
+
+    # Normalize to have 1 distance
+    points = points / np.linalg.norm(points, axis=1, keepdims=True)
+
+    # Transform to world space
+    R, _ = convert.T_to_R_t(T)
+    C = convert.T_to_C(T)
+    dirs = (np.linalg.inv(R) @ points.T).T
+
+    # Tile camera center C
+    centers = np.tile(C, (dirs.shape[0], 1))
+
+    return centers, dirs
 
 
 def mesh_to_depth(mesh, K, T, height, width):
