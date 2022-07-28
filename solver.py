@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 from camtools import sanity
 
@@ -61,7 +62,7 @@ def line_intersection_3d(src_points=None, dst_points=None):
     return np.linalg.solve(s, c)
 
 
-def closest_points_of_lines(src_o, src_d, dst_o, dst_d):
+def closest_points_of_line_pair(src_o, src_d, dst_o, dst_d):
     """
     Find the closest points of two lines. The distance between the closest
     points is the shortest distance between the two lines.
@@ -85,9 +86,15 @@ def closest_points_of_lines(src_o, src_d, dst_o, dst_d):
     sanity.assert_shape_3(dst_o, "dst_o")
     sanity.assert_shape_3(dst_d, "dst_d")
 
+    is_torch = torch.is_tensor(src_d) and torch.is_tensor(dst_d)
+    cross = torch.cross if is_torch else np.cross
+    vstack = torch.vstack if is_torch else np.vstack
+    norm = torch.linalg.norm if is_torch else np.linalg.norm
+    solve = torch.linalg.solve if is_torch else np.linalg.solve
+
     # Normalize direction vectors.
-    src_d = src_d / np.linalg.norm(src_d)
-    dst_d = dst_d / np.linalg.norm(dst_d)
+    src_d = src_d / norm(src_d)
+    dst_d = dst_d / norm(dst_d)
 
     # Find the closest points of the two lines.
     # - src_p = src_o + src_t * src_d is the closest point in src line.
@@ -103,11 +110,11 @@ def closest_points_of_lines(src_o, src_d, dst_o, dst_d):
     #   │src_d -dst_d mid_d│ │ dst_t │ = │ dst_o │ - │ src_o │
     #   │  │     │     │   │ │ mid_t │   │   │   │   │   │   │
     #   └                  ┘ └       ┘   └       ┘   └       ┘
-    mid_d = np.cross(src_d, dst_d)
-    mid_d = mid_d / np.linalg.norm(mid_d)
-    lhs = np.vstack((src_d, -dst_d, mid_d)).T
+    mid_d = cross(src_d, dst_d)
+    mid_d = mid_d / norm(mid_d)
+    lhs = vstack((src_d, -dst_d, mid_d)).T
     rhs = dst_o - src_o
-    src_t, dst_t, mid_t = np.linalg.solve(lhs, rhs)
+    src_t, dst_t, mid_t = solve(lhs, rhs)
     src_p = src_o + src_t * src_d
     dst_p = dst_o + dst_t * dst_d
 
