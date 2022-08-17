@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from . import sanity
 
 
 def overlay_mask_on_rgb(im_rgb,
@@ -106,10 +107,57 @@ def dst_pixels_to_src_pixels(dst_pixels,
     src_br = np.array([src_w - 0.5, src_h - 0.5])
     dst_tl = np.array([-0.5, -0.5])
     dst_br = np.array([tmp_w - 0.5, tmp_h - 0.5])
-    src_pixels = (dst_pixels - dst_tl) * (src_br - src_tl) / (dst_br -
-                                                              dst_tl) + src_tl
+    src_pixels = (dst_pixels - dst_tl) / (dst_br - dst_tl) * (src_br -
+                                                              src_tl) + src_tl
 
     return src_pixels
+
+
+def ndc_coords_to_pixels(ndc_coords, im_size_wh, align_corners=False):
+    """
+    Convert NDC coordinates (from -1 to 1) to pixel coordinates. Out-of-bound
+    values will NOT be corrected.
+
+    Args:
+        ndc_coords: NDC coordinates. (N, 2) array of floats. Each row represents
+            (x, y) or (c, r). Most values shall be in [-1, 1], where (-1, -1) is
+            the top left corner and (1, 1) is the bottom right corner.
+        im_size_wh: Image size (width, height).
+        align_corners: If True, -1 and 1 are aligned to the center of the corner
+            pixels. If False, -1 and 1 are aligned to the corner of the corner
+            pixels. In general image interpolation, if align_corners=True, the
+            src and dst images are aligned by the center point of their corner
+            pixels. If align_corners=False, the src and dst images are aligned
+            by the corner points of the corner pixels. Here, the NDC space does
+            not have a "pixels size", and thus we precisely align the extrema -1
+            and 1 to the center or corner of the corner pixels.
+
+    Returns:
+        Pixel coordinates. (N, 2) array of floats.
+    """
+    sanity.assert_shape(ndc_coords, (None, 2), name="ndc_coords")
+    w, h = im_size_wh[:2]
+    dtype = ndc_coords.dtype
+
+    src_tl = np.array([-1.0, -1.0], dtype=dtype)
+    src_br = np.array([1.0, 1.0], dtype=dtype)
+
+    if align_corners:
+        # (-1, -1) -> (    0,     0)
+        # (1 ,  1) -> (w - 1, h - 1)
+        dst_tl = np.array([0, 0], dtype=dtype)
+        dst_br = np.array([w - 1, h - 1], dtype=dtype)
+    else:
+        # (-1, -1) -> (   -0.5,    -0.5)
+        # (1 ,  1) -> (w - 0.5, h - 0.5)
+        # Align to the corner of the corner pixels.
+        dst_tl = np.array([-0.5, -0.5], dtype=dtype)
+        dst_br = np.array([w - 0.5, h - 0.5], dtype=dtype)
+
+    dst_pixels = (ndc_coords - src_tl) / (src_br - src_tl) * (dst_br -
+                                                              dst_tl) + dst_tl
+
+    return dst_pixels
 
 
 def resize(im, shape_wh, aspect_ratio_fill=None):
