@@ -251,3 +251,123 @@ def resize(im, shape_wh, aspect_ratio_fill=None):
     assert im_resize.shape == dst_numpy_shape
 
     return im_resize
+
+
+def make_corres_image(im_src,
+                      im_dst,
+                      src_pixels,
+                      dst_pixels,
+                      texts=None,
+                      point_color=(0, 1, 0, 1.0),
+                      line_color=(0, 0, 1, 0.75),
+                      point_size=1,
+                      line_width=1):
+    """
+    Make correspondence image.
+
+    Args:
+        im_src: (h, w, 3) float image, range 0-1.
+        im_dst: (h, w, 3) float image, range 0-1.
+        src_pixels: (n, 2) int array, each row represents (x, y) or (c, r).
+        dst_pixels: (n, 2) int array, each row represents (x, y) or (c, r).
+        texts: List of texts to draw on the top-left of the image.
+        point_color: RGB or RGBA color of the point, float, range 0-1.
+        line_color: RGB or RGBA color of the line, float, range 0-1.
+        point_size: Size of the point.
+        line_width: Width of the line.
+    """
+    assert im_src.shape == im_dst.shape
+    assert im_src.ndim == 3 and im_src.shape[2] == 3
+    assert im_src.dtype == np.float32 or im_src.dtype == np.float64
+    assert im_dst.dtype == np.float32 or im_dst.dtype == np.float64
+    assert im_src.min() >= 0.0 and im_src.max() <= 1.0
+    assert im_dst.min() >= 0.0 and im_dst.max() <= 1.0
+    h, w, _ = im_src.shape
+
+    assert src_pixels.shape == dst_pixels.shape
+    assert src_pixels.ndim == 2 and src_pixels.shape[1] == 2
+    assert src_pixels.dtype == np.int32 or src_pixels.dtype == np.int64
+    assert dst_pixels.dtype == np.int32 or dst_pixels.dtype == np.int64
+    assert src_pixels[:, 0].min() >= 0 and src_pixels[:, 0].max() < w
+    assert src_pixels[:, 1].min() >= 0 and src_pixels[:, 1].max() < h
+    assert dst_pixels[:, 0].min() >= 0 and dst_pixels[:, 0].max() < w
+    assert dst_pixels[:, 1].min() >= 0 and dst_pixels[:, 1].max() < h
+
+    # Sanity check: point_color and line_color.
+    if point_color is not None:
+        assert len(point_color) in {3, 4}
+    if line_color is not None:
+        assert len(line_color) in {3, 4}
+
+    # Concatenate images.
+    im_corres = np.concatenate((im_src, im_dst), axis=1)
+
+    # Draw points.
+    if point_color is not None:
+        assert len(point_color) == 4 or len(point_color) == 3
+        assert np.min(point_color) >= 0.0 and np.max(point_color) <= 1.0
+
+        # Draw white points as mask.
+        im_point_mask = np.zeros(im_corres.shape[:2], dtype=im_corres.dtype)
+        for (src_c, src_r), (dst_c, dst_r) in zip(src_pixels, dst_pixels):
+            cv2.circle(im_point_mask, (src_c, src_r), point_size, (1,), -1)
+            cv2.circle(im_point_mask, (dst_c + w, dst_r), point_size, (1,), -1)
+
+        point_alpha = point_color[3] if len(point_color) == 4 else 1.0
+        point_color = point_color[:3]
+        im_corres = overlay_mask_on_rgb(im_corres,
+                                        im_point_mask,
+                                        overlay_alpha=point_alpha,
+                                        overlay_color=point_color)
+
+    # Draw lines.
+    if line_color is not None:
+        assert len(line_color) == 4 or len(line_color) == 3
+        assert np.min(line_color) >= 0.0 and np.max(line_color) <= 1.0
+
+        # Draw white lines as mask.
+        im_line_mask = np.zeros(im_corres.shape[:2], dtype=im_corres.dtype)
+        for (src_c, src_r), (dst_c, dst_r) in zip(src_pixels, dst_pixels):
+            cv2.line(im_line_mask, (src_c, src_r), (dst_c + w, dst_r), (1,),
+                     line_width)
+
+        line_alpha = line_color[3] if len(line_color) == 4 else 1.0
+        line_color = line_color[:3]
+        im_corres = overlay_mask_on_rgb(im_corres,
+                                        im_line_mask,
+                                        overlay_alpha=line_alpha,
+                                        overlay_color=line_color)
+
+    # Draw texts.
+    if texts:
+
+        def get_scales(im_height, max_lines, font, line_text_h_ratio):
+            (_, text_h), _ = cv2.getTextSize("ABCDE", font, 1, 1)
+            text_h = text_h * line_text_h_ratio
+            expected_text_h = im_height / max_lines
+
+            font_scale = int(round(expected_text_h / text_h))
+            (_, text_h), _ = cv2.getTextSize("ABCDE", font, font_scale, 1)
+            line_h = text_h * line_text_h_ratio
+            line_h = int(round(line_h))
+            text_h = int(round(text_h))
+
+            return font_scale, line_h, text_h
+
+        font = cv2.FONT_HERSHEY_DUPLEX
+        line_text_h_ratio = 1.2
+        max_lines = 20
+        font_scale, line_h, text_h = get_scales(im_corres.shape[0], max_lines,
+                                                font, line_text_h_ratio)
+        font_thickness = 2
+        font_color = (1, 1, 1)
+        org = (line_h, line_h * 2)
+
+        for text in texts:
+            im_corres = cv2.putText(im_corres, text, org, font, font_scale,
+                                    font_color, font_thickness, cv2.LINE_AA)
+            org = (org[0], org[1] + line_h)
+
+    assert im_corres.min() >= 0.0 and im_corres.max() <= 1.0
+
+    return im_corres
