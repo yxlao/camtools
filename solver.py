@@ -65,7 +65,8 @@ def line_intersection_3d(src_points=None, dst_points=None):
 def closest_points_of_line_pair(src_o, src_d, dst_o, dst_d):
     """
     Find the closest points of two lines. The distance between the closest
-    points is the shortest distance between the two lines.
+    points is the shortest distance between the two lines. Used the batched
+    version closest_points_of_line_pairs() when possible.
 
     Args:
         src_o: (3,), origin of the src line
@@ -77,24 +78,52 @@ def closest_points_of_line_pair(src_o, src_d, dst_o, dst_d):
         (src_p, dst_p), where
         - src_p: (3,), closest point of the src line
         - dst_p: (3,), closest point of the dst line
-
-    TODO:
-        Batched version.
     """
     sanity.assert_shape_3(src_o, "src_o")
     sanity.assert_shape_3(src_d, "src_d")
     sanity.assert_shape_3(dst_o, "dst_o")
     sanity.assert_shape_3(dst_d, "dst_d")
 
-    is_torch = torch.is_tensor(src_d) and torch.is_tensor(dst_d)
+    src_ps, dst_ps = closest_points_of_line_pairs(
+        src_o.reshape((1, 3)),
+        src_d.reshape((1, 3)),
+        dst_o.reshape((1, 3)),
+        dst_d.reshape((1, 3)),
+    )
+
+    return src_ps[0], dst_ps[0]
+
+
+def closest_points_of_line_pairs(src_os, src_ds, dst_os, dst_ds):
+    """
+    Find the closest points of two lines. The distance between the closest
+    points is the shortest distance between the two lines.
+
+    Args:
+        src_os: (N, 3), origin of the src line
+        src_ds: (N, 3), direction of the src line
+        dst_os: (N, 3), origin of the dst line
+        dst_ds: (N, 3), direction of the dst line
+
+    Returns:
+        (src_ps, dst_s), where
+        - src_ps: (N, 3), closest point of the src line
+        - dst_ps: (N, 3), closest point of the dst line
+    """
+    sanity.assert_shape_nx3(src_os, "src_os")
+    sanity.assert_shape_nx3(src_ds, "src_ds")
+    sanity.assert_shape_nx3(dst_os, "dst_os")
+    sanity.assert_shape_nx3(dst_ds, "dst_ds")
+
+    is_torch = torch.is_tensor(src_ds) and torch.is_tensor(dst_ds)
     cross = torch.cross if is_torch else np.cross
-    vstack = torch.vstack if is_torch else np.vstack
     norm = torch.linalg.norm if is_torch else np.linalg.norm
     solve = torch.linalg.solve if is_torch else np.linalg.solve
+    stack = torch.stack if is_torch else np.stack
 
     # Normalize direction vectors.
-    src_d = src_d / norm(src_d)
-    dst_d = dst_d / norm(dst_d)
+    src_ds = src_ds / norm(src_ds, axis=1, keepdims=True)
+    dst_ds = dst_ds / norm(dst_ds, axis=1, keepdims=True)
 
     # Find the closest points of the two lines.
     # - src_p = src_o + src_t * src_d is the closest point in src line.
@@ -110,12 +139,14 @@ def closest_points_of_line_pair(src_o, src_d, dst_o, dst_d):
     #   │src_d -dst_d mid_d│ │ dst_t │ = │ dst_o │ - │ src_o │
     #   │  │     │     │   │ │ mid_t │   │   │   │   │   │   │
     #   └                  ┘ └       ┘   └       ┘   └       ┘
-    mid_d = cross(src_d, dst_d)
-    mid_d = mid_d / norm(mid_d)
-    lhs = vstack((src_d, -dst_d, mid_d)).T
-    rhs = dst_o - src_o
-    src_t, dst_t, mid_t = solve(lhs, rhs)
-    src_p = src_o + src_t * src_d
-    dst_p = dst_o + dst_t * dst_d
+    mid_ds = cross(src_ds, dst_ds)
+    mid_ds = mid_ds / norm(mid_ds, axis=1, keepdims=True)
 
-    return src_p, dst_p
+    lhs = stack((src_ds, -dst_ds, mid_ds), axis=-1)
+    rhs = dst_os - src_os
+    results = solve(lhs, rhs)
+    src_ts, dst_ts, mid_ts = results[:, 0], results[:, 1], results[:, 2]
+    src_ps = src_os + src_ts.reshape((-1, 1)) * src_ds
+    dst_ps = dst_os + dst_ts.reshape((-1, 1)) * dst_ds
+
+    return src_ps, dst_ps
