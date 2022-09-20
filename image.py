@@ -288,6 +288,11 @@ def make_corres_image(im_src,
     assert src_pixels.ndim == 2 and src_pixels.shape[1] == 2
     assert src_pixels.dtype == np.int32 or src_pixels.dtype == np.int64
     assert dst_pixels.dtype == np.int32 or dst_pixels.dtype == np.int64
+
+    # If there is no corres, return the original images side by side.
+    if len(src_pixels) == 0:
+        return np.concatenate((im_src, im_dst), axis=1)
+
     assert src_pixels[:, 0].min() >= 0 and src_pixels[:, 0].max() < w
     assert src_pixels[:, 1].min() >= 0 and src_pixels[:, 1].max() < h
     assert dst_pixels[:, 0].min() >= 0 and dst_pixels[:, 0].max() < w
