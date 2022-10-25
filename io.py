@@ -125,7 +125,7 @@ def imread(im_path):
     elif im.ndim == 3:
         # Ignore alpha channel.
         if im.shape[2] == 4:
-            print(f"Warning: alpha channel ignored.")
+            # print(f"Warning: alpha channel ignored.")
             im = im[:, :, :3]
         elif im.shape[2] == 3:
             pass
