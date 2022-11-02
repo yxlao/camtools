@@ -2,6 +2,15 @@
 
 Tools for handling pinhole camera parameters and plotting cameras.
 
+## Build
+
+```bash
+mkdir build && cd build
+cmake ..
+make pip-install -j$(nproc)
+python -c "import camtools as ct; print(ct.__version__)"
+```
+
 ## Matrix conventions
 
 ```
