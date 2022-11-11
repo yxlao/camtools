@@ -12,5 +12,4 @@ from . import raycast
 from . import sanity
 from . import solver
 from . import stat
-from . import pointcloud
 from .version import __version__
