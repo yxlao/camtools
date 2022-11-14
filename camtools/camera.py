@@ -181,34 +181,69 @@ def create_camera_ray_frame(K, T, size=0.1, color=[0, 0, 1]):
     return ls
 
 
+def _wrap_dim(dim: int, max_dim: int, inclusive: bool = False) -> int:
+    if max_dim <= 0:
+        raise ValueError(f"max_dim {max_dim} must be > 0.")
+    min = -max_dim
+    max = max_dim if inclusive else max_dim - 1
+
+    if dim < min or dim > max:
+        raise ValueError(f"Index out-of-range: dim == {dim}, "
+                         f"but it must satisfy {min} <= dim <= {max}.")
+    if dim < 0:
+        dim += max_dim
+    return dim
+
+
 def create_camera_ray_frames(Ks,
                              Ts,
                              size=0.1,
                              color=[0, 0, 1],
-                             start_color=[0, 1, 0],
-                             end_color=[1, 0, 0],
+                             highlight_color_map=None,
                              center_line=True,
                              center_line_color=[1, 0, 0]):
+    """
+    Args:
+        Ks: List of 3x3 camera intrinsics matrices.
+        Ts: List of 4x4 camera extrinsics matrices.
+        size: Size of the camera camera frame.
+        color: Color of the camera frame.
+        highlight_color_map: A map of camera_index to color, specifying the
+            colors of the highlighted cameras. Index wrapping is supported.
+            For example, to highlight the start and stop cameras, use:
+            highlight_color_map = {0: [0, 1, 0], -1: [1, 0, 0]}. If None, no
+            camera is highlighted.
+        center_line: If True, the camera center line will be drawn.
+        center_line_color: Color of the camera center line.
+    """
     assert len(Ts) == len(Ks)
 
-    camera_frames = o3d.geometry.LineSet()
+    # Wrap the highlight_color_map dimensions.
+    if highlight_color_map is not None:
+        max_dim = len(Ts)
+        highlight_color_map = {
+            _wrap_dim(dim, max_dim, inclusive=False): color
+            for dim, color in highlight_color_map.items()
+        }
+
+    # Draw camera frames.
+    ls = o3d.geometry.LineSet()
     for index, (T, K) in enumerate(zip(Ts, Ks)):
-        if index == 0:
-            frame_color = start_color
-        elif index == len(Ts) - 1:
-            frame_color = end_color
+        if highlight_color_map is not None and index in highlight_color_map:
+            frame_color = highlight_color_map[index]
         else:
             frame_color = color
         camera_frame = create_camera_ray_frame(K,
                                                T,
                                                size=size,
                                                color=frame_color)
-        camera_frames += camera_frame
+        ls += camera_frame
 
+    # Draw camera center lines.
     if len(Ts) > 1 and center_line:
         # TODO: fix open3d linese += when one of the line set is empty, the
         # color will be missing,
         center_line = create_camera_center_line(Ts, color=center_line_color)
-        camera_frames += center_line
+        ls += center_line
 
-    return camera_frames
+    return ls
