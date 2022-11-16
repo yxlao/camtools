@@ -24,8 +24,42 @@ def T_to_C(T):
     """
     Convert T to camera center.
     """
+    sanity.assert_T(T)
     R, t = T[:3, :3], T[:3, 3]
     return R_t_to_C(R, t)
+
+
+def T_to_pose(T):
+    """
+    Convert T to pose.
+    """
+    sanity.assert_T(T)
+    return np.linalg.inv(T)
+
+
+def pose_to_T(pose):
+    """
+    Convert pose to T.
+    """
+    sanity.assert_T(pose)
+    return np.linalg.inv(pose)
+
+
+def T_blender_to_pinhole(T_blender):
+    sanity.assert_T(T_blender)
+    R_b2p = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
+    R = R_b2p @ T_blender[:3, :3]
+    t = T_blender[:3, 3] @ R_b2p
+    T = R_t_to_T(R, t)
+    return T
+
+
+def pose_blender_to_pinhole(pose_blender):
+    sanity.assert_T(pose_blender)
+    T_blender = pose_to_T(pose_blender)
+    T = T_blender_to_pinhole(T_blender)
+    pose = T_to_pose(T)
+    return pose
 
 
 def R_t_to_C(R, t):
