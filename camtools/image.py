@@ -40,79 +40,6 @@ def overlay_mask_on_rgb(im_rgb,
     return im_soft
 
 
-def recover_resized_pixel_coordinates(dst_pixels,
-                                      src_wh,
-                                      dst_wh,
-                                      keep_aspect_ratio=True):
-    """
-    Converts dst image pixel coordinates to src image pixel coordinates, where
-    the src image is reshaped to the dst image.
-
-    Args:
-        dst_pixels: Numpy array of shape (N, 2), each row is (col, row) index.
-        src_wh: The size of src image (width, height). Be careful with the order.
-        dst_wh: The size of dst image (width, height). Be careful with the order.
-        keep_aspect_ratio: Whether the aspect ratio is kept during resizing. If
-            True, the src image is directly reshaped to the dst image. If False,
-            the src image is reshaped to the dst image with possible paddings to
-            keep the aspect ratio.
-
-    Returns:
-        src_pixels: Numpy array of shape (N, 2), each row is (col, row) index.
-            The coordinates will not be rounded to integers. Out-of-bound values
-            will not be corrected.
-
-    Note:
-        1. This function is paired with OpenCV's cv2.resize() function, where
-           the *center* of the top-left pixel is considered to be (0, 0).
-           - Top-left     corner: (-0.5   , -0.5   )
-           - Bottom-right corner: (w - 0.5, h - 0.5)
-           However, most other implementations in computer graphics treat the
-           *corner* of the top-left pixel to be (0, 0). For more discussions, see:
-           https://www.realtimerendering.com/blog/the-center-of-the-pixel-is-0-50-5/
-        2. OpenCV's image size is (width, height), while numpy's array shape
-           is (height, width) or (height, width, 3). Be careful with the order.
-    """
-    assert dst_pixels.ndim == 2
-    src_w, src_h = src_wh[:2]
-    dst_w, dst_h = dst_wh[:2]
-
-    # Compute intermediate shape (tmp_h, tmp_w)
-    if not keep_aspect_ratio:
-        # Case 1: direct reshape, do not keep aspect ratio.
-        tmp_w, tmp_h = dst_w, dst_h
-    else:
-        # Case 2; keep aspect ratio and fill.
-        src_wh_ratio = src_w / float(src_h)
-        dst_wh_ratio = dst_w / float(dst_h)
-        if src_wh_ratio >= dst_wh_ratio:
-            # Source image is "wider". Pad in the height dimension.
-            tmp_w = dst_w
-            tmp_h = int(round(tmp_w / src_wh_ratio))
-        else:
-            # Source image is "taller". Pad in the width dimension.
-            tmp_h = dst_h
-            tmp_w = int(round(tmp_h * src_wh_ratio))
-        assert tmp_w <= dst_w and tmp_h <= dst_h
-
-    # Mapping relationship, linear interpolate between:
-    # src                                 -> tmp
-    # src_tl = (-0.5 , -0.5)              -> dst_tl = (-0.5 , -0.5)
-    # src_br = (src_w - 0.5, src_h - 0.5) -> dst_br = (tmp_w - 0.5, tmp_h - 0.5)
-    #
-    # dst_pixels - dst_tl    src_pixels - src_tl
-    # ------------------- == --------------------
-    # dst_br - dst_tl        src_br - src_tl
-    src_tl = np.array([-0.5, -0.5])
-    src_br = np.array([src_w - 0.5, src_h - 0.5])
-    dst_tl = np.array([-0.5, -0.5])
-    dst_br = np.array([tmp_w - 0.5, tmp_h - 0.5])
-    src_pixels = (dst_pixels - dst_tl) / (dst_br - dst_tl) * (src_br -
-                                                              src_tl) + src_tl
-
-    return src_pixels
-
-
 def ndc_coords_to_pixels(ndc_coords, im_size_wh, align_corners=False):
     """
     Convert NDC coordinates (from -1 to 1) to pixel coordinates. Out-of-bound
@@ -158,6 +85,48 @@ def ndc_coords_to_pixels(ndc_coords, im_size_wh, align_corners=False):
                                                               dst_tl) + dst_tl
 
     return dst_pixels
+
+
+def rotate(im, ccw_degrees):
+    """
+    Rotate an image counter-clockwise by a given angle (90, 180, 270).
+
+    Args:
+        im: The image to rotate.
+        ccw_degrees: Counter-clockwise rotation angle in degrees, must be
+            90, 180, or 270.
+
+    Returns:
+        Rotated image.
+    """
+    if ccw_degrees == 90:
+        im_rotated = cv2.rotate(im, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    elif ccw_degrees == 180:
+        im_rotated = cv2.rotate(im, cv2.ROTATE_180)
+    elif ccw_degrees == 270:
+        im_rotated = cv2.rotate(im, cv2.ROTATE_90_CLOCKWISE)
+    else:
+        raise ValueError(f"Invalid rotation angle: {ccw_degrees}.")
+
+    return im_rotated
+
+
+def recover_rotated_pixel_coordinates(dst_pixels, ccw_degrees):
+    """
+    Converts dst image pixel coordinates to src image pixel coordinates, where
+    the dst image is the result of rotating the src image counter-clockwise by
+    a given ccw_degrees angle.
+
+    Args:
+        dst_pixels: Pixel coordinates in the dst image. (N, 2) array of floats.
+            Each row is (c, r).
+        ccw_degrees: Counter-clockwise rotation angle in degrees, must be
+            90, 180, or 270.
+
+    Returns:
+        Pixel coordinates in the src image. (N, 2) array of floats.
+    """
+    pass
 
 
 def resize(im, shape_wh, aspect_ratio_fill=None):
@@ -251,6 +220,79 @@ def resize(im, shape_wh, aspect_ratio_fill=None):
     assert im_resize.shape == dst_numpy_shape
 
     return im_resize
+
+
+def recover_resized_pixel_coordinates(dst_pixels,
+                                      src_wh,
+                                      dst_wh,
+                                      keep_aspect_ratio=True):
+    """
+    Converts dst image pixel coordinates to src image pixel coordinates, where
+    the src image is reshaped to the dst image.
+
+    Args:
+        dst_pixels: Numpy array of shape (N, 2), each row is (col, row) index.
+        src_wh: The size of src image (width, height). Be careful with the order.
+        dst_wh: The size of dst image (width, height). Be careful with the order.
+        keep_aspect_ratio: Whether the aspect ratio is kept during resizing. If
+            True, the src image is directly reshaped to the dst image. If False,
+            the src image is reshaped to the dst image with possible paddings to
+            keep the aspect ratio.
+
+    Returns:
+        src_pixels: Numpy array of shape (N, 2), each row is (col, row) index.
+            The coordinates will not be rounded to integers. Out-of-bound values
+            will not be corrected.
+
+    Note:
+        1. This function is paired with OpenCV's cv2.resize() function, where
+           the *center* of the top-left pixel is considered to be (0, 0).
+           - Top-left     corner: (-0.5   , -0.5   )
+           - Bottom-right corner: (w - 0.5, h - 0.5)
+           However, most other implementations in computer graphics treat the
+           *corner* of the top-left pixel to be (0, 0). For more discussions, see:
+           https://www.realtimerendering.com/blog/the-center-of-the-pixel-is-0-50-5/
+        2. OpenCV's image size is (width, height), while numpy's array shape
+           is (height, width) or (height, width, 3). Be careful with the order.
+    """
+    sanity.assert_shape_nx2(dst_pixels)
+    src_w, src_h = src_wh[:2]
+    dst_w, dst_h = dst_wh[:2]
+
+    # Compute intermediate shape (tmp_h, tmp_w)
+    if not keep_aspect_ratio:
+        # Case 1: direct reshape, do not keep aspect ratio.
+        tmp_w, tmp_h = dst_w, dst_h
+    else:
+        # Case 2; keep aspect ratio and fill.
+        src_wh_ratio = src_w / float(src_h)
+        dst_wh_ratio = dst_w / float(dst_h)
+        if src_wh_ratio >= dst_wh_ratio:
+            # Source image is "wider". Pad in the height dimension.
+            tmp_w = dst_w
+            tmp_h = int(round(tmp_w / src_wh_ratio))
+        else:
+            # Source image is "taller". Pad in the width dimension.
+            tmp_h = dst_h
+            tmp_w = int(round(tmp_h * src_wh_ratio))
+        assert tmp_w <= dst_w and tmp_h <= dst_h
+
+    # Mapping relationship, linear interpolate between:
+    # src                                 -> tmp
+    # src_tl = (-0.5 , -0.5)              -> dst_tl = (-0.5 , -0.5)
+    # src_br = (src_w - 0.5, src_h - 0.5) -> dst_br = (tmp_w - 0.5, tmp_h - 0.5)
+    #
+    # dst_pixels - dst_tl    src_pixels - src_tl
+    # ------------------- == --------------------
+    # dst_br - dst_tl        src_br - src_tl
+    src_tl = np.array([-0.5, -0.5])
+    src_br = np.array([src_w - 0.5, src_h - 0.5])
+    dst_tl = np.array([-0.5, -0.5])
+    dst_br = np.array([tmp_w - 0.5, tmp_h - 0.5])
+    src_pixels = (dst_pixels - dst_tl) / (dst_br - dst_tl) * (src_br -
+                                                              src_tl) + src_tl
+
+    return src_pixels
 
 
 def make_corres_image(im_src,
