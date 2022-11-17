@@ -40,10 +40,10 @@ def overlay_mask_on_rgb(im_rgb,
     return im_soft
 
 
-def dst_pixels_to_src_pixels(dst_pixels,
-                             src_wh,
-                             dst_wh,
-                             keep_aspect_ratio=True):
+def recover_resized_pixel_coordinates(dst_pixels,
+                                      src_wh,
+                                      dst_wh,
+                                      keep_aspect_ratio=True):
     """
     Converts dst image pixel coordinates to src image pixel coordinates, where
     the src image is reshaped to the dst image.
