@@ -89,17 +89,19 @@ def ndc_coords_to_pixels(ndc_coords, im_size_wh, align_corners=False):
 
 def rotate(im, ccw_degrees):
     """
-    Rotate an image counter-clockwise by a given angle (90, 180, 270).
+    Rotate an image counter-clockwise by a given angle.
 
     Args:
         im: The image to rotate.
         ccw_degrees: Counter-clockwise rotation angle in degrees, must be
-            90, 180, or 270.
+            0, 90, 180, or 270.
 
     Returns:
         Rotated image.
     """
-    if ccw_degrees == 90:
+    if ccw_degrees == 0:
+        im_rotated = np.copy(im)
+    elif ccw_degrees == 90:
         im_rotated = cv2.rotate(im, cv2.ROTATE_90_COUNTERCLOCKWISE)
     elif ccw_degrees == 180:
         im_rotated = cv2.rotate(im, cv2.ROTATE_180)
@@ -122,7 +124,7 @@ def recover_rotated_pixels(dst_pixels, src_wh, ccw_degrees):
             Each row is (c, r).
         src_wh: Width and height of the src image, 2-element tuple of ints.
         ccw_degrees: Counter-clockwise rotation angle in degrees, must be
-            90, 180, or 270.
+            0, 90, 180, or 270.
 
     Returns:
         Pixel coordinates in the src image. (N, 2) array of floats.
@@ -151,7 +153,9 @@ def recover_rotated_pixels(dst_pixels, src_wh, ccw_degrees):
     # Convert back to src.
     dst_c = dst_pixels[:, 0]
     dst_r = dst_pixels[:, 1]
-    if ccw_degrees == 90:
+    if ccw_degrees == 0:
+        src_pixels = np.copy(dst_pixels)
+    elif ccw_degrees == 90:
         src_pixels = np.stack([w - 1 - dst_r, dst_c], axis=1)
     elif ccw_degrees == 180:
         src_pixels = np.stack([w - 1 - dst_c, h - 1 - dst_r], axis=1)
@@ -163,7 +167,9 @@ def recover_rotated_pixels(dst_pixels, src_wh, ccw_degrees):
     # Sanity check.
     src_c = src_pixels[:, 0]
     src_r = src_pixels[:, 1]
-    if ccw_degrees == 90:
+    if ccw_degrees == 0:
+        dst_pixels_recovered = np.copy(src_pixels)
+    elif ccw_degrees == 90:
         dst_pixels_recovered = np.stack([src_r, w - 1 - src_c], axis=1)
     elif ccw_degrees == 180:
         dst_pixels_recovered = np.stack([w - 1 - src_c, h - 1 - src_r], axis=1)
