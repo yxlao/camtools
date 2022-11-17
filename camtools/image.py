@@ -291,57 +291,59 @@ def make_corres_image(im_src,
 
     # If there is no corres, return the original images side by side.
     if len(src_pixels) == 0:
-        return np.concatenate((im_src, im_dst), axis=1)
+        im_corres = np.concatenate((im_src, im_dst), axis=1)
 
-    assert src_pixels[:, 0].min() >= 0 and src_pixels[:, 0].max() < w
-    assert src_pixels[:, 1].min() >= 0 and src_pixels[:, 1].max() < h
-    assert dst_pixels[:, 0].min() >= 0 and dst_pixels[:, 0].max() < w
-    assert dst_pixels[:, 1].min() >= 0 and dst_pixels[:, 1].max() < h
+    else:
+        assert src_pixels[:, 0].min() >= 0 and src_pixels[:, 0].max() < w
+        assert src_pixels[:, 1].min() >= 0 and src_pixels[:, 1].max() < h
+        assert dst_pixels[:, 0].min() >= 0 and dst_pixels[:, 0].max() < w
+        assert dst_pixels[:, 1].min() >= 0 and dst_pixels[:, 1].max() < h
 
-    # Sanity check: point_color and line_color.
-    if point_color is not None:
-        assert len(point_color) in {3, 4}
-    if line_color is not None:
-        assert len(line_color) in {3, 4}
+        # Sanity check: point_color and line_color.
+        if point_color is not None:
+            assert len(point_color) in {3, 4}
+        if line_color is not None:
+            assert len(line_color) in {3, 4}
 
-    # Concatenate images.
-    im_corres = np.concatenate((im_src, im_dst), axis=1)
+        # Concatenate images.
+        im_corres = np.concatenate((im_src, im_dst), axis=1)
 
-    # Draw points.
-    if point_color is not None:
-        assert len(point_color) == 4 or len(point_color) == 3
-        assert np.min(point_color) >= 0.0 and np.max(point_color) <= 1.0
+        # Draw points.
+        if point_color is not None:
+            assert len(point_color) == 4 or len(point_color) == 3
+            assert np.min(point_color) >= 0.0 and np.max(point_color) <= 1.0
 
-        # Draw white points as mask.
-        im_point_mask = np.zeros(im_corres.shape[:2], dtype=im_corres.dtype)
-        for (src_c, src_r), (dst_c, dst_r) in zip(src_pixels, dst_pixels):
-            cv2.circle(im_point_mask, (src_c, src_r), point_size, (1,), -1)
-            cv2.circle(im_point_mask, (dst_c + w, dst_r), point_size, (1,), -1)
+            # Draw white points as mask.
+            im_point_mask = np.zeros(im_corres.shape[:2], dtype=im_corres.dtype)
+            for (src_c, src_r), (dst_c, dst_r) in zip(src_pixels, dst_pixels):
+                cv2.circle(im_point_mask, (src_c, src_r), point_size, (1,), -1)
+                cv2.circle(im_point_mask, (dst_c + w, dst_r), point_size, (1,),
+                           -1)
 
-        point_alpha = point_color[3] if len(point_color) == 4 else 1.0
-        point_color = point_color[:3]
-        im_corres = overlay_mask_on_rgb(im_corres,
-                                        im_point_mask,
-                                        overlay_alpha=point_alpha,
-                                        overlay_color=point_color)
+            point_alpha = point_color[3] if len(point_color) == 4 else 1.0
+            point_color = point_color[:3]
+            im_corres = overlay_mask_on_rgb(im_corres,
+                                            im_point_mask,
+                                            overlay_alpha=point_alpha,
+                                            overlay_color=point_color)
 
-    # Draw lines.
-    if line_color is not None:
-        assert len(line_color) == 4 or len(line_color) == 3
-        assert np.min(line_color) >= 0.0 and np.max(line_color) <= 1.0
+        # Draw lines.
+        if line_color is not None:
+            assert len(line_color) == 4 or len(line_color) == 3
+            assert np.min(line_color) >= 0.0 and np.max(line_color) <= 1.0
 
-        # Draw white lines as mask.
-        im_line_mask = np.zeros(im_corres.shape[:2], dtype=im_corres.dtype)
-        for (src_c, src_r), (dst_c, dst_r) in zip(src_pixels, dst_pixels):
-            cv2.line(im_line_mask, (src_c, src_r), (dst_c + w, dst_r), (1,),
-                     line_width)
+            # Draw white lines as mask.
+            im_line_mask = np.zeros(im_corres.shape[:2], dtype=im_corres.dtype)
+            for (src_c, src_r), (dst_c, dst_r) in zip(src_pixels, dst_pixels):
+                cv2.line(im_line_mask, (src_c, src_r), (dst_c + w, dst_r), (1,),
+                         line_width)
 
-        line_alpha = line_color[3] if len(line_color) == 4 else 1.0
-        line_color = line_color[:3]
-        im_corres = overlay_mask_on_rgb(im_corres,
-                                        im_line_mask,
-                                        overlay_alpha=line_alpha,
-                                        overlay_color=line_color)
+            line_alpha = line_color[3] if len(line_color) == 4 else 1.0
+            line_color = line_color[:3]
+            im_corres = overlay_mask_on_rgb(im_corres,
+                                            im_line_mask,
+                                            overlay_alpha=line_alpha,
+                                            overlay_color=line_color)
 
     # Draw texts.
     if texts:
