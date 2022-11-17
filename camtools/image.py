@@ -111,7 +111,7 @@ def rotate(im, ccw_degrees):
     return im_rotated
 
 
-def recover_rotated_pixel_coordinates(dst_pixels, ccw_degrees):
+def recover_rotated_pixels(dst_pixels, src_wh, ccw_degrees):
     """
     Converts dst image pixel coordinates to src image pixel coordinates, where
     the dst image is the result of rotating the src image counter-clockwise by
@@ -120,13 +120,60 @@ def recover_rotated_pixel_coordinates(dst_pixels, ccw_degrees):
     Args:
         dst_pixels: Pixel coordinates in the dst image. (N, 2) array of floats.
             Each row is (c, r).
+        src_wh: Width and height of the src image, 2-element tuple of ints.
         ccw_degrees: Counter-clockwise rotation angle in degrees, must be
             90, 180, or 270.
 
     Returns:
         Pixel coordinates in the src image. (N, 2) array of floats.
+
+    Notes:
+        1. This function is paired with OpenCV's cv2.resize() function, where
+           the *center* of the top-left pixel is considered to be (0, 0).
+           - Top-left     corner: (-0.5   , -0.5   )
+           - Bottom-right corner: (w - 0.5, h - 0.5)
+           However, most other implementations in computer graphics treat the
+           *corner* of the top-left pixel to be (0, 0). For more discussions, see:
+           https://www.realtimerendering.com/blog/the-center-of-the-pixel-is-0-50-5/
+        2. OpenCV's image size is (width, height), while numpy's array shape
+           is (height, width) or (height, width, 3). Be careful with the order.
     """
-    pass
+    # - src:
+    #   - src_wh    : (w    ,     h)
+    #   - src_pixels: (c    ,     r)
+    # - dst:
+    #   - dst_pixels: (r    , w-1-c)  # rotate 90
+    #   - dst_pixels: (w-1-c, h-1-r)  # rotate 180
+    #   - dst_pixels: (h-1-r,     c)  # rotate 270
+    sanity.assert_shape(dst_pixels, (None, 2), name="dst_pixels")
+    w, h = src_wh
+
+    # Convert back to src.
+    dst_c = dst_pixels[:, 0]
+    dst_r = dst_pixels[:, 1]
+    if ccw_degrees == 90:
+        src_pixels = np.stack([w - 1 - dst_r, dst_c], axis=1)
+    elif ccw_degrees == 180:
+        src_pixels = np.stack([w - 1 - dst_c, h - 1 - dst_r], axis=1)
+    elif ccw_degrees == 270:
+        src_pixels = np.stack([dst_r, h - 1 - dst_c], axis=1)
+    else:
+        raise ValueError(f"Invalid rotation angle: {ccw_degrees}.")
+
+    # Sanity check.
+    src_c = src_pixels[:, 0]
+    src_r = src_pixels[:, 1]
+    if ccw_degrees == 90:
+        dst_pixels_recovered = np.stack([src_r, w - 1 - src_c], axis=1)
+    elif ccw_degrees == 180:
+        dst_pixels_recovered = np.stack([w - 1 - src_c, h - 1 - src_r], axis=1)
+    elif ccw_degrees == 270:
+        dst_pixels_recovered = np.stack([h - 1 - src_r, src_c], axis=1)
+    else:
+        raise ValueError(f"Invalid rotation angle: {ccw_degrees}.")
+    np.testing.assert_allclose(dst_pixels, dst_pixels_recovered)
+
+    return src_pixels
 
 
 def resize(im, shape_wh, aspect_ratio_fill=None):
@@ -222,10 +269,7 @@ def resize(im, shape_wh, aspect_ratio_fill=None):
     return im_resize
 
 
-def recover_resized_pixel_coordinates(dst_pixels,
-                                      src_wh,
-                                      dst_wh,
-                                      keep_aspect_ratio=True):
+def recover_resized_pixels(dst_pixels, src_wh, dst_wh, keep_aspect_ratio=True):
     """
     Converts dst image pixel coordinates to src image pixel coordinates, where
     the src image is reshaped to the dst image.
@@ -244,7 +288,7 @@ def recover_resized_pixel_coordinates(dst_pixels,
             The coordinates will not be rounded to integers. Out-of-bound values
             will not be corrected.
 
-    Note:
+    Notes:
         1. This function is paired with OpenCV's cv2.resize() function, where
            the *center* of the top-left pixel is considered to be (0, 0).
            - Top-left     corner: (-0.5   , -0.5   )
