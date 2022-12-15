@@ -80,7 +80,7 @@ def points_to_pixel(points, K, T):
     return points_out
 
 
-def depth_to_points(im_depth, K, T):
+def im_depth_to_points(im_depth, K, T):
     """
     Convert depth image to point cloud. Assumes valid depths > 0 and < inf.
     Invalid depths are ignored. The depth image should already be in world
@@ -88,7 +88,7 @@ def depth_to_points(im_depth, K, T):
     center and the point in meters.
 
     Args:
-        im_depth: depth image (H, W)
+        im_depth: depth image (H, W), float32, already in world scale.
         K: intrinsics (3, 3)
         T: extrinsics (4, 4)
         depth_scale: float
@@ -124,3 +124,46 @@ def depth_to_points(im_depth, K, T):
     points = points[:, :3]
 
     return points
+
+
+def im_color_im_depth_to_colors_points(im_color, im_depth, K, T):
+    """
+    Convert color and depth image to a colored point cloud. Assumes valid depths
+    > 0 and < inf. Invalid depths are ignored. The depth image should already be
+    in world scale. That is, each pixel value represents the distance between
+    the camera center and the point in meters.
+
+    Args:
+        im_color: color image (H, W, 3), float32/float64, in [0, 1].
+        im_depth: depth image (H, W), float32, already in world scale.
+        K: intrinsics (3, 3)
+        T: extrinsics (4, 4)
+        depth_scale: float
+
+    Returns:
+        points: (N, 3) points in world coordinates.
+        colors: (N, 3) colors in [0, 1], float32/float64.
+    """
+    sanity.assert_K(K)
+    sanity.assert_T(T)
+    sanity.assert_shape(im_color, (None, None, 3), name="im_color")
+    sanity.assert_shape(im_depth, (None, None), name="im_depth")
+    assert len(im_color) == len(im_depth)
+    assert im_color.shape[0] == im_depth.shape[0]
+    assert im_color.shape[1] == im_depth.shape[1]
+    assert im_color.dtype == np.float32 or im_color.dtype == np.float64
+    assert im_depth.dtype == np.float32 or im_depth.dtype == np.float64
+    assert im_color.max() <= 1.0
+    assert im_color.min() >= 0.0
+
+    im_valid_mask = (im_depth.flatten() > 0) & (im_depth.flatten() < np.inf)
+    num_valid = np.sum(im_valid_mask)
+
+    points = im_depth_to_points(im_depth, K, T)
+    if len(points) != num_valid:
+        raise ValueError(
+            f"# of points ({len(points)}) does not match num_valid ({num_valid})"
+        )
+    colors = im_color.reshape((-1, 3))[im_valid_mask]
+
+    return points, colors
