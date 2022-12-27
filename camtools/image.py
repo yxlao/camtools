@@ -285,9 +285,9 @@ def recover_resized_pixels(dst_pixels, src_wh, dst_wh, keep_aspect_ratio=True):
         src_wh: The size of src image (width, height). Be careful with the order.
         dst_wh: The size of dst image (width, height). Be careful with the order.
         keep_aspect_ratio: Whether the aspect ratio is kept during resizing. If
-            True, the src image is directly reshaped to the dst image. If False,
-            the src image is reshaped to the dst image with possible paddings to
-            keep the aspect ratio.
+            True, the src image is reshaped to the dst image with possible
+            paddings to keep the aspect ratio. If False, the src image is
+            directly reshaped to the dst image. If False,
 
     Returns:
         src_pixels: Numpy array of shape (N, 2), each row is (col, row) index.
