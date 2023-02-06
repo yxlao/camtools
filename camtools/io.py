@@ -88,45 +88,63 @@ def imwrite_depth(im_path, im, depth_scale=1000.0):
     cv2.imwrite(str(im_path), im)
 
 
-def imread(im_path):
+def imread(im_path, alpha_mode="ignore"):
     """
     Read image, with no surprises. Float32 image [0, 1] will be returned.
+    The input image must be stored in uint8 format. If you're reading a depth
+    uint16 image, use imread_depth instead.
 
     Args:
         im_path: Path to image.
+        alpha_mode: Specifies how to handle alpha channel. If alpha channel is
+            not present, this argument is ignored.
+            - "ignore": Ignore alpha channel. Returns an RGB image.
+            - "white" : Fill with white background. Returns an RGB image.
+            - "black" : Fill with black background. Returns an RGB image.
 
     Returns:
-        Float32 image with range from 0 to 1.
+        An RGB image in float32, 3-channel or 1-channel, and range from 0 to 1.
 
     Notes:
         - If the image has 3 channels, the order will be R, G, B.
         - If image dtype is uint16, an exception will be thrown.
-        - Alpha channel will be ignored, a warning will be printed.
     """
     im_path = Path(im_path)
     assert im_path.suffix in (".jpg", ".png")
     assert im_path.is_file(), f"{im_path} is not a file."
+    assert alpha_mode in ("ignore", "white",
+                          "black"), f"Invalid alpha_mode: {alpha_mode}"
 
     # Read.
     im = cv2.imread(str(im_path), cv2.IMREAD_UNCHANGED)
 
-    # Check dtype.
+    # Handle dtypes.
     if im.dtype == np.uint8:
-        pass
-    elif im.dtype == np.uint16:
-        raise ValueError(f"Unsupported image type: {im.dtype}. Please use:\n"
-                         f"cv2.imread(str(im_path), cv2.IMREAD_UNCHANGED)")
+        im = im.astype(np.float32) / 255.0
     else:
-        raise ValueError(f"Unexpected image type: {im.dtype}")
+        raise ValueError(f"Unsupported image dtype: {im.dtype}")
 
     # Handle channels.
     if im.ndim == 1:
         pass
     elif im.ndim == 3:
-        # Ignore alpha channel.
         if im.shape[2] == 4:
-            # print(f"Warning: alpha channel ignored.")
-            im = im[:, :, :3]
+            if alpha_mode == "ignore":
+                im = im[:, :, :3]
+            elif alpha_mode == "white":
+                # (H, W, 1)
+                alpha = im[..., 3:]
+                # (H, W, 3)
+                foreground = im[..., :3] * alpha
+                # (H, W, 1)
+                background = (1.0 - alpha) * 1.0
+                # (H, W, 3), background is broadcasted.
+                im = foreground + background
+            elif alpha_mode == "black":
+                im = im[..., :3] * im[..., 3:]
+            else:
+                raise ValueError(f"Unexpected alpha_mode: {alpha_mode} for a "
+                                 "4-channel image.")
         elif im.shape[2] == 3:
             pass
         else:
@@ -136,18 +154,13 @@ def imread(im_path):
     else:
         raise ValueError(f"Unexpected image shape: {im.shape}")
 
-    # Handle dtypes.
-    if im.dtype == np.uint8:
-        im = im.astype(np.float32) / 255.0
-    elif im.dtype == np.float32 or im.dtype == np.float64:
-        # We shouldn't reach here. Do a sanity check anyway.
-        im_min = im.min()
-        im_max = im.max()
-        if im_max > 1 or im_min < 0:
-            raise ValueError(f"Image out-of-range: min {im_min} max {im_max}.")
-        pass
-    else:
-        raise ValueError(f"Unsupported image type: {im.dtype}")
+    # Sanity check.
+    if im.dtype != np.float32:
+        raise ValueError(f"Internal Error. Image must float32.")
+    # This can be avoided.
+    if im.min() > 1 or im.max() < 0:
+        raise ValueError(f"Internal Error. Image must be in range [0, 1], but "
+                         f"got [{im.min()}, {im.max()}]")
 
     return im
 
