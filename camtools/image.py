@@ -352,6 +352,7 @@ def make_corres_image(im_src,
                       texts=None,
                       point_color=(0, 1, 0, 1.0),
                       line_color=(0, 0, 1, 0.75),
+                      text_color=(1, 1, 1),
                       point_size=1,
                       line_width=1):
     """
@@ -365,6 +366,7 @@ def make_corres_image(im_src,
         texts: List of texts to draw on the top-left of the image.
         point_color: RGB or RGBA color of the point, float, range 0-1.
         line_color: RGB or RGBA color of the line, float, range 0-1.
+        text_color: RGB color of the text, float, range 0-1.
         point_size: Size of the point.
         line_width: Width of the line.
     """
@@ -459,12 +461,11 @@ def make_corres_image(im_src,
         font_scale, line_h, text_h = get_scales(im_corres.shape[0], max_lines,
                                                 font, line_text_h_ratio)
         font_thickness = 2
-        font_color = (1, 1, 1)
         org = (line_h, line_h * 2)
 
         for text in texts:
             im_corres = cv2.putText(im_corres, text, org, font, font_scale,
-                                    font_color, font_thickness, cv2.LINE_AA)
+                                    text_color, font_thickness, cv2.LINE_AA)
             org = (org[0], org[1] + line_h)
 
     assert im_corres.min() >= 0.0 and im_corres.max() <= 1.0
