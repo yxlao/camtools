@@ -188,7 +188,7 @@ def resize(im, shape_wh, aspect_ratio_fill=None):
     In numpy, the resulting shape is (height, width) or (height, width, 3).
 
     Args:
-        im: Numpy shape {(h, w), (h, w, 3}; dtype {uint8, float32, float64}.
+        im: Numpy shape {(h, w), (h, w, 3)}; dtype {uint8, float32, float64}.
         shape_wh: Tuple of (width, height). Be careful with the order.
         aspect_ratio_fill: The value to fill in order to keep the aspect ratio.
             - If None, image will be directly resized to (height, width).
