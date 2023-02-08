@@ -354,7 +354,8 @@ def make_corres_image(im_src,
                       line_color=(0, 0, 1, 0.75),
                       text_color=(1, 1, 1),
                       point_size=1,
-                      line_width=1):
+                      line_width=1,
+                      sample_ratio=None):
     """
     Make correspondence image.
 
@@ -369,6 +370,7 @@ def make_corres_image(im_src,
         text_color: RGB color of the text, float, range 0-1.
         point_size: Size of the point.
         line_width: Width of the line.
+        sample_ratio: Float value from 0-1. If None, all points are drawn.
     """
     assert im_src.shape == im_dst.shape
     assert im_src.ndim == 3 and im_src.shape[2] == 3
@@ -401,6 +403,17 @@ def make_corres_image(im_src,
 
         # Concatenate images.
         im_corres = np.concatenate((im_src, im_dst), axis=1)
+
+        # Sample corres.
+        if sample_ratio is not None:
+            assert sample_ratio > 0.0 and sample_ratio <= 1.0
+            num_points = len(src_pixels)
+            num_samples = int(round(num_points * sample_ratio))
+            sample_indices = np.random.choice(num_points,
+                                              num_samples,
+                                              replace=False)
+            src_pixels = src_pixels[sample_indices]
+            dst_pixels = dst_pixels[sample_indices]
 
         # Draw points.
         if point_color is not None:
