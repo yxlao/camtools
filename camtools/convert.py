@@ -140,6 +140,10 @@ def P_to_K_T(P):
     return K, T
 
 
+def K_T_to_P(K, T):
+    return K @ T[:3, :]
+
+
 def K_R_t_to_P(K, R, t):
     T = R_t_to_T(R, t)
     P = K @ T[:3, :]

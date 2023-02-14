@@ -188,7 +188,7 @@ def resize(im, shape_wh, aspect_ratio_fill=None):
     In numpy, the resulting shape is (height, width) or (height, width, 3).
 
     Args:
-        im: Numpy shape {(h, w), (h, w, 3}; dtype {uint8, float32, float64}.
+        im: Numpy shape {(h, w), (h, w, 3)}; dtype {uint8, float32, float64}.
         shape_wh: Tuple of (width, height). Be careful with the order.
         aspect_ratio_fill: The value to fill in order to keep the aspect ratio.
             - If None, image will be directly resized to (height, width).
@@ -353,8 +353,10 @@ def make_corres_image(im_src,
                       sample_ratio=1.0,
                       point_color=(0, 1, 0, 1.0),
                       line_color=(0, 0, 1, 0.75),
+                      text_color=(1, 1, 1),
                       point_size=1,
-                      line_width=1):
+                      line_width=1,
+                      sample_ratio=None):
     """
     Make correspondence image.
 
@@ -367,8 +369,10 @@ def make_corres_image(im_src,
         sample_ratio: Ratio of corres to draw. If 1.0, draw all points.
         point_color: RGB or RGBA color of the point, float, range 0-1.
         line_color: RGB or RGBA color of the line, float, range 0-1.
+        text_color: RGB color of the text, float, range 0-1.
         point_size: Size of the point.
         line_width: Width of the line.
+        sample_ratio: Float value from 0-1. If None, all points are drawn.
     """
     assert im_src.shape == im_dst.shape
     assert im_src.ndim == 3 and im_src.shape[2] == 3
@@ -413,6 +417,17 @@ def make_corres_image(im_src,
 
         # Concatenate images.
         im_corres = np.concatenate((im_src, im_dst), axis=1)
+
+        # Sample corres.
+        if sample_ratio is not None:
+            assert sample_ratio > 0.0 and sample_ratio <= 1.0
+            num_points = len(src_pixels)
+            num_samples = int(round(num_points * sample_ratio))
+            sample_indices = np.random.choice(num_points,
+                                              num_samples,
+                                              replace=False)
+            src_pixels = src_pixels[sample_indices]
+            dst_pixels = dst_pixels[sample_indices]
 
         # Draw points.
         if point_color is not None:
@@ -473,12 +488,11 @@ def make_corres_image(im_src,
         font_scale, line_h, text_h = get_scales(im_corres.shape[0], max_lines,
                                                 font, line_text_h_ratio)
         font_thickness = 2
-        font_color = (1, 1, 1)
         org = (line_h, line_h * 2)
 
         for text in texts:
             im_corres = cv2.putText(im_corres, text, org, font, font_scale,
-                                    font_color, font_thickness, cv2.LINE_AA)
+                                    text_color, font_thickness, cv2.LINE_AA)
             org = (org[0], org[1] + line_h)
 
     assert im_corres.min() >= 0.0 and im_corres.max() <= 1.0
