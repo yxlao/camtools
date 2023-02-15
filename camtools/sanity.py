@@ -2,6 +2,20 @@ import numpy as np
 import torch
 
 
+def assert_numpy(x, name=None):
+    if not isinstance(x, np.ndarray):
+        maybe_name = f" {name}" if name is not None else ""
+        raise ValueError(
+            f"Expected{maybe_name} to be numpy array, but got {type(x)}.")
+
+
+def assert_torch(x, name=None):
+    if not torch.is_tensor(x):
+        maybe_name = f" {name}" if name is not None else ""
+        raise ValueError(
+            f"Expected{maybe_name} to be torch tensor, but got {type(x)}.")
+
+
 def assert_K(K):
     if K.shape != (3, 3):
         raise ValueError(
@@ -22,14 +36,14 @@ def assert_T(T):
             f"T must has [0, 0, 0, 1] the bottom row, but got {T}.")
 
 
-def assert_shape(x, expected_shape, name=None):
+def assert_shape(x, shape, name=None):
     shape_valid = True
 
-    if shape_valid and x.ndim != len(expected_shape):
+    if shape_valid and x.ndim != len(shape):
         shape_valid = False
 
     if shape_valid:
-        for i, s in enumerate(expected_shape):
+        for i, s in enumerate(shape):
             if s is not None:
                 if x.shape[i] != s:
                     shape_valid = False
@@ -38,7 +52,7 @@ def assert_shape(x, expected_shape, name=None):
     if not shape_valid:
         name_must = f"{name} must" if name is not None else "Must"
         raise ValueError(
-            f"{name_must} has shape {expected_shape}, but got shape {x.shape}.")
+            f"{name_must} has shape {shape}, but got shape {x.shape}.")
 
 
 def assert_shape_nx3(x, name=None):

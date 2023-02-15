@@ -5,6 +5,7 @@ from . import convert
 from . import geometry
 from . import image
 from . import io
+from . import metric
 from . import normalize
 from . import plot
 from . import project
