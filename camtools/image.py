@@ -350,7 +350,6 @@ def make_corres_image(im_src,
                       src_pixels,
                       dst_pixels,
                       texts=None,
-                      sample_ratio=1.0,
                       point_color=(0, 1, 0, 1.0),
                       line_color=(0, 0, 1, 0.75),
                       text_color=(1, 1, 1),
@@ -366,7 +365,6 @@ def make_corres_image(im_src,
         src_pixels: (n, 2) int array, each row represents (x, y) or (c, r).
         dst_pixels: (n, 2) int array, each row represents (x, y) or (c, r).
         texts: List of texts to draw on the top-left of the image.
-        sample_ratio: Ratio of corres to draw. If 1.0, draw all points.
         point_color: RGB or RGBA color of the point, float, range 0-1.
         line_color: RGB or RGBA color of the line, float, range 0-1.
         text_color: RGB color of the text, float, range 0-1.
@@ -388,6 +386,7 @@ def make_corres_image(im_src,
     assert dst_pixels.dtype == np.int32 or dst_pixels.dtype == np.int64
 
     # Sample corres.
+    sample_ratio = 1.0 if sample_ratio is None else sample_ratio
     if sample_ratio > 1.0 or sample_ratio < 0.0:
         raise ValueError('sample_ratio should be in [0.0, 1.0]')
     elif sample_ratio == 1.0:
