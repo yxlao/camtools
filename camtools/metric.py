@@ -5,15 +5,18 @@ from . import io
 from . import sanity
 
 
-def image_psnr(im_pd, im_gt, im_mask):
+def image_psnr(im_pd, im_gt, im_mask=None):
     """
-    Computes PSNR.
+    Computes PSNR given images in numpy arrays.
 
     Args:
         im_pd: numpy array, (h, w, 3), float32, range [0..1].
         im_gt: numpy array, (h, w, 3), float32, range [0..1].
         im_mask: numpy array, (h, w), float32, range [0..1].
             Value > 0.5 means foreground. None means all foreground.
+
+    Returns:
+        PSNR value in float.
     """
     if im_mask is None:
         h, w = im_pd.shape[:2]
@@ -27,18 +30,21 @@ def image_psnr(im_pd, im_gt, im_mask):
     gt = im_gt[im_mask[:, :, 0] > 0.5].ravel()
     assert pr.dtype == gt.dtype and pr.dtype == np.float32
     ans = psnr(gt, pr)
-    return ans
+    return float(ans)
 
 
 def image_ssim(im_pd, im_gt, im_mask=None):
     """
-    Computes SSIM.
+    Computes SSIM given images in numpy arrays.
 
     Args:
         im_pd: numpy array, (h, w, 3), float32, range [0..1].
         im_gt: numpy array, (h, w, 3), float32, range [0..1].
         im_mask: numpy array, (h, w), float32, range [0..1].
             Value > 0.5 means foreground. None means all foreground.
+
+    Returns:
+        SSIM value in float.
     """
     if im_mask is None:
         h, w = im_pd.shape[:2]
@@ -52,18 +58,21 @@ def image_ssim(im_pd, im_gt, im_mask=None):
     gt = im_gt * im_mask
     assert pr.dtype == gt.dtype and pr.dtype == np.float32
     mean, S = ssim(pr, gt, channel_axis=-1, full=True)
-    return S[im_mask[:, :, 0] > 0.5].mean()
+    return float(S[im_mask[:, :, 0] > 0.5].mean())
 
 
-def image_lpips(im_pd, im_gt, im_mask):
+def image_lpips(im_pd, im_gt, im_mask=None):
     """
-    Computes LPIPS.
+    Computes LPIPS given images in numpy arrays.
 
     Args:
         im_pd: numpy array, (h, w, 3), float32, range [0..1].
         im_gt: numpy array, (h, w, 3), float32, range [0..1].
         im_mask: numpy array, (h, w), float32, range [0..1].
             Value > 0.5 means foreground. None means all foreground.
+
+    Returns:
+        LPIPS value in float.
     """
     if im_mask is None:
         h, w = im_pd.shape[:2]
@@ -87,7 +96,7 @@ def image_lpips(im_pd, im_gt, im_mask):
 
     ans = loss_fn.forward(torch.from_numpy(pr),
                           torch.from_numpy(gt)).cpu().detach().numpy()
-    return ans
+    return float(ans)
 
 
 image_lpips.static_vars = {}
@@ -101,8 +110,11 @@ def image_psnr_with_paths(im_pd_path, im_gt_path, im_mask_path=None):
         im_gt_path: Path to the ground truth RGB image.
         im_mask_path: Path to the mask image. The mask will be resized to the
             same (h, w) as im_gt.
+
+    Returns:
+        PSNR value in float.
     """
-    im_pd, im_gt, im_mask = _load_im_pd_im_gt_im_mask(
+    im_pd, im_gt, im_mask = load_im_pd_im_gt_im_mask_for_eval(
         im_pd_path,
         im_gt_path,
         im_mask_path,
@@ -119,8 +131,11 @@ def image_ssim_with_paths(im_pd_path, im_gt_path, im_mask_path=None):
         im_gt_path: Path to the ground truth RGB image.
         im_mask_path: Path to the mask image. The mask will be resized to the
             same (h, w) as im_gt.
+
+    Returns:
+        SSIM value in float.
     """
-    im_pd, im_gt, im_mask = _load_im_pd_im_gt_im_mask(
+    im_pd, im_gt, im_mask = load_im_pd_im_gt_im_mask_for_eval(
         im_pd_path,
         im_gt_path,
         im_mask_path,
@@ -138,7 +153,7 @@ def image_lpips_with_paths(im_pd_path, im_gt_path, im_mask_path=None):
         im_mask_path: Path to the mask image. The mask will be resized to the
             same (h, w) as im_gt.
     """
-    im_pd, im_gt, im_mask = _load_im_pd_im_gt_im_mask(
+    im_pd, im_gt, im_mask = load_im_pd_im_gt_im_mask_for_eval(
         im_pd_path,
         im_gt_path,
         im_mask_path,
@@ -147,11 +162,13 @@ def image_lpips_with_paths(im_pd_path, im_gt_path, im_mask_path=None):
     return image_lpips(im_pd, im_gt, im_mask)
 
 
-def _load_im_pd_im_gt_im_mask(im_pd_path,
-                              im_gt_path,
-                              im_mask_path=None,
-                              alpha_mode="white"):
+def load_im_pd_im_gt_im_mask_for_eval(im_pd_path,
+                                      im_gt_path,
+                                      im_mask_path=None,
+                                      alpha_mode="white"):
     """
+    Load prediction, ground truth, and mask images for image metric evaluation.
+
     Args:
         im_pd_path: Path to the rendered image.
         im_gt_path: Path to the ground truth RGB or RGBA image.
