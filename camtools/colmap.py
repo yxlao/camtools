@@ -1440,17 +1440,30 @@ def read_colmap_to_Ks_Ts_names(data_dir):
         camera = cameras_dict[image_obj.camera_id]
         K = np.eye(3).astype(np.float64)
 
+        # https://github.com/colmap/colmap/blob/dev/src/base/camera_models.h
         if camera.model == "SIMPLE_PINHOLE":
+            # f, cx, cy
             K[0, 0] = camera.params[0]
             K[1, 1] = camera.params[0]
             K[0, 2] = camera.params[1]
             K[1, 2] = camera.params[2]
         elif camera.model == "PINHOLE":
+            # fx, fy, cx, cy
             K[0, 0] = camera.params[0]
             K[1, 1] = camera.params[1]
             K[0, 2] = camera.params[2]
             K[1, 2] = camera.params[3]
+        elif camera.model == "SIMPLE_RADIAL":
+            # f, cx, cy, k
+            k = camera.params[3]
+            # print(f"Warning: SIMPLE_RADIAL camera distortion {k} ignored.")
+            K[0, 0] = camera.params[0]
+            K[1, 1] = camera.params[0]
+            K[0, 2] = camera.params[1]
+            K[1, 2] = camera.params[2]
         else:
+            import ipdb
+            ipdb.set_trace()
             raise ValueError(f"Unknown camera model: {camera.model}")
 
         Ks.append(K)
