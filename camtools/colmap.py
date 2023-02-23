@@ -729,8 +729,6 @@ def read_colmap_to_Ks_Ts_names(data_dir):
             K[0, 2] = camera.params[1]
             K[1, 2] = camera.params[2]
         else:
-            import ipdb
-            ipdb.set_trace()
             raise ValueError(f"Unknown camera model: {camera.model}")
 
         Ks.append(K)
