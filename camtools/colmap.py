@@ -667,7 +667,7 @@ def main_bin_to_txt(args):
     pts_txt = sparse_dir / "points3D.txt"
     if pts_bin.exists():
         print(f"convert {pts_bin} to {pts_txt}")
-        points3d = read_points3d_binary(str(pts_bin))
+        points3d = read_points3D_binary(str(pts_bin))
         write_points3D_text(pts_txt, points3d)
 
 
