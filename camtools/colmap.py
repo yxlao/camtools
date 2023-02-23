@@ -537,6 +537,9 @@ def rotmat2qvec(R):
 
 
 def rotm_from_quat(q):
+    """
+    Custom code.
+    """
     q = q.reshape(-1, 4)
     w, x, y, z = q[:, 0], q[:, 1], q[:, 2], q[:, 3]
     R = np.array(
@@ -564,7 +567,10 @@ def rotm_from_quat(q):
 
 
 def quat_from_rotm(R):
-    # # http://muri.materials.cmu.edu/wp-content/uploads/2015/06/RotationPaperRevised.pdf
+    """
+    Custom code.
+    """
+    # http://muri.materials.cmu.edu/wp-content/uploads/2015/06/RotationPaperRevised.pdf
     # https://en.wikipedia.org/wiki/Rotation_matrix#Quaternion
     # http://www.iri.upc.edu/files/scidoc/2083-A-Survey-on-the-Computation-of-Quaternions-from-Rotation-Matrices.pdf
     # https://d3cw3dd2w32x2b.cloudfront.net/wp-content/uploads/2015/01/matrix-to-quat.pdf
@@ -603,6 +609,7 @@ def quat_from_rotm(R):
 
 def load_cameras_all(sparse_dir):
     """
+    Custom code.
     """
     sparse_dir = Path(sparse_dir)
     if (sparse_dir / "images.bin").exists():
@@ -644,6 +651,7 @@ def load_cameras_all(sparse_dir):
 
 def main_bin_to_txt(args):
     """
+    Custom code.
     """
     print("bin-to-txt")
     sparse_dir = Path(args.sparse_dir)
