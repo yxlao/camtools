@@ -649,34 +649,39 @@ def load_cameras_all(sparse_dir):
     return ims, Ks, Rs, ts, heights, widths, names
 
 
-def main_bin_to_txt(args):
+def bin_to_txt(sparse_dir):
     """
-    Custom code.
+    Args:
+        sparse_dir: containing cameras.bin, images.bin, and points3D.bin
     """
-    print("bin-to-txt")
-    sparse_dir = Path(args.sparse_dir)
-    print(sparse_dir)
+    sparse_dir = Path(sparse_dir)
 
     cam_bin = sparse_dir / "cameras.bin"
     cam_txt = sparse_dir / "cameras.txt"
     if cam_bin.exists():
-        print(f"convert {cam_bin} to {cam_txt}")
+        print(f"Convert {cam_bin} to {cam_txt}")
         cameras = read_cameras_binary(str(cam_bin))
-        write_cameras_text(cam_txt, cameras)
+        write_cameras_text(cameras, cam_txt)
+    else:
+        print(f"{cam_bin} does not exist, skip")
 
     img_bin = sparse_dir / "images.bin"
     img_txt = sparse_dir / "images.txt"
     if img_bin.exists():
-        print(f"convert {img_bin} to {img_txt}")
+        print(f"Convert {img_bin} to {img_txt}")
         images = read_images_binary(str(img_bin))
-        write_images_text(img_txt, images)
+        write_images_text(images, img_txt)
+    else:
+        print(f"{img_bin} does not exist, skip")
 
     pts_bin = sparse_dir / "points3D.bin"
     pts_txt = sparse_dir / "points3D.txt"
     if pts_bin.exists():
-        print(f"convert {pts_bin} to {pts_txt}")
+        print(f"Convert {pts_bin} to {pts_txt}")
         points3d = read_points3D_binary(str(pts_bin))
-        write_points3D_text(pts_txt, points3d)
+        write_points3D_text(points3d, pts_txt)
+    else:
+        print(f"{pts_bin} does not exist, skip")
 
 
 def read_colmap_to_Ks_Ts_names(data_dir):
