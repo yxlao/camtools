@@ -744,3 +744,47 @@ def read_colmap_to_Ks_Ts_names(data_dir):
     assert len(Ks) == len(Ts) == len(image_names)
 
     return np.array(Ks), np.array(Ts), image_names
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Read and write COLMAP binary and text models")
+    parser.add_argument(
+        "--input_model",
+        help="path to input model folder",
+    )
+    parser.add_argument(
+        "--input_format",
+        choices=[".bin", ".txt"],
+        help="input model format",
+        default="",
+    )
+    parser.add_argument(
+        "--output_model",
+        help="path to output model folder",
+    )
+    parser.add_argument(
+        "--output_format",
+        choices=[".bin", ".txt"],
+        help="outut model format",
+        default=".txt",
+    )
+    args = parser.parse_args()
+
+    cameras, images, points3D = read_model(path=args.input_model,
+                                           ext=args.input_format)
+
+    print("num_cameras:", len(cameras))
+    print("num_images:", len(images))
+    print("num_points3D:", len(points3D))
+
+    if args.output_model is not None:
+        write_model(cameras,
+                    images,
+                    points3D,
+                    path=args.output_model,
+                    ext=args.output_format)
+
+
+if __name__ == "__main__":
+    main()
