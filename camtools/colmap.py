@@ -1,5 +1,3 @@
-# Based on https://github.com/colmap/colmap/blob/dev/scripts/python/read_write_model.py
-#
 # Copyright (c) 2022, ETH Zurich and UNC Chapel Hill.
 # All rights reserved.
 #
@@ -30,6 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # Author: Johannes L. Schoenberger (jsch-at-demuc-dot-de)
+# https://github.com/colmap/colmap/blob/dev/scripts/python/read_write_model.py
 
 from . import convert
 
