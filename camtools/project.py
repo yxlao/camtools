@@ -91,7 +91,6 @@ def im_depth_to_points(im_depth, K, T):
         im_depth: depth image (H, W), float32, already in world scale.
         K: intrinsics (3, 3)
         T: extrinsics (4, 4)
-        depth_scale: float
 
     Returns:
         points: (N, 3) points in world coordinates.
@@ -126,6 +125,49 @@ def im_depth_to_points(im_depth, K, T):
     return points
 
 
+def im_depth_to_im_points(im_depth, K, T):
+    """
+    Convert depth image to point cloud. Each pixel will be converted to exactly
+    one points. Invalid depths are still returned, the returned shape is
+    (H, W, 3), which is different from im_depth_to_points.
+
+    Args:
+        im_depth: depth image (H, W), float32, already in world scale.
+        K: intrinsics (3, 3)
+        T: extrinsics (4, 4)
+
+    Returns:
+        points: (H, W, 3) points in world coordinates.
+    """
+    sanity.assert_K(K)
+    sanity.assert_T(T)
+
+    height, width = im_depth.shape
+    pose = np.linalg.inv(T)
+
+    # pixels.shape == (height, width, 2)
+    # pixels[r, c] == [c, r]  # Since x-axis goes from top-left to top-right.
+    pixels = np.transpose(np.indices((width, height)), (2, 1, 0))
+    # (height * width, 2)
+    pixels = pixels.reshape((-1, 2))
+    # (height * width, 3)
+    pixels = np.hstack((pixels, np.ones((pixels.shape[0], 1))))
+    # (height * width, )
+    depths = im_depth.flatten()
+    # C(height * width, 3)
+    points = depths.reshape((-1, 1)) * (np.linalg.inv(K) @ pixels.T).T
+    # (height * width, 4)
+    points = np.hstack((points, np.ones((points.shape[0], 1))))
+    # (height * width, 4)
+    points = (pose @ points.T).T
+    # (height * width, 3)
+    points = points[:, :3]
+    # (height, width, 3)
+    points = points.reshape((height, width, 3))
+
+    return points
+
+
 def im_color_im_depth_to_colors_points(im_color, im_depth, K, T):
     """
     Convert color and depth image to a colored point cloud. Assumes valid depths
@@ -138,7 +180,6 @@ def im_color_im_depth_to_colors_points(im_color, im_depth, K, T):
         im_depth: depth image (H, W), float32, already in world scale.
         K: intrinsics (3, 3)
         T: extrinsics (4, 4)
-        depth_scale: float
 
     Returns:
         points: (N, 3) points in world coordinates.
