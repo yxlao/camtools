@@ -188,7 +188,8 @@ def resize(im, shape_wh, aspect_ratio_fill=None):
     In numpy, the resulting shape is (height, width) or (height, width, 3).
 
     Args:
-        im: Numpy shape {(h, w), (h, w, 3)}; dtype {uint8, float32, float64}.
+        im: Numpy shape {(h, w), (h, w, 3)};
+            dtype {uint8, uint16, float32, float64}.
         shape_wh: Tuple of (width, height). Be careful with the order.
         aspect_ratio_fill: The value to fill in order to keep the aspect ratio.
             - If None, image will be directly resized to (height, width).
@@ -205,15 +206,10 @@ def resize(im, shape_wh, aspect_ratio_fill=None):
     """
     # Sanity: dtype.
     dtype = im.dtype
-    ndim = im.ndim
-    if dtype == np.uint8:
-        pass
-    elif dtype == np.float32 or dtype == np.float64:
-        assert im.max() <= 1.0 and im.min() >= 0.0
-    else:
-        raise ValueError(f"Unsupported dtype {dtype}.")
+    assert dtype in (np.uint8, np.uint16, np.float32, np.float64)
 
     # Sanity: input shape.
+    ndim = im.ndim
     assert ndim in {2, 3}, "ndim must be 2 or 3"
     if ndim == 3:
         assert im.shape[2] == 3, "im.shape[2] must be 3"
