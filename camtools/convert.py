@@ -47,11 +47,29 @@ def pose_to_T(pose):
 
 def T_blender_to_pinhole(T_blender):
     sanity.assert_T(T_blender)
+
     R_b2p = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
-    R = R_b2p @ T_blender[:3, :3]
-    t = T_blender[:3, 3] @ R_b2p
+
+    R_blender, t_blender = T_to_R_t(T_blender)
+    R = R_b2p @ R_blender
+    t = t_blender @ R_b2p
     T = R_t_to_T(R, t)
+
     return T
+
+
+def T_pinhole_to_blender(T):
+    sanity.assert_T(T)
+
+    R_b2p = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
+    R_p2b = R_b2p.T
+
+    R, t = T_to_R_t(T)
+    R_blender = R_p2b @ R
+    t_blender = t @ R_p2b
+    T_blender = R_t_to_T(R_blender, t_blender)
+
+    return T_blender
 
 
 def pose_blender_to_pinhole(pose_blender):
