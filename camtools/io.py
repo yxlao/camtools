@@ -129,7 +129,7 @@ def imread(im_path, alpha_mode=None):
         raise ValueError(f"Unsupported image dtype: {im.dtype}")
 
     # Handle channels.
-    if im.ndim == 1:
+    if im.ndim == 2:
         pass
     elif im.ndim == 3:
         if im.shape[2] == 4:
