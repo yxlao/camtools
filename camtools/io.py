@@ -134,7 +134,7 @@ def imread(im_path, alpha_mode=None):
     elif im.ndim == 3:
         if im.shape[2] == 4:
             if alpha_mode is None:
-                raise ValueError(f"The image has an alpha channel, alpha_mode "
+                raise ValueError(f"{im_path} has an alpha channel, alpha_mode "
                                  f"must be specified.")
             elif alpha_mode == "keep":
                 pass

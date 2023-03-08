@@ -218,7 +218,7 @@ def load_im_pd_im_gt_im_mask_for_eval(im_pd_path,
         else:
             im_mask = (im_gt_alpha > 0.5).astype(np.float32)
     else:
-        im_mask = io.imread(im_mask_path)
+        im_mask = io.imread(im_mask_path, alpha_mode="ignore")
         im_mask = image.resize(im_mask, shape_wh=(w, h))
         if im_mask.ndim == 3:
             im_mask = im_mask[:, :, 0]
