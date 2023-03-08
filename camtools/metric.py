@@ -198,7 +198,6 @@ def load_im_pd_im_gt_im_mask_for_eval(im_pd_path,
     # (h, w, 3) or (h, w, 4), float32.
     # If (h, w, 4), the alpha channel will be separated.
     im_gt = io.imread(im_gt_path, alpha_mode=alpha_mode)
-    w, h = im_gt.shape[1], im_gt.shape[0]
     if im_gt.shape[2] == 4:
         im_gt_alpha = im_gt[:, :, 3]
         im_gt = im_gt[:, :, :3]
@@ -208,18 +207,26 @@ def load_im_pd_im_gt_im_mask_for_eval(im_pd_path,
     # Prepare im_pd.
     # (h, w, 3), float32.
     im_pd = io.imread(im_pd_path)
-    im_pd = image.resize(im_pd, shape_wh=(w, h))
+
+    # Resize gt and pd to smaller wh.
+    gt_w, gt_h = im_gt.shape[1], im_gt.shape[0]
+    pd_w, pd_h = im_pd.shape[1], im_pd.shape[0]
+    min_wh = min(gt_w, pd_w), min(gt_h, pd_h)
+    im_gt = image.resize(im_gt, shape_wh=min_wh)
+    if im_gt_alpha is not None:
+        im_gt_alpha = image.resize(im_gt_alpha, shape_wh=min_wh)
+    im_pd = image.resize(im_pd, shape_wh=min_wh)
 
     # Prepare im_mask.
     # (h, w), float32, value only 0 or 1.
     if im_mask_path is None:
         if im_gt_alpha is None:
-            im_mask = np.ones((h, w), dtype=np.float32)
+            im_mask = np.ones((min_wh[1], min_wh[0]), dtype=np.float32)
         else:
             im_mask = (im_gt_alpha > 0.5).astype(np.float32)
     else:
         im_mask = io.imread(im_mask_path, alpha_mode="ignore")
-        im_mask = image.resize(im_mask, shape_wh=(w, h))
+        im_mask = image.resize(im_mask, shape_wh=min_wh)
         if im_mask.ndim == 3:
             im_mask = im_mask[:, :, 0]
         im_mask = (im_mask > 0.5).astype(np.float32)
