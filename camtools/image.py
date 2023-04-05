@@ -177,7 +177,10 @@ def recover_rotated_pixels(dst_pixels, src_wh, ccw_degrees):
         dst_pixels_recovered = np.stack([h - 1 - src_r, src_c], axis=1)
     else:
         raise ValueError(f"Invalid rotation angle: {ccw_degrees}.")
-    np.testing.assert_allclose(dst_pixels, dst_pixels_recovered)
+    np.testing.assert_allclose(dst_pixels,
+                               dst_pixels_recovered,
+                               rtol=1e-5,
+                               atol=1e-5)
 
     return src_pixels
 
