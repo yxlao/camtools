@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 from . import sanity
+from . import colormap
 
 
 def overlay_mask_on_rgb(im_rgb,
@@ -348,6 +349,7 @@ def make_corres_image(im_src,
                       im_dst,
                       src_pixels,
                       dst_pixels,
+                      confidences=None,
                       texts=None,
                       point_color=(0, 1, 0, 1.0),
                       line_color=(0, 0, 1, 0.75),
@@ -363,8 +365,15 @@ def make_corres_image(im_src,
         im_dst: (h, w, 3) float image, range 0-1.
         src_pixels: (n, 2) int array, each row represents (x, y) or (c, r).
         dst_pixels: (n, 2) int array, each row represents (x, y) or (c, r).
+        confidences: (n,) float array, confidence of each corres, range [0, 1].
         texts: List of texts to draw on the top-left of the image.
         point_color: RGB or RGBA color of the point, float, range 0-1.
+            - If point_color == None:
+                points will never be drawn.
+            - If point_color != None and confidences == None
+                point color will be determined by point_color.
+            - If point_color != None and confidences != None
+                point color will be determined by "viridis" colormap.
         line_color: RGB or RGBA color of the line, float, range 0-1.
         text_color: RGB color of the text, float, range 0-1.
         point_size: Size of the point.
@@ -377,12 +386,21 @@ def make_corres_image(im_src,
     assert im_dst.dtype == np.float32 or im_dst.dtype == np.float64
     assert im_src.min() >= 0.0 and im_src.max() <= 1.0
     assert im_dst.min() >= 0.0 and im_dst.max() <= 1.0
-    h, w, _ = im_src.shape
 
     assert src_pixels.shape == dst_pixels.shape
     assert src_pixels.ndim == 2 and src_pixels.shape[1] == 2
     assert src_pixels.dtype == np.int32 or src_pixels.dtype == np.int64
     assert dst_pixels.dtype == np.int32 or dst_pixels.dtype == np.int64
+    assert len(src_pixels) == len(dst_pixels)
+
+    if confidences is not None:
+        assert len(confidences) == len(src_pixels)
+        assert confidences.dtype == np.float32 or confidences.dtype == np.float64
+        assert confidences.min() >= 0.0 and confidences.max() <= 1.0
+        assert confidences.ndim == 1
+
+    # Get shape.
+    h, w, _ = im_src.shape
 
     # Sample corres.
     sample_ratio = 1.0 if sample_ratio is None else sample_ratio
@@ -426,25 +444,60 @@ def make_corres_image(im_src,
                                               replace=False)
             src_pixels = src_pixels[sample_indices]
             dst_pixels = dst_pixels[sample_indices]
+            confidences = confidences[sample_indices]
 
         # Draw points.
         if point_color is not None:
             assert len(point_color) == 4 or len(point_color) == 3
             assert np.min(point_color) >= 0.0 and np.max(point_color) <= 1.0
 
-            # Draw white points as mask.
-            im_point_mask = np.zeros(im_corres.shape[:2], dtype=im_corres.dtype)
-            for (src_c, src_r), (dst_c, dst_r) in zip(src_pixels, dst_pixels):
-                cv2.circle(im_point_mask, (src_c, src_r), point_size, (1,), -1)
-                cv2.circle(im_point_mask, (dst_c + w, dst_r), point_size, (1,),
-                           -1)
+            if confidences is None:
+                # Draw white points as mask.
+                im_point_mask = np.zeros(im_corres.shape[:2],
+                                         dtype=im_corres.dtype)
+                for (src_c, src_r), (dst_c,
+                                     dst_r) in zip(src_pixels, dst_pixels):
+                    cv2.circle(
+                        im_point_mask,
+                        (src_c, src_r),
+                        point_size,
+                        (1,),
+                        -1,
+                    )
+                    cv2.circle(
+                        im_point_mask,
+                        (dst_c + w, dst_r),
+                        point_size,
+                        (1,),
+                        -1,
+                    )
+                point_alpha = point_color[3] if len(point_color) == 4 else 1.0
+                point_color = point_color[:3]
+                im_corres = overlay_mask_on_rgb(im_corres,
+                                                im_point_mask,
+                                                overlay_alpha=point_alpha,
+                                                overlay_color=point_color)
+            else:
+                # Query color map for colors, given confidences from 0-1.
+                colors = colormap.query(confidences, colormap="viridis")
 
-            point_alpha = point_color[3] if len(point_color) == 4 else 1.0
-            point_color = point_color[:3]
-            im_corres = overlay_mask_on_rgb(im_corres,
-                                            im_point_mask,
-                                            overlay_alpha=point_alpha,
-                                            overlay_color=point_color)
+                # Draw points.
+                for (src_c, src_r), (dst_c, dst_r), color in zip(
+                        src_pixels, dst_pixels, colors):
+                    cv2.circle(
+                        im_corres,
+                        (src_c, src_r),
+                        point_size,
+                        tuple(color.tolist()),
+                        -1,
+                    )
+                    cv2.circle(
+                        im_corres,
+                        (dst_c + w, dst_r),
+                        point_size,
+                        tuple(color.tolist()),
+                        -1,
+                    )
 
         # Draw lines.
         if line_color is not None:
