@@ -396,7 +396,8 @@ def make_corres_image(im_src,
     if confidences is not None:
         assert len(confidences) == len(src_pixels)
         assert confidences.dtype == np.float32 or confidences.dtype == np.float64
-        assert confidences.min() >= 0.0 and confidences.max() <= 1.0
+        if confidences.size > 0:
+            assert confidences.min() >= 0.0 and confidences.max() <= 1.0
         assert confidences.ndim == 1
 
     # Get shape.
