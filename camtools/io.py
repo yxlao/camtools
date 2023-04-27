@@ -213,7 +213,7 @@ def imread_depth(im_path, depth_scale=1000.0):
 
     im = cv2.imread(str(im_path), cv2.IMREAD_UNCHANGED)
 
-    if im.dtype != np.uint16:
+    if im.dtype != np.uint16 and im.dtype != np.uint8:
         raise ValueError(f"Unexpected image type: {im.dtype}")
 
     im = im.astype(np.float32) / depth_scale
