@@ -46,6 +46,20 @@ def pose_to_T(pose):
 
 
 def T_blender_to_pinhole(T_blender):
+    """
+    Converts blender T to pinhole. Compared to the pinhole model, Blender has
+    the Y and Z axes flipped, while the X axis is the same.
+
+    - Pinhole/OpenCV/COLMAP/Ours
+        - +X: Right
+        - +Y: Down
+        - +Z: The view direction, pointing forward and away from the camera
+    - Blender/OpenGL/Nerfstudio
+        - +X: Right
+        - +Y: Up
+        - +Z: The negative view direction, pointing back and away from the camera
+        - -Z: The view direction
+    """
     sanity.assert_T(T_blender)
 
     R_b2p = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
@@ -59,6 +73,20 @@ def T_blender_to_pinhole(T_blender):
 
 
 def T_pinhole_to_blender(T):
+    """
+    Converts pinhole T to blender. Compared to the pinhole model, Blender has
+    the Y and Z axes flipped, while the X axis is the same.
+
+    - Pinhole/OpenCV/COLMAP/Ours
+        - +X: Right
+        - +Y: Down
+        - +Z: The view direction, pointing forward and away from the camera
+    - Blender/OpenGL/Nerfstudio
+        - +X: Right
+        - +Y: Up
+        - +Z: The negative view direction, pointing back and away from the camera
+        - -Z: The view direction
+    """
     sanity.assert_T(T)
 
     R_b2p = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
@@ -73,11 +101,56 @@ def T_pinhole_to_blender(T):
 
 
 def pose_blender_to_pinhole(pose_blender):
-    sanity.assert_T(pose_blender)
-    T_blender = pose_to_T(pose_blender)
-    T = T_blender_to_pinhole(T_blender)
-    pose = T_to_pose(T)
+    """
+    Converts blender pose to pinhole. Compared to the pinhole model, Blender has
+    the Y and Z axes flipped, while the X axis is the same.
+
+    - Pinhole/OpenCV/COLMAP/Ours
+        - +X: Right
+        - +Y: Down
+        - +Z: The view direction, pointing forward and away from the camera
+    - Blender/OpenGL/Nerfstudio
+        - +X: Right
+        - +Y: Up
+        - +Z: The negative view direction, pointing back and away from the camera
+        - -Z: The view direction
+    """
+    sanity.assert_pose(pose_blender)
+    pose = np.copy(pose_blender)
+    pose[0:3, 1:3] *= -1
+
+    def pose_blender_to_pinhole_via_T(pose_blender):
+        sanity.assert_T(pose_blender)
+        T_blender = pose_to_T(pose_blender)
+        T = T_blender_to_pinhole(T_blender)
+        pose = T_to_pose(T)
+        return pose
+
+    pose_v2 = pose_blender_to_pinhole_via_T(pose_blender)
+    assert np.allclose(pose, pose_v2)
+
     return pose
+
+
+def pose_pinhole_to_blender(pose):
+    """
+    Converts pinhole pose to blender. Compared to the pinhole model, Blender has
+    the Y and Z axes flipped, while the X axis is the same.
+
+    - Pinhole/OpenCV/COLMAP/Ours
+        - +X: Right
+        - +Y: Down
+        - +Z: The view direction, pointing forward and away from the camera
+    - Blender/OpenGL/Nerfstudio
+        - +X: Right
+        - +Y: Up
+        - +Z: The negative view direction, pointing back and away from the camera
+        - -Z: The view direction
+    """
+    sanity.assert_pose(pose)
+    pose_blender = np.copy(pose)
+    pose_blender[0:3, 1:3] *= -1
+    return pose_blender
 
 
 def R_t_to_C(R, t):
@@ -142,8 +215,15 @@ def T_to_R_t(T):
 
 
 def P_to_K_R_t(P):
-    (camera_matrix, rot_matrix, trans_vect, rot_matrix_x, rot_matrix_y,
-     rot_matrix_z, euler_angles) = cv2.decomposeProjectionMatrix(P)
+    (
+        camera_matrix,
+        rot_matrix,
+        trans_vect,
+        rot_matrix_x,
+        rot_matrix_y,
+        rot_matrix_z,
+        euler_angles,
+    ) = cv2.decomposeProjectionMatrix(P)
 
     K = camera_matrix
     R = rot_matrix

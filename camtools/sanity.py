@@ -36,6 +36,22 @@ def assert_T(T):
             f"T must has [0, 0, 0, 1] the bottom row, but got {T}.")
 
 
+def assert_pose(pose):
+    if pose.shape != (4, 4):
+        raise ValueError(
+            f"pose must has shape (4, 4), but got {pose} of shape {pose.shape}."
+        )
+    if torch.is_tensor(pose):
+        is_valid = torch.allclose(
+            pose[3, :],
+            torch.tensor([0, 0, 0, 1], dtype=pose.dtype, device=pose.device))
+    else:
+        is_valid = np.allclose(pose[3, :], np.array([0, 0, 0, 1]))
+    if not is_valid:
+        raise ValueError(
+            f"pose must has [0, 0, 0, 1] the bottom row, but got {pose}.")
+
+
 def assert_shape(x, shape, name=None):
     shape_valid = True
 
