@@ -5,6 +5,120 @@ import torch
 from . import sanity
 
 
+def pad_0001(array):
+    """
+    Pad [0, 0, 0, 1] to the bottom row.
+
+    Args:
+        array: (3, 4) or (N, 3, 4).
+
+    Returns:
+        Array of shape (4, 4) or (N, 4, 4).
+    """
+    if array.ndim == 2:
+        if not array.shape == (3, 4):
+            raise ValueError(
+                f"Expected array of shape (3, 4), but got {array.shape}.")
+    elif array.ndim == 3:
+        if not array.shape[-2:] == (3, 4):
+            raise ValueError(
+                f"Expected array of shape (N, 3, 4), but got {array.shape}.")
+    else:
+        raise ValueError(
+            f"Expected array of shape (3, 4) or (N, 3, 4), but got {array.shape}."
+        )
+
+    if torch.is_tensor(array):
+        if array.ndim == 2:
+            bottom = torch.tensor([0, 0, 0, 1],
+                                  dtype=array.dtype,
+                                  device=array.device)
+            return torch.cat([array, bottom[None, :]], dim=0)
+        elif array.ndim == 3:
+            bottom_single = torch.tensor([0, 0, 0, 1],
+                                         dtype=array.dtype,
+                                         device=array.device)
+            bottom = bottom_single[None, None, :].expand(array.shape[0], 1, 4)
+            return torch.cat([array, bottom], dim=-2)
+    else:
+        if array.ndim == 2:
+            bottom = np.array([0, 0, 0, 1], dtype=array.dtype)
+            return np.concatenate([array, bottom[None, :]], axis=0)
+        elif array.ndim == 3:
+            bottom_single = np.array([0, 0, 0, 1], dtype=array.dtype)
+            bottom = np.broadcast_to(bottom_single, (array.shape[0], 1, 4))
+            return np.concatenate([array, bottom], axis=-2)
+        else:
+            raise ValueError("Should not reach here.")
+
+
+def rm_pad_0001(array, check_vals=False):
+    """
+    Remove the homogeneous bottom row [0, 0, 0, 1].
+
+    Args:
+        array: (4, 4) or (N, 4, 4).
+        check_vals (bool): If True, check that the bottom row is [0, 0, 0, 1].
+
+    Returns:
+        Array of shape (3, 4) or (N, 3, 4).
+    """
+    # Check shapes.
+    if array.ndim == 2:
+        if not array.shape == (4, 4):
+            raise ValueError(
+                f"Expected array of shape (4, 4), but got {array.shape}.")
+    elif array.ndim == 3:
+        if not array.shape[-2:] == (4, 4):
+            raise ValueError(
+                f"Expected array of shape (N, 4, 4), but got {array.shape}.")
+    else:
+        raise ValueError(
+            f"Expected array of shape (4, 4) or (N, 4, 4), but got {array.shape}."
+        )
+
+    # Check vals.
+    if check_vals:
+        if torch.is_tensor(array):
+            if array.ndim == 2:
+                bottom = array[3, :]
+                if not torch.allclose(
+                        bottom, torch.tensor([0, 0, 0, 1], dtype=array.dtype)):
+                    raise ValueError(
+                        f"Expected bottom row to be [0, 0, 0, 1], but got {bottom}."
+                    )
+            elif array.ndim == 3:
+                bottom = array[:, 3:4, :]
+                expected_bottom = torch.tensor([0, 0, 0, 1],
+                                               dtype=array.dtype).expand(
+                                                   array.shape[0], 1, 4)
+                if not torch.allclose(bottom, expected_bottom):
+                    raise ValueError(
+                        f"Expected bottom row to be {expected_bottom}, but got {bottom}."
+                    )
+            else:
+                raise ValueError("Should not reach here.")
+        else:
+            if array.ndim == 2:
+                bottom = array[3, :]
+                if not np.allclose(bottom, [0, 0, 0, 1]):
+                    raise ValueError(
+                        f"Expected bottom row to be [0, 0, 0, 1], but got {bottom}."
+                    )
+            elif array.ndim == 3:
+                bottom = array[:, 3:4, :]
+                expected_bottom = np.broadcast_to([0, 0, 0, 1],
+                                                  (array.shape[0], 1, 4))
+                if not np.allclose(bottom, expected_bottom):
+                    raise ValueError(
+                        f"Expected bottom row to be {expected_bottom}, but got {bottom}."
+                    )
+            else:
+                raise ValueError("Should not reach here.")
+
+    return array[..., :3, :]
+
+
 def R_to_quat(R):
     # https://github.com/isl-org/StableViewSynthesis/tree/main/co
     R = R.reshape(-1, 3, 3)
