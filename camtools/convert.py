@@ -143,6 +143,15 @@ def T_to_C(T):
     return R_t_to_C(R, t)
 
 
+def pose_to_C(pose):
+    """
+    Convert pose to camera center.
+    """
+    sanity.assert_pose(pose)
+    C = pose[:3, 3]
+    return C
+
+
 def T_to_pose(T):
     """
     Convert T to pose.
