@@ -6,10 +6,10 @@ Tools for handling pinhole camera parameters and plotting cameras.
 
 ```bash
 # For development.
-python setup.py develop
+pip install -e .
 
 # For install.
-python setup.py install
+pip install .
 ```
 
 <!-- ```bash

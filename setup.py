@@ -22,12 +22,15 @@ def main():
         raise RuntimeError("Cannot find version from camtools/version.py")
     print(f"Detected version: {version}")
 
+    entry_points = {"console_scripts": ["ct = camtools.tools.cli:main",]}
+
     status = setup(
         name="camtools",
         version=version,
         description="Camtools: Camera Tools for Computer Vision.",
         packages=['camtools'],
         cmdclass=cmdclass,
+        entry_points=entry_points,
         include_package_data=True,
     )
 

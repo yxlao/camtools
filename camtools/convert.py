@@ -241,17 +241,6 @@ def pose_blender_to_pinhole(pose_blender):
     sanity.assert_pose(pose_blender)
     pose = np.copy(pose_blender)
     pose[0:3, 1:3] *= -1
-
-    def pose_blender_to_pinhole_via_T(pose_blender):
-        sanity.assert_T(pose_blender)
-        T_blender = pose_to_T(pose_blender)
-        T = T_blender_to_pinhole(T_blender)
-        pose = T_to_pose(T)
-        return pose
-
-    pose_v2 = pose_blender_to_pinhole_via_T(pose_blender)
-    assert np.allclose(pose, pose_v2)
-
     return pose
 
 
