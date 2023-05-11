@@ -188,6 +188,12 @@ def instantiate_parser(parser):
         "file with the same name as the input file, but with the prefix "
         "'cropped_'.",
     )
+    parser.add_argument(
+        "--inplace",
+        "-i",
+        action="store_true",
+        help="If specified, overwrite the input file with the cropped image.",
+    )
     return parser
 
 
@@ -207,20 +213,27 @@ def entry_point(parser, args):
     for src_path in src_paths:
         if not src_path.is_file():
             raise FileNotFoundError(f"Input file {src_path} does not exist.")
-    if args.skip_cropped:
+    if args.inplace:
+        if args.skip_cropped:
+            raise ValueError(
+                "Cannot specify --skip_cropped when --inplace is specified.")
+        dst_paths = src_paths
+    else:
+        if args.skip_cropped:
+            dst_paths = [
+                src_path.parent / f"cropped_{src_path.name}"
+                for src_path in src_paths
+            ]
+            skipped_src_paths = [p for p in src_paths if p in dst_paths]
+            src_paths = [p for p in src_paths if p not in dst_paths]
+            if len(skipped_src_paths) > 0:
+                print("[Skipped]")
+                for src_path in skipped_src_paths:
+                    print(f"  - {src_path}")
         dst_paths = [
             src_path.parent / f"cropped_{src_path.name}"
             for src_path in src_paths
         ]
-        skipped_src_paths = [p for p in src_paths if p in dst_paths]
-        src_paths = [p for p in src_paths if p not in dst_paths]
-        if len(skipped_src_paths) > 0:
-            print("[Skipped]")
-            for src_path in skipped_src_paths:
-                print(f"  - {src_path}")
-    dst_paths = [
-        src_path.parent / f"cropped_{src_path.name}" for src_path in src_paths
-    ]
 
     # Read.
     src_ims = [ct.io.imread(src_path) for src_path in src_paths]
