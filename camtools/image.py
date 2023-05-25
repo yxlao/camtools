@@ -5,8 +5,136 @@ from . import colormap
 from typing import Tuple, List
 
 
-def compute_cropping(im: np.array):
-    pass
+def compute_cropping(im: np.array) -> Tuple[int]:
+    """
+    Compute top, down, left, right white boarder in pixels.
+
+    This function can handle (H, W, N) images, e.g.,
+    - 3-channel image: (H, W, 3)
+    - 3-channel images concatenated in the 2nd dimension: (H, W, 3 x num_im)
+
+    Args:
+        im: (H, W, N) image, float32.
+
+    Return: tuple of 4 elements
+        crop_u: int, number of white pixels on the top edge.
+        crop_d: int, number of white pixels on the down edge.
+        crop_l: int, number of white pixels on the left edge.
+        crop_r: int, number of white pixels on the right edge.
+    """
+    if not im.dtype == np.float32:
+        raise ValueError(f"im.dtype == {im.dtype} != np.float32")
+    if not im.ndim == 3:
+        raise ValueError(f"im must be (H, W, N), but got {im.shape}")
+    if im.shape[2] == 0:
+        raise ValueError(f"Empty image, got {im.shape}")
+
+    h, w, _ = im.shape
+
+    # Find the number of white pixels on each edge.
+    crop_u = 0
+    crop_d = 0
+    crop_l = 0
+    crop_r = 0
+
+    for u in range(h):
+        if np.allclose(im[u, :, :], 1.0):
+            crop_u += 1
+        else:
+            break
+    for d in range(h):
+        if np.allclose(im[h - d - 1, :, :], 1.0):
+            crop_d += 1
+        else:
+            break
+    for l in range(w):
+        if np.allclose(im[:, l, :], 1.0):
+            crop_l += 1
+        else:
+            break
+    for r in range(w):
+        if np.allclose(im[:, w - r - 1, :], 1.0):
+            crop_r += 1
+        else:
+            break
+
+    return crop_u, crop_d, crop_l, crop_r
+
+
+def apply_croppings_and_paddings(src_ims, croppings, paddings):
+    """
+    Apply cropping and padding to a list of images.
+
+    Ars:
+        src_ims: list of (H, W, 3) images, float32.
+        croppings: list of 4-tuples
+            [
+                (crop_u, crop_d, crop_l, crop_r),
+                (crop_u, crop_d, crop_l, crop_r),
+                ...
+            ]
+        paddings: list of 4-tuples
+            [
+                (pad_u, pad_d, pad_l, pad_r),
+                (pad_u, pad_d, pad_l, pad_r),
+                ...
+            ]
+    """
+    num_images = len(src_ims)
+    if not len(croppings) == num_images:
+        raise ValueError(f"len(croppings) == {len(croppings)} != {num_images}")
+    if not len(paddings) == num_images:
+        raise ValueError(f"len(paddings) == {len(paddings)} != {num_images}")
+    for cropping in croppings:
+        if not len(cropping) == 4:
+            raise ValueError(f"len(cropping) == {len(cropping)} != 4")
+
+    dst_ims = []
+    for src_im, cropping, padding in zip(src_ims, croppings, paddings):
+        crop_u, crop_d, crop_l, crop_r = cropping
+        dst_im = src_im[crop_u:-crop_d, crop_l:-crop_r, :]
+        pad_u, pad_d, pad_l, pad_r = padding
+        dst_im = np.pad(
+            dst_im,
+            ((pad_u, pad_d), (pad_l, pad_r), (0, 0)),
+            mode="constant",
+            constant_values=1.0,
+        )
+        dst_ims.append(dst_im)
+
+    return dst_ims
+
+
+def get_post_cropping_padding_shapes(src_shapes, croppings, paddings):
+    """
+    Compute image shapes after cropping and padding.
+
+    Ars:
+        src_shapes: list of source image shapes.
+        croppings: list of 4-tuples
+            [
+                (crop_u, crop_d, crop_l, crop_r),
+                (crop_u, crop_d, crop_l, crop_r),
+                ...
+            ]
+        paddings: list of 4-tuples
+            [
+                (pad_u, pad_d, pad_l, pad_r),
+                (pad_u, pad_d, pad_l, pad_r),
+                ...
+            ]
+    """
+    dst_shapes = []
+    for src_shape, cropping, padding in zip(src_shapes, croppings, paddings):
+        crop_u, crop_d, crop_l, crop_r = cropping
+        pad_u, pad_d, pad_l, pad_r = padding
+        dst_shape = (
+            src_shape[0] - crop_u - crop_d + pad_u + pad_d,
+            src_shape[1] - crop_l - crop_r + pad_l + pad_r,
+            src_shape[2],
+        )
+        dst_shapes.append(dst_shape)
+    return dst_shapes
 
 
 def overlay_mask_on_rgb(im_rgb,
