@@ -156,7 +156,7 @@ def entry_point(parser, args):
         # If same_shape is specified, pad all images to the same shape.
         # Distribute the padding evenly among top/down, left/right.
         if args.same_shape:
-            dst_shapes = ct.image.get_post_cropping_padding_shapes(
+            dst_shapes = ct.image.get_post_croppings_paddings_shapes(
                 src_shapes=[im.shape for im in src_ims],
                 croppings=croppings,
                 paddings=paddings,
@@ -180,7 +180,7 @@ def entry_point(parser, args):
                     np.array(paddings[i]) + np.array(extra_paddings[i]))
 
     # Apply.
-    dst_ims = ct.image.apply_croppings_and_paddings(
+    dst_ims = ct.image.apply_croppings_paddings(
         src_ims=src_ims,
         croppings=croppings,
         paddings=paddings,

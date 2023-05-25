@@ -5,6 +5,22 @@ from . import colormap
 from typing import Tuple, List
 
 
+def crop_white_boarders(
+    im: np.array, padding: Tuple[int] = (0, 0, 0, 0)) -> np.array:
+    """
+    Crop white boarders from an image.
+
+    Args:
+        im: (H, W, 3) image, float32.
+
+    Return:
+        im_dst: (H', W', 3) image, float32.
+    """
+    udlr = compute_cropping(im)
+    im_dst = apply_cropping_padding(im, udlr, padding)
+    return im_dst
+
+
 def compute_cropping(im: np.array) -> Tuple[int]:
     """
     Compute top, down, left, right white boarder in pixels.
@@ -61,11 +77,41 @@ def compute_cropping(im: np.array) -> Tuple[int]:
     return crop_u, crop_d, crop_l, crop_r
 
 
-def apply_croppings_and_paddings(src_ims, croppings, paddings):
+def apply_cropping_padding(src_im: np.ndarray, cropping: Tuple[int],
+                           padding: Tuple[int]):
+    """
+    Apply cropping and padding to an image.
+
+    Args:
+        src_im: (H, W, 3) image, float32.
+        cropping: 4-tuple (crop_u, crop_d, crop_l, crop_r)
+        padding: 4-tuple (pad_u, pad_d, pad_l, pad_r)
+
+    Return:
+        dst_im: (H, W, 3) image, float32.
+    """
+    if not src_im.dtype == np.float32:
+        raise ValueError(f"src_im.dtype == {src_im.dtype} != np.float32")
+    if not src_im.ndim == 3:
+        raise ValueError(f"src_im must be (H, W, 3), but got {src_im.shape}")
+
+    crop_u, crop_d, crop_l, crop_r = cropping
+    dst_im = src_im[crop_u:-crop_d, crop_l:-crop_r, :]
+    pad_u, pad_d, pad_l, pad_r = padding
+    dst_im = np.pad(
+        dst_im,
+        ((pad_u, pad_d), (pad_l, pad_r), (0, 0)),
+        mode="constant",
+        constant_values=1.0,
+    )
+    return dst_im
+
+
+def apply_croppings_paddings(src_ims, croppings, paddings):
     """
     Apply cropping and padding to a list of images.
 
-    Ars:
+    Args:
         src_ims: list of (H, W, 3) images, float32.
         croppings: list of 4-tuples
             [
@@ -91,21 +137,13 @@ def apply_croppings_and_paddings(src_ims, croppings, paddings):
 
     dst_ims = []
     for src_im, cropping, padding in zip(src_ims, croppings, paddings):
-        crop_u, crop_d, crop_l, crop_r = cropping
-        dst_im = src_im[crop_u:-crop_d, crop_l:-crop_r, :]
-        pad_u, pad_d, pad_l, pad_r = padding
-        dst_im = np.pad(
-            dst_im,
-            ((pad_u, pad_d), (pad_l, pad_r), (0, 0)),
-            mode="constant",
-            constant_values=1.0,
-        )
+        dst_im = apply_cropping_padding(src_im, cropping, padding)
         dst_ims.append(dst_im)
 
     return dst_ims
 
 
-def get_post_cropping_padding_shapes(src_shapes, croppings, paddings):
+def get_post_croppings_paddings_shapes(src_shapes, croppings, paddings):
     """
     Compute image shapes after cropping and padding.
 

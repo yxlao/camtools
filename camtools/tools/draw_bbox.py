@@ -11,13 +11,6 @@ import tempfile
 from pathlib import Path
 
 
-def crop_white_boarders(im):
-    from camtools.tools.crop_boarders import _compute_cropping, _apply_cropping_padding
-    u, d, l, r = _compute_cropping(im)
-    im_dst = _apply_cropping_padding([im], [(u, d, l, r)], [(0, 0, 0, 0)])[0]
-    return im_dst
-
-
 class BBoxer:
     """
     Draw bounding boxes on images.
@@ -72,7 +65,8 @@ class BBoxer:
             im_dst = ct.io.imread(f.name, alpha_mode="ignore")
         plt.close()
 
-        return crop_white_boarders(im_dst)
+        return ct.image.crop_white_boarders(im_dst)
+        return im_dst
 
     def _redraw(self):
         """
