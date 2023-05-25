@@ -2,6 +2,11 @@ import numpy as np
 import cv2
 from . import sanity
 from . import colormap
+from typing import Tuple, List
+
+
+def compute_cropping(im: np.array):
+    pass
 
 
 def overlay_mask_on_rgb(im_rgb,
