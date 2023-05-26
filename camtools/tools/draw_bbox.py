@@ -92,14 +92,14 @@ class BBoxer:
         plt.show()
 
     @staticmethod
-    def _copy_rec(
-            rec: matplotlib.patches.Rectangle) -> matplotlib.patches.Rectangle:
+    def _copy_rec(rec: matplotlib.patches.Rectangle,
+                  color=None) -> matplotlib.patches.Rectangle:
         new_rec = matplotlib.patches.Rectangle(
             xy=(rec.xy[0], rec.xy[1]),
             width=rec.get_width(),
             height=rec.get_height(),
             linewidth=rec.get_linewidth(),
-            edgecolor=rec.get_edgecolor(),
+            edgecolor=color if color is not None else rec.get_edgecolor(),
             facecolor=rec.get_facecolor(),
         )
         return new_rec
@@ -128,21 +128,24 @@ class BBoxer:
         return ct.image.crop_white_boarders(im_dst)
 
     def _redraw(self):
+        # Clear all visible rectangles.
         for rec in self.visible_recs:
             rec.remove()
         self.visible_recs.clear()
 
-        # Draw confirmed patches.
+        # Draw confirmed rectangles.
         for rec in self.confirmed_recs:
             for axis in self.axes:
-                cloned_patch = BBoxer._copy_rec(rec)
-                self.visible_recs.append(axis.add_patch(cloned_patch))
+                rec_ = axis.add_patch(BBoxer._copy_rec(rec, color="blue"))
+                self.visible_recs.append(rec_)
 
-        # Draw current patch.
+        # Draw current rectangle.
         if self.current_rec is not None:
             for axis in self.axes:
-                cloned_patch = BBoxer._copy_rec(self.current_rec)
-                self.visible_recs.append(axis.add_patch(cloned_patch))
+                rec_ = axis.add_patch(BBoxer._copy_rec(self.current_rec))
+                self.visible_recs.append(rec_)
+
+        self.fig.canvas.flush_events()
 
     def _save(self) -> None:
         """
@@ -169,16 +172,45 @@ class BBoxer:
 
         # Check if enter is pressed.
         if event.key == "enter":
-            print(f"[Keypress] Enter.")
+            print("[Keypress] Enter.")
             if self.current_rec is None:
                 print("No new bounding box selected.")
             else:
-                self.confirmed_recs.append(BBoxer._copy_rec(self.current_rec))
-                self._redraw()
-                print(
-                    f"[Keypress] Enter. BBox saved: {self.current_rec.get_bbox()}."
-                )
+                current_bbox = self.current_rec.get_bbox()
+                bbox_exists = False
+                for bbox in self.confirmed_recs:
+                    if current_bbox == bbox.get_bbox():
+                        bbox_exists = True
+                        break
+                if bbox_exists:
+                    print("Bounding box already exists. Not saving.")
+                else:
+                    self.confirmed_recs.append(
+                        BBoxer._copy_rec(self.current_rec))
+                    self._redraw()
+                    print(f"BBox saved: {self.current_rec.get_bbox()}.")
+                    self.current_rec = None
+        elif event.key == "escape":
+            print("[Keypress] Escape.")
+            self._close()
+        elif event.key == "backspace":
+            print("[Keypress] Backspace.")
+            if self.current_rec is not None:
                 self.current_rec = None
+                print("Current bounding box removed.")
+            else:
+                if len(self.confirmed_recs) > 0:
+                    self.confirmed_recs.pop()
+                    print("Last bounding box removed.")
+                else:
+                    print("No bounding boxes to remove.")
+            self._redraw()
+
+    def _close(self):
+        """
+        Close the matplotlib window. This will trigger the _on_close callback.
+        """
+        plt.close(self.fig)
 
     def _on_close(self, event):
         """
@@ -211,10 +243,10 @@ class BBoxer:
                 if axis != current_axis:
                     self.axis_to_selector[axis].set_visible(False)
 
-            # Set current patch.
+            # Set current rectangle.
             self.current_rec = rect
 
-            # Draw current patch and confirmed patch.
+            # Draw current rectangle and confirmed rectangles.
             self._redraw()
 
         # If not saved, the selector will go out-of-scope.
