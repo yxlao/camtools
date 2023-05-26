@@ -77,8 +77,11 @@ def compute_cropping(im: np.array) -> Tuple[int]:
     return crop_u, crop_d, crop_l, crop_r
 
 
-def apply_cropping_padding(src_im: np.ndarray, cropping: Tuple[int],
-                           padding: Tuple[int]):
+def apply_cropping_padding(
+    src_im: np.ndarray,
+    cropping: Tuple[int],
+    padding: Tuple[int],
+) -> np.ndarray:
     """
     Apply cropping and padding to an image.
 
