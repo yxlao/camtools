@@ -108,6 +108,9 @@ class BBoxer:
             print(f"Saved {dst_path}")
 
     def on_keypress(self, event):
+        """
+        Callback function for keypress.
+        """
         print(f"Pressed: {event.key}")
         sys.stdout.flush()
 
@@ -118,6 +121,13 @@ class BBoxer:
             self.current_patch = None
             self._redraw()
             print(f"BBox saved: {bbox}")
+
+    def on_close(self, event):
+        """
+        Callback function on matplotlib window close.
+        """
+        print('Closing...')
+        self.save()
 
     def run(self) -> None:
         """
@@ -150,7 +160,7 @@ class BBoxer:
                 raise ValueError("Images must have the same shape "
                                  f"{im_src.shape} != {im_srcs[0].shape}")
 
-        # Register fig and axes
+        # Register fig and axes.
         self.fig, self.axes = plt.subplots(1, len(im_srcs))
         for i, (axis, im_src) in enumerate(zip(self.axes, im_srcs)):
             axis.imshow(im_src)
@@ -175,10 +185,6 @@ class BBoxer:
             self.current_patch = rect
             self._redraw()
 
-        def on_close(event):
-            print('Closing...')
-            self.save()
-
         _ = RectangleSelector(
             self.axes[0],
             on_selector,
@@ -191,7 +197,7 @@ class BBoxer:
         )
 
         self.fig.canvas.mpl_connect('key_press_event', self.on_keypress)
-        self.fig.canvas.mpl_connect('close_event', on_close)
+        self.fig.canvas.mpl_connect('close_event', self.on_close)
 
         plt.show()
 
