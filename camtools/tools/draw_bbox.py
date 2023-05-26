@@ -90,7 +90,7 @@ class BBoxer:
                 cloned_patch = BBoxer._copy_bbox(self.current_patch)
                 self.visible_patches.append(axis.add_patch(cloned_patch))
 
-    def save(self) -> None:
+    def _save(self) -> None:
         """
         Save images with bounding boxes to disk. This function is called by the
         matplotlib event handler when the figure is closed.
@@ -107,7 +107,7 @@ class BBoxer:
             ct.io.imwrite(dst_path, im_dst)
             print(f"Saved {dst_path}")
 
-    def on_keypress(self, event):
+    def _on_keypress(self, event):
         """
         Callback function for keypress.
         """
@@ -122,12 +122,12 @@ class BBoxer:
             self._redraw()
             print(f"BBox saved: {bbox}")
 
-    def on_close(self, event):
+    def _on_close(self, event):
         """
         Callback function on matplotlib window close.
         """
         print('Closing...')
-        self.save()
+        self._save()
 
     def run(self) -> None:
         """
@@ -196,8 +196,8 @@ class BBoxer:
             interactive=True,
         )
 
-        self.fig.canvas.mpl_connect('key_press_event', self.on_keypress)
-        self.fig.canvas.mpl_connect('close_event', self.on_close)
+        self.fig.canvas.mpl_connect('key_press_event', self._on_keypress)
+        self.fig.canvas.mpl_connect('close_event', self._on_close)
 
         plt.show()
 
