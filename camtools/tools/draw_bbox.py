@@ -107,6 +107,18 @@ class BBoxer:
             ct.io.imwrite(dst_path, im_dst)
             print(f"Saved {dst_path}")
 
+    def on_keypress(self, event):
+        print(f"Pressed: {event.key}")
+        sys.stdout.flush()
+
+        # Check if enter is pressed.
+        if event.key == "enter":
+            bbox = self.current_patch.get_bbox()
+            self.confirm_patches.append(self.current_patch)
+            self.current_patch = None
+            self._redraw()
+            print(f"BBox saved: {bbox}")
+
     def run(self) -> None:
         """
         Run the bounding boxer.
@@ -163,18 +175,6 @@ class BBoxer:
             self.current_patch = rect
             self._redraw()
 
-        def on_keypress(event):
-            print(f"Pressed: {event.key}")
-            sys.stdout.flush()
-
-            # Check if enter is pressed.
-            if event.key == "enter":
-                bbox = self.current_patch.get_bbox()
-                self.confirm_patches.append(self.current_patch)
-                self.current_patch = None
-                self._redraw()
-                print(f"BBox saved: {bbox}")
-
         def on_close(event):
             print('Closing...')
             self.save()
@@ -190,7 +190,7 @@ class BBoxer:
             interactive=True,
         )
 
-        self.fig.canvas.mpl_connect('key_press_event', on_keypress)
+        self.fig.canvas.mpl_connect('key_press_event', self.on_keypress)
         self.fig.canvas.mpl_connect('close_event', on_close)
 
         plt.show()
