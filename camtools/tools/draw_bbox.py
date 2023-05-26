@@ -42,6 +42,55 @@ class BBoxer:
         for path in paths:
             self.src_paths.append(Path(path))
 
+    def run(self) -> None:
+        """
+        Run the bounding boxer.
+
+        Steps:
+            1. Load images.
+            2. Display images simultaneously, side-by-side.
+            3. Interactively draw bounding boxes on images.
+            4. Save images with bounding boxes to disk.
+
+        Notes:
+            1. Currently the output path is hardcoded.
+            2. The input images must have the same dimensions and 3 channels.
+        """
+        if len(self.src_paths) == 0:
+            raise ValueError("No input images.")
+
+        # Load.
+        im_srcs = []
+        for src_path in self.src_paths:
+            im_src = ct.io.imread(src_path)
+            if im_src.ndim != 3 or im_src.shape[2] != 3:
+                raise ValueError(f"Invalid image shape {im_src.shape}.")
+            im_srcs.append(im_src)
+
+        # Check all images are of the same shape.
+        for im_src in im_srcs:
+            if im_src.shape != im_srcs[0].shape:
+                raise ValueError("Images must have the same shape "
+                                 f"{im_src.shape} != {im_srcs[0].shape}")
+
+        # Register fig and axes.
+        self.fig, self.axes = plt.subplots(1, len(im_srcs))
+        for i, (axis, im_src) in enumerate(zip(self.axes, im_srcs)):
+            axis.imshow(im_src)
+            axis.set_title(self.src_paths[i].name)
+            axis.set_axis_off()
+        plt.tight_layout()
+
+        # Register rectangle selector callbacks.
+        for axis in self.axes:
+            self._register_rectangle_selector(axis)
+
+        # Register other handlers.
+        self.fig.canvas.mpl_connect('key_press_event', self._on_keypress)
+        self.fig.canvas.mpl_connect('close_event', self._on_close)
+
+        plt.show()
+
     @staticmethod
     def _copy_bbox(
             bbox: matplotlib.patches.Rectangle) -> matplotlib.patches.Rectangle:
@@ -139,7 +188,6 @@ class BBoxer:
         Register "on selector" event handler for a given axis.
         """
 
-        # Rectangle selector on the first image.
         def on_selector(eclick, erelease):
             x1, y1 = eclick.xdata, eclick.ydata
             x2, y2 = erelease.xdata, erelease.ydata
@@ -165,7 +213,8 @@ class BBoxer:
             # Draw current patch and confirmed patch.
             self._redraw()
 
-        selector = RectangleSelector(
+        # If not saved, the selector will go out-of-scope.
+        self.axis_to_selector[axis] = RectangleSelector(
             axis,
             on_selector,
             useblit=False,
@@ -175,58 +224,6 @@ class BBoxer:
             spancoords='pixels',
             interactive=True,
         )
-
-        # If not saved, the selector will go out-of-scope.
-        self.axis_to_selector[axis] = selector
-
-    def run(self) -> None:
-        """
-        Run the bounding boxer.
-
-        Steps:
-            1. Load images.
-            2. Display images simultaneously, side-by-side.
-            3. Interactively draw bounding boxes on images.
-            4. Save images with bounding boxes to disk.
-
-        Notes:
-            1. Currently the output path is hardcoded.
-            2. The input images must have the same dimensions and 3 channels.
-        """
-        if len(self.src_paths) == 0:
-            raise ValueError("No input images.")
-
-        # Load.
-        im_srcs = []
-        for src_path in self.src_paths:
-            im_src = ct.io.imread(src_path)
-            if im_src.ndim != 3 or im_src.shape[2] != 3:
-                raise ValueError(f"Invalid image shape {im_src.shape}.")
-            im_srcs.append(im_src)
-
-        # Check all images are of the same shape.
-        for im_src in im_srcs:
-            if im_src.shape != im_srcs[0].shape:
-                raise ValueError("Images must have the same shape "
-                                 f"{im_src.shape} != {im_srcs[0].shape}")
-
-        # Register fig and axes.
-        self.fig, self.axes = plt.subplots(1, len(im_srcs))
-        for i, (axis, im_src) in enumerate(zip(self.axes, im_srcs)):
-            axis.imshow(im_src)
-            axis.set_title(self.src_paths[i].name)
-            axis.set_axis_off()
-        plt.tight_layout()
-
-        # Register rectangle selector callbacks.
-        for axis in self.axes:
-            self._register_rectangle_selector(axis)
-
-        # Register other handlers.
-        self.fig.canvas.mpl_connect('key_press_event', self._on_keypress)
-        self.fig.canvas.mpl_connect('close_event', self._on_close)
-
-        plt.show()
 
 
 def main():
