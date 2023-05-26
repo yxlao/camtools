@@ -25,9 +25,9 @@ class BBoxer:
         self.src_paths: List[Path] = []
 
         # Bounding boxes.
-        self.current_patch = None
-        self.confirm_patches = []
-        self.visible_patches = []
+        self.current_rec = None
+        self.confirmed_recs = []
+        self.visible_recs = []
 
         # Other matplotlib objects.
         self.fig = None
@@ -92,17 +92,17 @@ class BBoxer:
         plt.show()
 
     @staticmethod
-    def _copy_bbox(
-            bbox: matplotlib.patches.Rectangle) -> matplotlib.patches.Rectangle:
-        new_bbox = matplotlib.patches.Rectangle(
-            xy=(bbox.xy[0], bbox.xy[1]),
-            width=bbox.get_width(),
-            height=bbox.get_height(),
-            linewidth=bbox.get_linewidth(),
-            edgecolor=bbox.get_edgecolor(),
-            facecolor=bbox.get_facecolor(),
+    def _copy_rec(
+            rec: matplotlib.patches.Rectangle) -> matplotlib.patches.Rectangle:
+        new_rec = matplotlib.patches.Rectangle(
+            xy=(rec.xy[0], rec.xy[1]),
+            width=rec.get_width(),
+            height=rec.get_height(),
+            linewidth=rec.get_linewidth(),
+            edgecolor=rec.get_edgecolor(),
+            facecolor=rec.get_facecolor(),
         )
-        return new_bbox
+        return new_rec
 
     @staticmethod
     def _overlay_bbox_on_image(
@@ -119,7 +119,7 @@ class BBoxer:
         axis.set_axis_off()
         axis.imshow(im)
         for bbox in bboxes:
-            axis.add_patch(BBoxer._copy_bbox(bbox))
+            axis.add_patch(BBoxer._copy_rec(bbox))
         with tempfile.NamedTemporaryFile(suffix=".png") as f:
             plt.savefig(f.name, bbox_inches='tight')
             im_dst = ct.io.imread(f.name, alpha_mode="ignore")
@@ -128,28 +128,28 @@ class BBoxer:
         return ct.image.crop_white_boarders(im_dst)
 
     def _redraw(self):
-        for patch in self.visible_patches:
-            patch.remove()
-        self.visible_patches.clear()
+        for rec in self.visible_recs:
+            rec.remove()
+        self.visible_recs.clear()
 
         # Draw confirmed patches.
-        for patch in self.confirm_patches:
+        for rec in self.confirmed_recs:
             for axis in self.axes:
-                cloned_patch = BBoxer._copy_bbox(patch)
-                self.visible_patches.append(axis.add_patch(cloned_patch))
+                cloned_patch = BBoxer._copy_rec(rec)
+                self.visible_recs.append(axis.add_patch(cloned_patch))
 
         # Draw current patch.
-        if self.current_patch is not None:
+        if self.current_rec is not None:
             for axis in self.axes:
-                cloned_patch = BBoxer._copy_bbox(self.current_patch)
-                self.visible_patches.append(axis.add_patch(cloned_patch))
+                cloned_patch = BBoxer._copy_rec(self.current_rec)
+                self.visible_recs.append(axis.add_patch(cloned_patch))
 
     def _save(self) -> None:
         """
         Save images with bounding boxes to disk. This function is called by the
         matplotlib event handler when the figure is closed.
 
-        If self.confirm_patches is empty, then no bounding boxes will be drawn,
+        If self.confirmed_recs is empty, then no bounding boxes will be drawn,
         but the images will still be saved.
         """
         dst_paths = [
@@ -157,7 +157,7 @@ class BBoxer:
         ]
         for src_path, dst_path in zip(self.src_paths, dst_paths):
             im_src = ct.io.imread(src_path)
-            im_dst = BBoxer._overlay_bbox_on_image(im_src, self.confirm_patches)
+            im_dst = BBoxer._overlay_bbox_on_image(im_src, self.confirmed_recs)
             ct.io.imwrite(dst_path, im_dst)
             print(f"Saved {dst_path}")
 
@@ -170,15 +170,15 @@ class BBoxer:
         # Check if enter is pressed.
         if event.key == "enter":
             print(f"[Keypress] Enter.")
-            if self.current_patch is None:
+            if self.current_rec is None:
                 print("No new bounding box selected.")
             else:
-                bbox = self.current_patch.get_bbox()
-                self.confirm_patches.append(
-                    BBoxer._copy_bbox(self.current_patch))
-                self.current_patch = None
+                self.confirmed_recs.append(BBoxer._copy_rec(self.current_rec))
                 self._redraw()
-                print(f"[Keypress] Enter. BBox saved: {bbox}.")
+                print(
+                    f"[Keypress] Enter. BBox saved: {self.current_rec.get_bbox()}."
+                )
+                self.current_rec = None
 
     def _on_close(self, event):
         """
@@ -212,7 +212,7 @@ class BBoxer:
                     self.axis_to_selector[axis].set_visible(False)
 
             # Set current patch.
-            self.current_patch = rect
+            self.current_rec = rect
 
             # Draw current patch and confirmed patch.
             self._redraw()
