@@ -165,16 +165,20 @@ class BBoxer:
         """
         Callback function for keypress.
         """
-        print(f"Pressed: {event.key}")
         sys.stdout.flush()
 
         # Check if enter is pressed.
         if event.key == "enter":
-            bbox = self.current_patch.get_bbox()
-            self.confirm_patches.append(self.current_patch)
-            self.current_patch = None
-            self._redraw()
-            print(f"BBox saved: {bbox}")
+            print(f"[Keypress] Enter.")
+            if self.current_patch is None:
+                print("No new bounding box selected.")
+            else:
+                bbox = self.current_patch.get_bbox()
+                self.confirm_patches.append(
+                    BBoxer._copy_bbox(self.current_patch))
+                self.current_patch = None
+                self._redraw()
+                print(f"[Keypress] Enter. BBox saved: {bbox}.")
 
     def _on_close(self, event):
         """
