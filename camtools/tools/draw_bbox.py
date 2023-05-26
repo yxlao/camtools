@@ -55,11 +55,11 @@ class BBoxer:
             im: Image to draw bounding box on.
             bboxes: List of Matplotlib bounding boxes to draw on image.
         """
-        fig, ax = plt.subplots()
-        ax.set_axis_off()
-        ax.imshow(im)
+        fig, axis = plt.subplots()
+        axis.set_axis_off()
+        axis.imshow(im)
         for bbox in bboxes:
-            ax.add_patch(BBoxer._copy_bbox(bbox))
+            axis.add_patch(BBoxer._copy_bbox(bbox))
         with tempfile.NamedTemporaryFile(suffix=".png") as f:
             plt.savefig(f.name, bbox_inches='tight')
             im_dst = ct.io.imread(f.name, alpha_mode="ignore")
@@ -123,15 +123,12 @@ class BBoxer:
                                  f"{im_src.shape} != {im_srcs[0].shape}")
 
         # Display images side by side with matplotlib.
-        fig, axs = plt.subplots(1, len(im_srcs))
-        for i, (ax, im_src) in enumerate(zip(axs, im_srcs)):
-            ax.imshow(im_src)
-            ax.set_title(self.src_paths[i].name)
-            ax.set_axis_off()
+        fig, axes = plt.subplots(1, len(im_srcs))
+        for i, (axis, im_src) in enumerate(zip(axes, im_srcs)):
+            axis.imshow(im_src)
+            axis.set_title(self.src_paths[i].name)
+            axis.set_axis_off()
         plt.tight_layout()
-
-        # Only support interactive on first image for now.
-        first_ax = axs[0]
 
         # Patches that are drawn on axes.
         drawn_patches = []
@@ -143,13 +140,13 @@ class BBoxer:
 
             # Draw confirmed patches.
             for patch in self.confirm_patches:
-                for axis in axs:
+                for axis in axes:
                     cloned_patch = BBoxer._copy_bbox(patch)
                     drawn_patches.append(axis.add_patch(cloned_patch))
 
             # Draw current patch.
             if self.current_patch is not None:
-                for axis in axs:
+                for axis in axes:
                     cloned_patch = BBoxer._copy_bbox(self.current_patch)
                     drawn_patches.append(axis.add_patch(cloned_patch))
 
@@ -187,7 +184,7 @@ class BBoxer:
             self.save()
 
         _ = RectangleSelector(
-            first_ax,
+            axes[0],
             on_selector,
             useblit=False,
             button=[1],
