@@ -190,6 +190,7 @@ class BBoxer:
                     self._redraw()
                     print(f"BBox saved: {self.current_rec.get_bbox()}.")
                     self.current_rec = None
+            self._redraw()
         elif event.key == "escape":
             print("[Keypress] Escape.")
             self._close()
