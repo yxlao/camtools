@@ -29,6 +29,8 @@ class BBoxer:
         self.fig = None
         self.axes = []
 
+        self.axis_to_selector = dict()
+
     def add_paths(self, paths: List[Path]) -> None:
         """
         Append input image paths to list of images to be processed.
@@ -129,6 +131,41 @@ class BBoxer:
         print('Closing...')
         self._save()
 
+    def _register_rectangle_selector(self, axis):
+        """
+        Register "on selector" event handler for a given axis.
+        """
+
+        # Rectangle selector on the first image.
+        def on_selector(eclick, erelease):
+            x1, y1 = eclick.xdata, eclick.ydata
+            x2, y2 = erelease.xdata, erelease.ydata
+
+            rect = plt.Rectangle(
+                (min(x1, x2), min(y1, y2)),
+                np.abs(x1 - x2),
+                np.abs(y1 - y2),
+                linewidth=self.line_width,
+                edgecolor=self.edge_color,
+                facecolor='none',
+            )
+            self.current_patch = rect
+            self._redraw()
+
+        selector = RectangleSelector(
+            axis,
+            on_selector,
+            useblit=False,
+            button=[1],
+            minspanx=5,
+            minspany=5,
+            spancoords='pixels',
+            interactive=True,
+        )
+
+        # If not saved, the selector will go out-of-scope.
+        self.axis_to_selector[axis] = selector
+
     def run(self) -> None:
         """
         Run the bounding boxer.
@@ -168,34 +205,11 @@ class BBoxer:
             axis.set_axis_off()
         plt.tight_layout()
 
-        # Rectangle selector on the first image.
-        def on_selector(eclick, erelease):
-            x1, y1 = eclick.xdata, eclick.ydata
-            x2, y2 = erelease.xdata, erelease.ydata
+        # Register rectangle selector callbacks.
+        for axis in self.axes:
+            self._register_rectangle_selector(axis)
 
-            rect = plt.Rectangle(
-                (min(x1, x2), min(y1, y2)),
-                np.abs(x1 - x2),
-                np.abs(y1 - y2),
-                linewidth=self.line_width,
-                edgecolor=self.edge_color,
-                facecolor='none',
-            )
-
-            self.current_patch = rect
-            self._redraw()
-
-        _ = RectangleSelector(
-            self.axes[0],
-            on_selector,
-            useblit=False,
-            button=[1],
-            minspanx=5,
-            minspany=5,
-            spancoords='pixels',
-            interactive=True,
-        )
-
+        # Register other handlers.
         self.fig.canvas.mpl_connect('key_press_event', self._on_keypress)
         self.fig.canvas.mpl_connect('close_event', self._on_close)
 
