@@ -17,18 +17,21 @@ class BBoxer:
     """
 
     def __init__(self, line_width=1, edge_color="r"):
+        # Draw properties.
         self.line_width = line_width
         self.edge_color = edge_color
 
+        # Input image paths.
         self.src_paths: List[Path] = []
+
+        # Bounding boxes.
         self.current_patch = None
         self.confirm_patches = []
-
         self.visible_patches = []
 
+        # Other matplotlib objects.
         self.fig = None
         self.axes = []
-
         self.axis_to_selector = dict()
 
     def add_paths(self, paths: List[Path]) -> None:
@@ -149,7 +152,17 @@ class BBoxer:
                 edgecolor=self.edge_color,
                 facecolor='none',
             )
+
+            # Hide other selectors.
+            current_axis = eclick.inaxes
+            for axis in self.axes:
+                if axis != current_axis:
+                    self.axis_to_selector[axis].set_visible(False)
+
+            # Set current patch.
             self.current_patch = rect
+
+            # Draw current patch and confirmed patch.
             self._redraw()
 
         selector = RectangleSelector(
