@@ -24,6 +24,11 @@ class BBoxer:
         self.current_patch = None
         self.confirm_patches = []
 
+        self.visible_patches = []
+
+        self.fig = None
+        self.axes = []
+
     def add_paths(self, paths: List[Path]) -> None:
         """
         Append input image paths to list of images to be processed.
@@ -46,11 +51,12 @@ class BBoxer:
         return new_bbox
 
     @staticmethod
-    def _draw_bbox_on_image(
+    def _overlay_bbox_on_image(
             im: np.ndarray,
             bboxes: List[matplotlib.patches.Rectangle]) -> np.ndarray:
         """
-        Draw red rectangular bounding box on image with matplotlib.
+        Draw red rectangular bounding box on image.
+
         Args:
             im: Image to draw bounding box on.
             bboxes: List of Matplotlib bounding boxes to draw on image.
@@ -66,13 +72,23 @@ class BBoxer:
         plt.close()
 
         return ct.image.crop_white_boarders(im_dst)
-        return im_dst
 
     def _redraw(self):
-        """
-        Draw current patches and confirmed patches on all images.
-        """
-        pass
+        for patch in self.visible_patches:
+            patch.remove()
+        self.visible_patches.clear()
+
+        # Draw confirmed patches.
+        for patch in self.confirm_patches:
+            for axis in self.axes:
+                cloned_patch = BBoxer._copy_bbox(patch)
+                self.visible_patches.append(axis.add_patch(cloned_patch))
+
+        # Draw current patch.
+        if self.current_patch is not None:
+            for axis in self.axes:
+                cloned_patch = BBoxer._copy_bbox(self.current_patch)
+                self.visible_patches.append(axis.add_patch(cloned_patch))
 
     def save(self) -> None:
         """
@@ -87,7 +103,7 @@ class BBoxer:
         ]
         for src_path, dst_path in zip(self.src_paths, dst_paths):
             im_src = ct.io.imread(src_path)
-            im_dst = BBoxer._draw_bbox_on_image(im_src, self.confirm_patches)
+            im_dst = BBoxer._overlay_bbox_on_image(im_src, self.confirm_patches)
             ct.io.imwrite(dst_path, im_dst)
             print(f"Saved {dst_path}")
 
@@ -122,33 +138,13 @@ class BBoxer:
                 raise ValueError("Images must have the same shape "
                                  f"{im_src.shape} != {im_srcs[0].shape}")
 
-        # Display images side by side with matplotlib.
-        fig, axes = plt.subplots(1, len(im_srcs))
-        for i, (axis, im_src) in enumerate(zip(axes, im_srcs)):
+        # Register fig and axes
+        self.fig, self.axes = plt.subplots(1, len(im_srcs))
+        for i, (axis, im_src) in enumerate(zip(self.axes, im_srcs)):
             axis.imshow(im_src)
             axis.set_title(self.src_paths[i].name)
             axis.set_axis_off()
         plt.tight_layout()
-
-        # Patches that are drawn on axes.
-        drawn_patches = []
-
-        def redraw_on_axes():
-            for patch in drawn_patches:
-                patch.remove()
-            drawn_patches.clear()
-
-            # Draw confirmed patches.
-            for patch in self.confirm_patches:
-                for axis in axes:
-                    cloned_patch = BBoxer._copy_bbox(patch)
-                    drawn_patches.append(axis.add_patch(cloned_patch))
-
-            # Draw current patch.
-            if self.current_patch is not None:
-                for axis in axes:
-                    cloned_patch = BBoxer._copy_bbox(self.current_patch)
-                    drawn_patches.append(axis.add_patch(cloned_patch))
 
         # Rectangle selector on the first image.
         def on_selector(eclick, erelease):
@@ -165,7 +161,7 @@ class BBoxer:
             )
 
             self.current_patch = rect
-            redraw_on_axes()
+            self._redraw()
 
         def on_keypress(event):
             print(f"Pressed: {event.key}")
@@ -176,7 +172,7 @@ class BBoxer:
                 bbox = self.current_patch.get_bbox()
                 self.confirm_patches.append(self.current_patch)
                 self.current_patch = None
-                redraw_on_axes()
+                self._redraw()
                 print(f"BBox saved: {bbox}")
 
         def on_close(event):
@@ -184,7 +180,7 @@ class BBoxer:
             self.save()
 
         _ = RectangleSelector(
-            axes[0],
+            self.axes[0],
             on_selector,
             useblit=False,
             button=[1],
@@ -194,8 +190,8 @@ class BBoxer:
             interactive=True,
         )
 
-        fig.canvas.mpl_connect('key_press_event', on_keypress)
-        fig.canvas.mpl_connect('close_event', on_close)
+        self.fig.canvas.mpl_connect('key_press_event', on_keypress)
+        self.fig.canvas.mpl_connect('close_event', on_close)
 
         plt.show()
 
