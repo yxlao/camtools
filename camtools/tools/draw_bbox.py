@@ -120,7 +120,7 @@ class BBoxer:
     def _overlay_rectangle_on_image(im: np.ndarray,
                                     tl_xy: Tuple[int, int],
                                     br_xy: Tuple[int, int],
-                                    linewidth: int,
+                                    linewidth_px: int,
                                     edgecolor: str,
                                     squarecorners: bool = True) -> np.ndarray:
         """
@@ -185,7 +185,7 @@ class BBoxer:
                       pt1=tl_xy,
                       pt2=br_xy,
                       color=1.0,
-                      thickness=linewidth,
+                      thickness=linewidth_px,
                       lineType=cv2.LINE_8)
 
         if squarecorners:
@@ -294,7 +294,7 @@ class BBoxer:
                     im=im_dst,
                     tl_xy=tl_xy,
                     br_xy=br_xy,
-                    linewidth=linewidth_px,
+                    linewidth_px=linewidth_px,
                     edgecolor=self.edgecolor)
             ct.io.imwrite(dst_path, im_dst)
             print(f"Saved {dst_path}")
