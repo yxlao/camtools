@@ -1,3 +1,6 @@
+camtools/assets/bbox_box.png
+camtools/assets/bbox_box_blender.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
