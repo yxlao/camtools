@@ -65,7 +65,11 @@ def instantiate_parser(parser):
     return parser
 
 
-def entry_point(args):
+def entry_point(parser, args):
+    """
+    This is used by sub_parser.set_defaults(func=entry_point).
+    The parser argument is not used.
+    """
     if args.pad_pixel < 0:
         raise ValueError(
             f"pad_pixel must be non-negative, but got {args.pad_pixel}")
@@ -221,7 +225,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser = instantiate_parser(parser)
     args = parser.parse_args()
-    entry_point(args)
+    entry_point(parser, args)
 
 
 if __name__ == "__main__":

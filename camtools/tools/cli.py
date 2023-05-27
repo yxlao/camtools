@@ -37,6 +37,19 @@ def main():
     sub_parser = ct.tools.crop_boarders.instantiate_parser(sub_parser)
     sub_parser.set_defaults(func=ct.tools.crop_boarders.entry_point)
 
+    # ct draw-bboxes a.png b.png
+    sub_parser = sub_parsers.add_parser(
+        "draw-bboxes",
+        help="Draw bounding boxes on images. Example usage:\n"
+        "```\n"
+        "ct draw-bboxes path/to/a.png\n"
+        "ct draw-bboxes path/to/a.png path/to/b.png\n"
+        "```",
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    sub_parser = ct.tools.draw_bboxes.instantiate_parser(sub_parser)
+    sub_parser.set_defaults(func=ct.tools.draw_bboxes.entry_point)
+
     args = main_parser.parse_args()
     if args.subcommand in sub_parsers.choices.keys():
         return args.func(sub_parsers.choices[args.subcommand], args)

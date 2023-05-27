@@ -445,7 +445,12 @@ def instantiate_parser(parser):
     return parser
 
 
-def entry_point(args):
+def entry_point(parser, args):
+    """
+    This is used by sub_parser.set_defaults(func=entry_point).
+    The parser argument is not used.
+    """
+
     if isinstance(args.inputs, list):
         src_paths = args.inputs
     elif isinstance(args.inputs, str):
@@ -459,10 +464,15 @@ def entry_point(args):
 
 
 def main():
+    # Usage 1:
+    # ct draw-bboxes camtools/assets/box.png camtools/assets/box_blender.png
+
+    # Usage 2:
+    # python camtools/tools/draw_bbox.py camtools/assets/box_blender.png
     parser = argparse.ArgumentParser()
     parser = instantiate_parser(parser)
     args = parser.parse_args()
-    entry_point(args)
+    entry_point(parser, args)
 
     # Or, you can import the class and use it as a library.
     # camtools_dir = Path(__file__).parent.parent.absolute()
