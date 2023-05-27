@@ -6,7 +6,7 @@ import matplotlib
 from matplotlib.widgets import RectangleSelector
 import sys
 import camtools as ct
-from typing import List
+from typing import List, Tuple
 import tempfile
 from pathlib import Path
 import io
@@ -27,9 +27,9 @@ class BBoxer:
         self.src_paths: List[Path] = []
 
         # Bounding boxes.
-        self.current_rec = None
-        self.confirmed_recs = []
-        self.visible_recs = []
+        self.current_rectangle = None
+        self.confirmed_rectangles = []
+        self.visible_rectangles = []
 
         # Other matplotlib objects.
         self.fig = None
@@ -98,51 +98,52 @@ class BBoxer:
         return f"Bbox({bbox.x0:.2f}, {bbox.y0:.2f}, {bbox.x1:.2f}, {bbox.y1:.2f})"
 
     @staticmethod
-    def _copy_rec(rec: matplotlib.patches.Rectangle,
-                  linestyle: str = None,
-                  linewidth: int = None,
-                  edgecolor=None) -> matplotlib.patches.Rectangle:
-        new_rec = matplotlib.patches.Rectangle(
-            xy=(rec.xy[0], rec.xy[1]),
-            width=rec.get_width(),
-            height=rec.get_height(),
+    def _copy_rectangle(rectangle: matplotlib.patches.Rectangle,
+                        linestyle: str = None,
+                        linewidth: int = None,
+                        edgecolor=None) -> matplotlib.patches.Rectangle:
+        new_rectangle = matplotlib.patches.Rectangle(
+            xy=(rectangle.xy[0], rectangle.xy[1]),
+            width=rectangle.get_width(),
+            height=rectangle.get_height(),
             linestyle=linestyle
-            if linestyle is not None else rec.get_linestyle(),
+            if linestyle is not None else rectangle.get_linestyle(),
             linewidth=linewidth
-            if linewidth is not None else rec.get_linewidth(),
+            if linewidth is not None else rectangle.get_linewidth(),
             edgecolor=edgecolor
-            if edgecolor is not None else rec.get_edgecolor(),
-            facecolor=rec.get_facecolor(),
+            if edgecolor is not None else rectangle.get_edgecolor(),
+            facecolor=rectangle.get_facecolor(),
         )
-        return new_rec
+        return new_rectangle
 
     @staticmethod
-    def _overlay_recs_on_image(
+    def _overlay_rectangle_on_image(
         im: np.ndarray,
-        recs: List[matplotlib.patches.Rectangle],
+        tl_xy: Tuple[int, int],
+        br_xy: Tuple[int, int],
         linewidth: int,
         edgecolor: str,
     ) -> np.ndarray:
         """
-        Draw red rectangular bounding box on image using OpenCV.
+        Draw red rectangletangular bounding box on image using OpenCV.
 
         Args:
             im: Image to draw bounding box on.
-            bboxes: List of Matplotlib bounding boxes to draw on image.
+            tl_xy: Top-left corner of bounding box, in (x, y), or (c, r).
+                If the thickness is larger than 1, this is the center of the line.
+            br_xy: Bottom-right corner of bounding box, in (x, y), or (c, r).
+                If the thickness is larger than 1, this is the center of the line.
             linewidth: Width of bounding box line, this is in pixels!
             edgecolor: Color of bounding box line.
         """
         color_rgb = matplotlib.colors.to_rgb(edgecolor)
         im_dst = im.copy()
-        for rec in recs:
-            bbox = rec.get_bbox()
-            cv2.rectangle(im_dst,
-                          pt1=(int(bbox.x0), int(bbox.y0)),
-                          pt2=(int(bbox.x1), int(bbox.y1)),
-                          color=color_rgb,
-                          thickness=linewidth,
-                          lineType=cv2.LINE_8)
-
+        cv2.rectangle(im_dst,
+                      pt1=tl_xy,
+                      pt2=br_xy,
+                      color=color_rgb,
+                      thickness=linewidth,
+                      lineType=cv2.LINE_8)
         return im_dst
 
         # fig, axis = plt.subplots()
@@ -150,7 +151,7 @@ class BBoxer:
         # axis.imshow(im)
         # for bbox in bboxes:
         #     axis.add_patch(
-        #         BBoxer._copy_rec(bbox,
+        #         BBoxer._copy_rectangle(bbox,
         #                          linestyle="-",
         #                          linewidth=linewidth,
         #                          edgecolor=edgecolor))
@@ -163,29 +164,29 @@ class BBoxer:
 
     def _redraw(self):
         # Clear all visible rectangles.
-        for rec in self.visible_recs:
-            rec.remove()
-        self.visible_recs.clear()
+        for rectangle in self.visible_rectangles:
+            rectangle.remove()
+        self.visible_rectangles.clear()
 
         # Draw confirmed rectangles.
-        for rec in self.confirmed_recs:
+        for rectangle in self.confirmed_rectangles:
             for axis in self.axes:
-                rec_ = axis.add_patch(
-                    BBoxer._copy_rec(rec,
-                                     linestyle="-",
-                                     linewidth=self.linewidth,
-                                     edgecolor=self.edgecolor))
-                self.visible_recs.append(rec_)
+                rectangle_ = axis.add_patch(
+                    BBoxer._copy_rectangle(rectangle,
+                                           linestyle="-",
+                                           linewidth=self.linewidth,
+                                           edgecolor=self.edgecolor))
+                self.visible_rectangles.append(rectangle_)
 
         # Draw current rectangle.
-        if self.current_rec is not None:
+        if self.current_rectangle is not None:
             for axis in self.axes:
-                rec_ = axis.add_patch(
-                    BBoxer._copy_rec(self.current_rec,
-                                     linestyle="--",
-                                     linewidth=self.linewidth,
-                                     edgecolor=self.edgecolor))
-                self.visible_recs.append(rec_)
+                rectangle_ = axis.add_patch(
+                    BBoxer._copy_rectangle(self.current_rectangle,
+                                           linestyle="--",
+                                           linewidth=self.linewidth,
+                                           edgecolor=self.edgecolor))
+                self.visible_rectangles.append(rectangle_)
 
         # Ask matplotlib to redraw the current figure.
         # No need to call self.fig.canvas.flush_events().
@@ -196,7 +197,7 @@ class BBoxer:
         Save images with bounding boxes to disk. This function is called by the
         matplotlib event handler when the figure is closed.
 
-        If self.confirmed_recs is empty, then no bounding boxes will be drawn,
+        If self.confirmed_rectangles is empty, then no bounding boxes will be drawn,
         but the images will still be saved.
         """
         # Get the axis image shape in pixels.
@@ -207,17 +208,23 @@ class BBoxer:
         width, height = bbox.width * self.fig.dpi, bbox.height * self.fig.dpi
 
         # Get the linewidth in pixels.
-        linewidth = self.linewidth * self.fig.dpi / 72
+        linewidth_px = int(round(self.linewidth * self.fig.dpi / 72))
 
         dst_paths = [
             p.parent / f"bbox_{p.stem}{p.suffix}" for p in self.src_paths
         ]
         for src_path, dst_path in zip(self.src_paths, dst_paths):
-            im_src = ct.io.imread(src_path)
-            im_dst = BBoxer._overlay_recs_on_image(im_src,
-                                                   self.confirmed_recs,
-                                                   linewidth=self.linewidth,
-                                                   edgecolor=self.edgecolor)
+            im_dst = ct.io.imread(src_path)
+            for rectangle in self.confirmed_rectangles:
+                bbox = rectangle.get_bbox()
+                tl_xy = (int(round(bbox.x0)), int(round(bbox.y0)))
+                br_xy = (int(round(bbox.x1)), int(round(bbox.y1)))
+                im_dst = BBoxer._overlay_rectangle_on_image(
+                    im=im_dst,
+                    tl_xy=tl_xy,
+                    br_xy=br_xy,
+                    linewidth=linewidth_px,
+                    edgecolor=self.edgecolor)
             ct.io.imwrite(dst_path, im_dst)
             print(f"Saved {dst_path}")
 
@@ -244,12 +251,12 @@ class BBoxer:
         # Check if enter is pressed.
         if event.key == "enter":
             print_key(event.key)
-            if self.current_rec is None:
+            if self.current_rectangle is None:
                 print_msg("No new BBox selected.")
             else:
-                current_bbox = self.current_rec.get_bbox()
+                current_bbox = self.current_rectangle.get_bbox()
                 bbox_exists = False
-                for bbox in self.confirmed_recs:
+                for bbox in self.confirmed_rectangles:
                     if current_bbox == bbox.get_bbox():
                         bbox_exists = True
                         break
@@ -257,12 +264,13 @@ class BBoxer:
                     print_msg("BBox already exists. Not saving.")
                 else:
                     # Save to confirmed.
-                    self.confirmed_recs.append(
-                        BBoxer._copy_rec(self.current_rec))
-                    bbox_str = BBoxer._bbox_str(self.current_rec.get_bbox())
+                    self.confirmed_rectangles.append(
+                        BBoxer._copy_rectangle(self.current_rectangle))
+                    bbox_str = BBoxer._bbox_str(
+                        self.current_rectangle.get_bbox())
                     print_msg(f"BBox saved: {bbox_str}.")
                     # Clear current.
-                    self.current_rec = None
+                    self.current_rectangle = None
                     # Hide all rectangle selectors.
                     for axis in self.axes:
                         self.axis_to_selector[axis].set_visible(False)
@@ -270,17 +278,17 @@ class BBoxer:
 
         elif event.key == "backspace":
             print_key(event.key)
-            if self.current_rec is not None:
-                bbox_str = BBoxer._bbox_str(self.current_rec.get_bbox())
-                self.current_rec = None
+            if self.current_rectangle is not None:
+                bbox_str = BBoxer._bbox_str(self.current_rectangle.get_bbox())
+                self.current_rectangle = None
                 # Hide all rectangle selectors.
                 for axis in self.axes:
                     self.axis_to_selector[axis].set_visible(False)
                 print_msg(f"Current BBox removed: {bbox_str},")
             else:
-                if len(self.confirmed_recs) > 0:
-                    last_rec = self.confirmed_recs.pop()
-                    bbox_str = BBoxer._bbox_str(last_rec.get_bbox())
+                if len(self.confirmed_rectangles) > 0:
+                    last_rectangle = self.confirmed_rectangles.pop()
+                    bbox_str = BBoxer._bbox_str(last_rectangle.get_bbox())
                     print_msg(f"Last BBox removed: {bbox_str}")
                 else:
                     print_msg("No BBox to remove.")
@@ -327,7 +335,7 @@ class BBoxer:
             x1, y1 = eclick.xdata, eclick.ydata
             x2, y2 = erelease.xdata, erelease.ydata
 
-            rect = plt.Rectangle(
+            rectanglet = plt.Rectangle(
                 (min(x1, x2), min(y1, y2)),
                 np.abs(x1 - x2),
                 np.abs(y1 - y2),
@@ -343,7 +351,7 @@ class BBoxer:
                     self.axis_to_selector[axis].set_visible(False)
 
             # Set current rectangle.
-            self.current_rec = rect
+            self.current_rectangle = rectanglet
 
             # Draw current rectangle and confirmed rectangles.
             self._redraw()
