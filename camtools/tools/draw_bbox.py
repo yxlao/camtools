@@ -234,6 +234,9 @@ class BBoxer:
             print_key(event.key)
             if self.current_rec is not None:
                 self.current_rec = None
+                # Hide all rectangle selectors.
+                for axis in self.axes:
+                    self.axis_to_selector[axis].set_visible(False)
                 print_msg("Current bounding box removed.")
             else:
                 if len(self.confirmed_recs) > 0:
