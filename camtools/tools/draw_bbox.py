@@ -10,6 +10,7 @@ from typing import List
 import tempfile
 from pathlib import Path
 import io
+import cv2
 
 
 class BBoxer:
@@ -116,34 +117,49 @@ class BBoxer:
         return new_rec
 
     @staticmethod
-    def _overlay_bbox_on_image(
+    def _overlay_recs_on_image(
         im: np.ndarray,
-        bboxes: List[matplotlib.patches.Rectangle],
+        recs: List[matplotlib.patches.Rectangle],
         linewidth: int,
         edgecolor: str,
     ) -> np.ndarray:
         """
-        Draw red rectangular bounding box on image.
+        Draw red rectangular bounding box on image using OpenCV.
 
         Args:
             im: Image to draw bounding box on.
             bboxes: List of Matplotlib bounding boxes to draw on image.
+            linewidth: Width of bounding box line, this is in pixels!
+            edgecolor: Color of bounding box line.
         """
-        fig, axis = plt.subplots()
-        axis.set_axis_off()
-        axis.imshow(im)
-        for bbox in bboxes:
-            axis.add_patch(
-                BBoxer._copy_rec(bbox,
-                                 linestyle="-",
-                                 linewidth=linewidth,
-                                 edgecolor=edgecolor))
-        with tempfile.NamedTemporaryFile(suffix=".png") as f:
-            plt.savefig(f.name, bbox_inches='tight')
-            im_dst = ct.io.imread(f.name, alpha_mode="ignore")
-        plt.close()
+        color_rgb = matplotlib.colors.to_rgb(edgecolor)
+        im_dst = im.copy()
+        for rec in recs:
+            bbox = rec.get_bbox()
+            cv2.rectangle(im_dst,
+                          pt1=(int(bbox.x0), int(bbox.y0)),
+                          pt2=(int(bbox.x1), int(bbox.y1)),
+                          color=color_rgb,
+                          thickness=linewidth,
+                          lineType=cv2.LINE_8)
 
-        return ct.image.crop_white_boarders(im_dst)
+        return im_dst
+
+        # fig, axis = plt.subplots()
+        # axis.set_axis_off()
+        # axis.imshow(im)
+        # for bbox in bboxes:
+        #     axis.add_patch(
+        #         BBoxer._copy_rec(bbox,
+        #                          linestyle="-",
+        #                          linewidth=linewidth,
+        #                          edgecolor=edgecolor))
+        # with tempfile.NamedTemporaryFile(suffix=".png") as f:
+        #     plt.savefig(f.name, bbox_inches='tight')
+        #     im_dst = ct.io.imread(f.name, alpha_mode="ignore")
+        # plt.close()
+
+        # return ct.image.crop_white_boarders(im_dst)
 
     def _redraw(self):
         # Clear all visible rectangles.
@@ -183,12 +199,22 @@ class BBoxer:
         If self.confirmed_recs is empty, then no bounding boxes will be drawn,
         but the images will still be saved.
         """
+        # Get the axis image shape in pixels.
+        im_shape = self.axes[0].get_images()[0].get_array().shape
+        axis = self.axes[0]
+        bbox = axis.get_window_extent().transformed(
+            self.fig.dpi_scale_trans.inverted())
+        width, height = bbox.width * self.fig.dpi, bbox.height * self.fig.dpi
+
+        # Get the linewidth in pixels.
+        linewidth = self.linewidth * self.fig.dpi / 72
+
         dst_paths = [
             p.parent / f"bbox_{p.stem}{p.suffix}" for p in self.src_paths
         ]
         for src_path, dst_path in zip(self.src_paths, dst_paths):
             im_src = ct.io.imread(src_path)
-            im_dst = BBoxer._overlay_bbox_on_image(im_src,
+            im_dst = BBoxer._overlay_recs_on_image(im_src,
                                                    self.confirmed_recs,
                                                    linewidth=self.linewidth,
                                                    edgecolor=self.edgecolor)
@@ -340,8 +366,8 @@ def main():
 
     bboxer = BBoxer()
     bboxer.add_paths([
-        camtools_dir / "assets" / "box.jpg",
-        camtools_dir / "assets" / "box_blender.jpg",
+        camtools_dir / "assets" / "box.png",
+        camtools_dir / "assets" / "box_blender.png",
     ])
     bboxer.run()
 
