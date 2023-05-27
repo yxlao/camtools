@@ -186,11 +186,15 @@ class BBoxer:
                 if bbox_exists:
                     print("Bounding box already exists. Not saving.")
                 else:
+                    # Save to confirmed.
                     self.confirmed_recs.append(
                         BBoxer._copy_rec(self.current_rec))
-                    self._redraw()
                     print(f"BBox saved: {self.current_rec.get_bbox()}.")
+                    # Clear current.
                     self.current_rec = None
+                    # Hide all rectangle selectors.
+                    for axis in self.axes:
+                        self.axis_to_selector[axis].set_visible(False)
             self._redraw()
 
         elif event.key == "escape":
