@@ -128,6 +128,9 @@ class BBoxer:
         return ct.image.crop_white_boarders(im_dst)
 
     def _redraw(self):
+        # Redraw the current figure.
+        self.fig.canvas.draw()
+
         # Clear all visible rectangles.
         for rec in self.visible_recs:
             rec.remove()
@@ -144,8 +147,6 @@ class BBoxer:
             for axis in self.axes:
                 rec_ = axis.add_patch(BBoxer._copy_rec(self.current_rec))
                 self.visible_recs.append(rec_)
-
-        self.fig.canvas.flush_events()
 
     def _save(self) -> None:
         """
@@ -191,6 +192,7 @@ class BBoxer:
                     print(f"BBox saved: {self.current_rec.get_bbox()}.")
                     self.current_rec = None
             self._redraw()
+
         elif event.key == "escape":
             print("[Keypress] Escape.")
             self._close()
