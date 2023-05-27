@@ -17,10 +17,10 @@ class BBoxer:
     Draw bounding boxes on images.
     """
 
-    def __init__(self, line_width=1, edge_color="r"):
+    def __init__(self, linewidth=1, edgecolor="r"):
         # Draw properties.
-        self.line_width = line_width
-        self.edge_color = edge_color
+        self.linewidth = linewidth
+        self.edgecolor = edgecolor
 
         # Input image paths.
         self.src_paths: List[Path] = []
@@ -94,21 +94,27 @@ class BBoxer:
 
     @staticmethod
     def _copy_rec(rec: matplotlib.patches.Rectangle,
-                  color=None) -> matplotlib.patches.Rectangle:
+                  linewidth: int = None,
+                  edgecolor=None) -> matplotlib.patches.Rectangle:
         new_rec = matplotlib.patches.Rectangle(
             xy=(rec.xy[0], rec.xy[1]),
             width=rec.get_width(),
             height=rec.get_height(),
-            linewidth=rec.get_linewidth(),
-            edgecolor=color if color is not None else rec.get_edgecolor(),
+            linewidth=linewidth
+            if linewidth is not None else rec.get_linewidth(),
+            edgecolor=edgecolor
+            if edgecolor is not None else rec.get_edgecolor(),
             facecolor=rec.get_facecolor(),
         )
         return new_rec
 
     @staticmethod
     def _overlay_bbox_on_image(
-            im: np.ndarray,
-            bboxes: List[matplotlib.patches.Rectangle]) -> np.ndarray:
+        im: np.ndarray,
+        bboxes: List[matplotlib.patches.Rectangle],
+        linewidth: int,
+        edgecolor: str,
+    ) -> np.ndarray:
         """
         Draw red rectangular bounding box on image.
 
@@ -120,7 +126,9 @@ class BBoxer:
         axis.set_axis_off()
         axis.imshow(im)
         for bbox in bboxes:
-            axis.add_patch(BBoxer._copy_rec(bbox))
+            axis.add_patch(
+                BBoxer._copy_rec(bbox, linewidth=linewidth,
+                                 edgecolor=edgecolor))
         with tempfile.NamedTemporaryFile(suffix=".png") as f:
             plt.savefig(f.name, bbox_inches='tight')
             im_dst = ct.io.imread(f.name, alpha_mode="ignore")
@@ -137,13 +145,19 @@ class BBoxer:
         # Draw confirmed rectangles.
         for rec in self.confirmed_recs:
             for axis in self.axes:
-                rec_ = axis.add_patch(BBoxer._copy_rec(rec, color="blue"))
+                rec_ = axis.add_patch(
+                    BBoxer._copy_rec(rec,
+                                     linewidth=self.linewidth,
+                                     edgecolor="blue"))
                 self.visible_recs.append(rec_)
 
         # Draw current rectangle.
         if self.current_rec is not None:
             for axis in self.axes:
-                rec_ = axis.add_patch(BBoxer._copy_rec(self.current_rec))
+                rec_ = axis.add_patch(
+                    BBoxer._copy_rec(self.current_rec,
+                                     linewidth=self.linewidth,
+                                     edgecolor=self.edgecolor))
                 self.visible_recs.append(rec_)
 
         # Ask matplotlib to redraw the current figure.
@@ -163,7 +177,10 @@ class BBoxer:
         ]
         for src_path, dst_path in zip(self.src_paths, dst_paths):
             im_src = ct.io.imread(src_path)
-            im_dst = BBoxer._overlay_bbox_on_image(im_src, self.confirmed_recs)
+            im_dst = BBoxer._overlay_bbox_on_image(im_src,
+                                                   self.confirmed_recs,
+                                                   linewidth=self.linewidth,
+                                                   edgecolor=self.edgecolor)
             ct.io.imwrite(dst_path, im_dst)
             print(f"Saved {dst_path}")
 
@@ -176,7 +193,7 @@ class BBoxer:
         def print_key(key):
             # Change the first letter to upper case.
             key = key[0].upper() + key[1:]
-            print(f"[Keypress] {key}.")
+            print(f"[Keypress] \"{key}\".")
 
         def print_msg(*args, **kwargs):
             # Simulate sprintf
@@ -226,6 +243,13 @@ class BBoxer:
                     print_msg("No bounding boxes to remove.")
             self._redraw()
 
+        elif event.key == "+" or event.key == "=":
+            print_key(event.key)
+            # increase self.linewidth
+            self.linewidth += 1
+            print_msg(f"Line width: {self.linewidth}")
+            self._redraw()
+
         elif event.key == "escape":
             print_key(event.key)
             self._close()
@@ -256,8 +280,8 @@ class BBoxer:
                 (min(x1, x2), min(y1, y2)),
                 np.abs(x1 - x2),
                 np.abs(y1 - y2),
-                linewidth=self.line_width,
-                edgecolor=self.edge_color,
+                linewidth=self.linewidth,
+                edgecolor=self.edgecolor,
                 facecolor='none',
             )
 
