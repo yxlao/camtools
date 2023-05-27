@@ -93,6 +93,10 @@ class BBoxer:
         plt.show()
 
     @staticmethod
+    def _bbox_str(bbox: matplotlib.transforms.Bbox) -> str:
+        return f"Bbox({bbox.x0:.2f}, {bbox.y0:.2f}, {bbox.x1:.2f}, {bbox.y1:.2f})"
+
+    @staticmethod
     def _copy_rec(rec: matplotlib.patches.Rectangle,
                   linestyle: str = None,
                   linewidth: int = None,
@@ -215,7 +219,7 @@ class BBoxer:
         if event.key == "enter":
             print_key(event.key)
             if self.current_rec is None:
-                print_msg("No new bounding box selected.")
+                print_msg("No new BBox selected.")
             else:
                 current_bbox = self.current_rec.get_bbox()
                 bbox_exists = False
@@ -224,12 +228,13 @@ class BBoxer:
                         bbox_exists = True
                         break
                 if bbox_exists:
-                    print_msg("Bounding box already exists. Not saving.")
+                    print_msg("BBox already exists. Not saving.")
                 else:
                     # Save to confirmed.
                     self.confirmed_recs.append(
                         BBoxer._copy_rec(self.current_rec))
-                    print_msg(f"BBox saved: {self.current_rec.get_bbox()}.")
+                    bbox_str = BBoxer._bbox_str(self.current_rec.get_bbox())
+                    print_msg(f"BBox saved: {bbox_str}.")
                     # Clear current.
                     self.current_rec = None
                     # Hide all rectangle selectors.
@@ -240,17 +245,19 @@ class BBoxer:
         elif event.key == "backspace":
             print_key(event.key)
             if self.current_rec is not None:
+                bbox_str = BBoxer._bbox_str(self.current_rec.get_bbox())
                 self.current_rec = None
                 # Hide all rectangle selectors.
                 for axis in self.axes:
                     self.axis_to_selector[axis].set_visible(False)
-                print_msg("Current bounding box removed.")
+                print_msg(f"Current BBox removed: {bbox_str},")
             else:
                 if len(self.confirmed_recs) > 0:
-                    self.confirmed_recs.pop()
-                    print_msg("Last bounding box removed.")
+                    last_rec = self.confirmed_recs.pop()
+                    bbox_str = BBoxer._bbox_str(last_rec.get_bbox())
+                    print_msg(f"Last BBox removed: {bbox_str}")
                 else:
-                    print_msg("No bounding boxes to remove.")
+                    print_msg("No BBox to remove.")
             self._redraw()
 
         elif event.key == "+" or event.key == "=":
