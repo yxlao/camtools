@@ -10,6 +10,7 @@ import numpy as np
 from matplotlib.widgets import RectangleSelector
 
 import camtools as ct
+import argparse
 
 
 class BBoxer:
@@ -72,6 +73,8 @@ class BBoxer:
 
         # Register fig and axes.
         self.fig, self.axes = plt.subplots(1, len(im_srcs))
+        if len(im_srcs) == 1:
+            self.axes = [self.axes]
         for i, (axis, im_src) in enumerate(zip(self.axes, im_srcs)):
             axis.imshow(im_src)
             axis.set_title(self.src_paths[i].name)
@@ -432,15 +435,43 @@ class BBoxer:
         )
 
 
-def main():
-    camtools_dir = Path(__file__).parent.parent.absolute()
+def instantiate_parser(parser):
+    parser.add_argument(
+        "inputs",
+        type=Path,
+        help="Input image paths.",
+        nargs="+",
+    )
+    return parser
+
+
+def entry_point(args):
+    if isinstance(args.inputs, list):
+        src_paths = args.inputs
+    elif isinstance(args.inputs, str):
+        src_paths = [args.inputs]
+    else:
+        raise ValueError(f"Invalid input type: {type(args.inputs)}")
 
     bboxer = BBoxer()
-    bboxer.add_paths([
-        camtools_dir / "assets" / "box.png",
-        camtools_dir / "assets" / "box_blender.png",
-    ])
+    bboxer.add_paths(src_paths)
     bboxer.run()
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser = instantiate_parser(parser)
+    args = parser.parse_args()
+    entry_point(args)
+
+    # Or, you can import the class and use it as a library.
+    # camtools_dir = Path(__file__).parent.parent.absolute()
+    # bboxer = BBoxer()
+    # bboxer.add_paths([
+    #     camtools_dir / "assets" / "box.png",
+    #     camtools_dir / "assets" / "box_blender.png",
+    # ])
+    # bboxer.run()
 
 
 if __name__ == "__main__":

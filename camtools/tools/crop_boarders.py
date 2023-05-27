@@ -18,7 +18,7 @@ def instantiate_parser(parser):
     parser.add_argument(
         "input",
         type=Path,
-        help="Input image path.",
+        help="Input image paths.",
         nargs="+",
     )
     parser.add_argument(
@@ -65,7 +65,7 @@ def instantiate_parser(parser):
     return parser
 
 
-def entry_point(parser, args):
+def entry_point(args):
     if args.pad_pixel < 0:
         raise ValueError(
             f"pad_pixel must be non-negative, but got {args.pad_pixel}")
@@ -221,7 +221,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser = instantiate_parser(parser)
     args = parser.parse_args()
-    entry_point(parser, args)
+    entry_point(args)
 
 
 if __name__ == "__main__":
