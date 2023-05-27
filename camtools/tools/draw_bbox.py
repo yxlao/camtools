@@ -117,33 +117,119 @@ class BBoxer:
         return new_rectangle
 
     @staticmethod
-    def _overlay_rectangle_on_image(
-        im: np.ndarray,
-        tl_xy: Tuple[int, int],
-        br_xy: Tuple[int, int],
-        linewidth: int,
-        edgecolor: str,
-    ) -> np.ndarray:
+    def _overlay_rectangle_on_image(im: np.ndarray,
+                                    tl_xy: Tuple[int, int],
+                                    br_xy: Tuple[int, int],
+                                    linewidth: int,
+                                    edgecolor: str,
+                                    squarecorners: bool = True) -> np.ndarray:
         """
         Draw red rectangletangular bounding box on image using OpenCV.
 
         Args:
-            im: Image to draw bounding box on.
+            im: Image to draw bounding box on. Must be float32.
             tl_xy: Top-left corner of bounding box, in (x, y), or (c, r).
                 If the thickness is larger than 1, this is the center of the line.
             br_xy: Bottom-right corner of bounding box, in (x, y), or (c, r).
                 If the thickness is larger than 1, this is the center of the line.
             linewidth: Width of bounding box line, this is in pixels!
             edgecolor: Color of bounding box line.
+            squarecorners: If True, draw square corners. If False, draw rounded
+                corners as opencv default.
         """
-        color_rgb = matplotlib.colors.to_rgb(edgecolor)
-        im_dst = im.copy()
-        cv2.rectangle(im_dst,
+
+        def fill_connected_component(mat, x, y):
+            """
+                Mat: (h, w) single channel float32 image.
+                    0.0: empty pixel.
+                    1.0: filled pixel.
+                    -1.0: invalid pixel.
+                x: x coordinate of pixel to start filling from.
+                y: y coordinate of pixel to start filling from.
+                """
+            mat = np.copy(mat)
+            # mat can only contain 0, -1, or 1.
+            assert np.all(np.isin(mat, [-1.0, 0.0, 1.0]))
+            # mat must be single channel.
+            assert mat.ndim == 2
+            # mat must be np.float32.
+            assert mat.dtype == np.float32
+            # Iterative DFS
+            stack = [(x, y)]
+            while len(stack) > 0:
+                x, y = stack.pop()
+                if mat[y, x] != 0.0:
+                    continue
+                mat[y, x] = 1.0
+                if x > 0:
+                    stack.append((x - 1, y))
+                if x < mat.shape[1] - 1:
+                    stack.append((x + 1, y))
+                if y > 0:
+                    stack.append((x, y - 1))
+                if y < mat.shape[0] - 1:
+                    stack.append((x, y + 1))
+            return mat
+
+        # Sanity checks.
+        if im.dtype != np.float32:
+            raise ValueError(f"Invalid image dtype {im.dtype}.")
+
+        w = im.shape[1]
+        h = im.shape[0]
+        im_mask = np.zeros((h, w), dtype=np.float32)
+
+        # Draw white lines on black im_mask. These lines have "rounded" corners.
+        # Later we will fill "rounded" corners to square corners.
+        cv2.rectangle(im_mask,
                       pt1=tl_xy,
                       pt2=br_xy,
-                      color=color_rgb,
+                      color=1.0,
                       thickness=linewidth,
                       lineType=cv2.LINE_8)
+
+        if squarecorners:
+            ys, xs = np.where(im_mask > 0.0)
+            if len(xs) == 0:
+                pass
+            else:
+                # 1. Find bounds of white pixels im_mask.
+                tl_bound = (np.min(xs), np.min(ys))  # Inclusive
+                br_bound = (np.max(xs), np.max(ys))  # Inclusive
+                # 2. Mark everything outside the bound as invalid: -1.
+                im_mask[:, :tl_bound[0]] = -1.0  # Left
+                im_mask[:, br_bound[0] + 1:] = -1.0  # Right
+                im_mask[:tl_bound[1], :] = -1.0  # Top
+                im_mask[br_bound[1] + 1:, :] = -1.0  # Bottom
+                # 3. Start from the 4 corners, fill connected components.
+                # This will only fill 0 pixels to 1.
+                im_mask = fill_connected_component(
+                    im_mask,
+                    tl_bound[0],
+                    tl_bound[1],
+                )
+                im_mask = fill_connected_component(
+                    im_mask,
+                    br_bound[0],
+                    tl_bound[1],
+                )
+                im_mask = fill_connected_component(
+                    im_mask,
+                    tl_bound[0],
+                    br_bound[1],
+                )
+                im_mask = fill_connected_component(
+                    im_mask,
+                    br_bound[0],
+                    br_bound[1],
+                )
+                # 4. Undo mask invalid pixels.
+                im_mask[im_mask == -1.0] = 0.0
+
+        # Draw im_mask on im_dst with the specified color.
+        color_rgb = matplotlib.colors.to_rgb(edgecolor)
+        im_dst = np.copy(im)
+        im_dst[im_mask == 1.0] = color_rgb
 
         return im_dst
 
@@ -357,24 +443,24 @@ class BBoxer:
 def main():
     camtools_dir = Path(__file__).parent.parent.absolute()
 
-    # bboxer = BBoxer()
-    # bboxer.add_paths([
-    #     camtools_dir / "assets" / "box.png",
-    #     camtools_dir / "assets" / "box_blender.png",
-    # ])
-    # bboxer.run()
+    bboxer = BBoxer()
+    bboxer.add_paths([
+        camtools_dir / "assets" / "box.png",
+        camtools_dir / "assets" / "box_blender.png",
+    ])
+    bboxer.run()
 
-    import pickle
-    with open("bbox.pkl", "rb") as f:
-        im, tl_xy, br_xy, linewidth, edgecolor = pickle.load(f)
+    # import pickle
+    # with open("bbox.pkl", "rb") as f:
+    #     im, tl_xy, br_xy, linewidth, edgecolor = pickle.load(f)
 
-    im = ct.io.imread("camtools/assets/box_blender.png")
-    im_dst = BBoxer._overlay_rectangle_on_image(im=im,
-                                                tl_xy=tl_xy,
-                                                br_xy=br_xy,
-                                                linewidth=linewidth,
-                                                edgecolor=edgecolor)
-    ct.io.imwrite("im_dst.png", im_dst)
+    # im = ct.io.imread("camtools/assets/box_blender.png")
+    # im_dst = BBoxer._overlay_rectangle_on_image(im=im,
+    #                                             tl_xy=tl_xy,
+    #                                             br_xy=br_xy,
+    #                                             linewidth=linewidth,
+    #                                             edgecolor=edgecolor)
+    # ct.io.imwrite("im_dst.png", im_dst)
 
 
 if __name__ == "__main__":
