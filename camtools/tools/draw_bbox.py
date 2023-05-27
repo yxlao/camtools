@@ -144,6 +144,7 @@ class BBoxer:
                       color=color_rgb,
                       thickness=linewidth,
                       lineType=cv2.LINE_8)
+
         return im_dst
 
     def _redraw(self):
@@ -356,12 +357,24 @@ class BBoxer:
 def main():
     camtools_dir = Path(__file__).parent.parent.absolute()
 
-    bboxer = BBoxer()
-    bboxer.add_paths([
-        camtools_dir / "assets" / "box.png",
-        camtools_dir / "assets" / "box_blender.png",
-    ])
-    bboxer.run()
+    # bboxer = BBoxer()
+    # bboxer.add_paths([
+    #     camtools_dir / "assets" / "box.png",
+    #     camtools_dir / "assets" / "box_blender.png",
+    # ])
+    # bboxer.run()
+
+    import pickle
+    with open("bbox.pkl", "rb") as f:
+        im, tl_xy, br_xy, linewidth, edgecolor = pickle.load(f)
+
+    im = ct.io.imread("camtools/assets/box_blender.png")
+    im_dst = BBoxer._overlay_rectangle_on_image(im=im,
+                                                tl_xy=tl_xy,
+                                                br_xy=br_xy,
+                                                linewidth=linewidth,
+                                                edgecolor=edgecolor)
+    ct.io.imwrite("im_dst.png", im_dst)
 
 
 if __name__ == "__main__":
