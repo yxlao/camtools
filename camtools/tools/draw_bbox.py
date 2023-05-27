@@ -128,9 +128,6 @@ class BBoxer:
         return ct.image.crop_white_boarders(im_dst)
 
     def _redraw(self):
-        # Redraw the current figure.
-        self.fig.canvas.draw()
-
         # Clear all visible rectangles.
         for rec in self.visible_recs:
             rec.remove()
@@ -147,6 +144,10 @@ class BBoxer:
             for axis in self.axes:
                 rec_ = axis.add_patch(BBoxer._copy_rec(self.current_rec))
                 self.visible_recs.append(rec_)
+
+        # Ask matplotlib to redraw the current figure.
+        # No need to call self.fig.canvas.flush_events().
+        self.fig.canvas.draw()
 
     def _save(self) -> None:
         """
