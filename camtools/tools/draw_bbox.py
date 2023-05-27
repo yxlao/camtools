@@ -273,13 +273,17 @@ class BBoxer:
         """
         # Get the axis image shape in pixels.
         im_shape = self.axes[0].get_images()[0].get_array().shape
+        im_height = im_shape[0]
+
         axis = self.axes[0]
         bbox = axis.get_window_extent().transformed(
             self.fig.dpi_scale_trans.inverted())
-        width, height = bbox.width * self.fig.dpi, bbox.height * self.fig.dpi
+        axis_height = bbox.height * self.fig.dpi
 
         # Get the linewidth in pixels.
-        linewidth_px = int(round(self.linewidth * self.fig.dpi / 72))
+        linewidth_px = self.linewidth * self.fig.dpi / 72.0
+        linewidth_px = linewidth_px / axis_height * im_height
+        linewidth_px = int(round(linewidth_px))
 
         dst_paths = [
             p.parent / f"bbox_{p.stem}{p.suffix}" for p in self.src_paths
