@@ -146,22 +146,6 @@ class BBoxer:
                       lineType=cv2.LINE_8)
         return im_dst
 
-        # fig, axis = plt.subplots()
-        # axis.set_axis_off()
-        # axis.imshow(im)
-        # for bbox in bboxes:
-        #     axis.add_patch(
-        #         BBoxer._copy_rectangle(bbox,
-        #                          linestyle="-",
-        #                          linewidth=linewidth,
-        #                          edgecolor=edgecolor))
-        # with tempfile.NamedTemporaryFile(suffix=".png") as f:
-        #     plt.savefig(f.name, bbox_inches='tight')
-        #     im_dst = ct.io.imread(f.name, alpha_mode="ignore")
-        # plt.close()
-
-        # return ct.image.crop_white_boarders(im_dst)
-
     def _redraw(self):
         # Clear all visible rectangles.
         for rectangle in self.visible_rectangles:
