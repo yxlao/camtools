@@ -1,16 +1,15 @@
+import io
+import sys
 from pathlib import Path
-import matplotlib.pyplot as plt
+from typing import List, Tuple
+
+import cv2
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib
 from matplotlib.widgets import RectangleSelector
-import sys
+
 import camtools as ct
-from typing import List, Tuple
-import tempfile
-from pathlib import Path
-import io
-import cv2
 
 
 class BBoxer:
@@ -27,11 +26,11 @@ class BBoxer:
         self.src_paths: List[Path] = []
 
         # Bounding boxes.
-        self.current_rectangle = None
-        self.confirmed_rectangles = []
-        self.visible_rectangles = []
+        self.current_rectangle = None  # Only one copy of this.
+        self.confirmed_rectangles = []  # Only one copy of this.
+        self.axes_owned_rectangles = []  # MRectangles are duplicated in axes.
 
-        # Other matplotlib objects.
+        # Matplotlib objects.
         self.fig = None
         self.axes = []
         self.axis_to_selector = dict()
@@ -49,14 +48,10 @@ class BBoxer:
         Run the bounding boxer.
 
         Steps:
-            1. Load images.
+            1. Load images. Images must have the same dimensions and 3 channels.
             2. Display images simultaneously, side-by-side.
             3. Interactively draw bounding boxes on images.
-            4. Save images with bounding boxes to disk.
-
-        Notes:
-            1. Currently the output path is hardcoded.
-            2. The input images must have the same dimensions and 3 channels.
+            4. Save images with bounding boxes to disk (with hard-coded paths).
         """
         if len(self.src_paths) == 0:
             raise ValueError("No input images.")
@@ -95,6 +90,9 @@ class BBoxer:
 
     @staticmethod
     def _bbox_str(bbox: matplotlib.transforms.Bbox) -> str:
+        """
+        A better matplotlib.transforms.Bbox.__str__()`
+        """
         return f"Bbox({bbox.x0:.2f}, {bbox.y0:.2f}, {bbox.x1:.2f}, {bbox.y1:.2f})"
 
     @staticmethod
@@ -102,6 +100,9 @@ class BBoxer:
                         linestyle: str = None,
                         linewidth: int = None,
                         edgecolor=None) -> matplotlib.patches.Rectangle:
+        """
+        Copy rectangle with new properties.
+        """
         new_rectangle = matplotlib.patches.Rectangle(
             xy=(rectangle.xy[0], rectangle.xy[1]),
             width=rectangle.get_width(),
@@ -203,41 +204,33 @@ class BBoxer:
                 im_mask[br_bound[1] + 1:, :] = -1.0  # Bottom
                 # 3. Start from the 4 corners, fill connected components.
                 # This will only fill 0 pixels to 1.
-                im_mask = fill_connected_component(
-                    im_mask,
-                    tl_bound[0],
-                    tl_bound[1],
-                )
-                im_mask = fill_connected_component(
-                    im_mask,
-                    br_bound[0],
-                    tl_bound[1],
-                )
-                im_mask = fill_connected_component(
-                    im_mask,
-                    tl_bound[0],
-                    br_bound[1],
-                )
-                im_mask = fill_connected_component(
-                    im_mask,
-                    br_bound[0],
-                    br_bound[1],
-                )
+                corners = [
+                    (tl_bound[0], tl_bound[1]),  # Top-left
+                    (br_bound[0], tl_bound[1]),  # Top-right
+                    (tl_bound[0], br_bound[1]),  # Bottom-left
+                    (br_bound[0], br_bound[1]),  # Bottom-right
+                ]
+                for corner in corners:
+                    im_mask = fill_connected_component(im_mask, corner[0],
+                                                       corner[1])
                 # 4. Undo mask invalid pixels.
                 im_mask[im_mask == -1.0] = 0.0
 
         # Draw im_mask on im_dst with the specified color.
-        color_rgb = matplotlib.colors.to_rgb(edgecolor)
         im_dst = np.copy(im)
+        color_rgb = matplotlib.colors.to_rgb(edgecolor)
         im_dst[im_mask == 1.0] = color_rgb
 
         return im_dst
 
     def _redraw(self):
+        """
+        Triggers redraw of all axis and rectangles.
+        """
         # Clear all visible rectangles.
-        for rectangle in self.visible_rectangles:
+        for rectangle in self.axes_owned_rectangles:
             rectangle.remove()
-        self.visible_rectangles.clear()
+        self.axes_owned_rectangles.clear()
 
         # Draw confirmed rectangles.
         for rectangle in self.confirmed_rectangles:
@@ -247,7 +240,7 @@ class BBoxer:
                                            linestyle="-",
                                            linewidth=self.linewidth,
                                            edgecolor=self.edgecolor))
-                self.visible_rectangles.append(rectangle_)
+                self.axes_owned_rectangles.append(rectangle_)
 
         # Draw current rectangle.
         if self.current_rectangle is not None:
@@ -257,7 +250,7 @@ class BBoxer:
                                            linestyle="--",
                                            linewidth=self.linewidth,
                                            edgecolor=self.edgecolor))
-                self.visible_rectangles.append(rectangle_)
+                self.axes_owned_rectangles.append(rectangle_)
 
         # Ask matplotlib to redraw the current figure.
         # No need to call self.fig.canvas.flush_events().
@@ -268,8 +261,8 @@ class BBoxer:
         Save images with bounding boxes to disk. This function is called by the
         matplotlib event handler when the figure is closed.
 
-        If self.confirmed_rectangles is empty, then no bounding boxes will be drawn,
-        but the images will still be saved.
+        If self.confirmed_rectangles is empty, then no bounding boxes will be
+        drawn, but the images will still be saved.
         """
         # Get the axis image shape in pixels.
         im_shape = self.axes[0].get_images()[0].get_array().shape
@@ -323,7 +316,6 @@ class BBoxer:
             prefix = " " * len("[Keypress] ")
             print(f"{prefix}{msg}", end="")
 
-        # Check if enter is pressed.
         if event.key == "enter":
             print_key(event.key)
             if self.current_rectangle is None:
@@ -350,7 +342,6 @@ class BBoxer:
                     for axis in self.axes:
                         self.axis_to_selector[axis].set_visible(False)
             self._redraw()
-
         elif event.key == "backspace":
             print_key(event.key)
             if self.current_rectangle is not None:
@@ -368,13 +359,11 @@ class BBoxer:
                 else:
                     print_msg("No BBox to remove.")
             self._redraw()
-
         elif event.key == "+" or event.key == "=":
             print_key(event.key)
             self.linewidth += 1
             print_msg(f"Line width increased to: {self.linewidth}")
             self._redraw()
-
         elif event.key == "-" or event.key == "_":
             print_key(event.key)
             if self.linewidth > 1:
@@ -383,7 +372,6 @@ class BBoxer:
             else:
                 print_msg(f"Line width already at minimum: {self.linewidth}")
             self._redraw()
-
         elif event.key == "escape":
             print_key(event.key)
             self._close()
@@ -453,18 +441,6 @@ def main():
         camtools_dir / "assets" / "box_blender.png",
     ])
     bboxer.run()
-
-    # import pickle
-    # with open("bbox.pkl", "rb") as f:
-    #     im, tl_xy, br_xy, linewidth, edgecolor = pickle.load(f)
-
-    # im = ct.io.imread("camtools/assets/box_blender.png")
-    # im_dst = BBoxer._overlay_rectangle_on_image(im=im,
-    #                                             tl_xy=tl_xy,
-    #                                             br_xy=br_xy,
-    #                                             linewidth=linewidth,
-    #                                             edgecolor=edgecolor)
-    # ct.io.imwrite("im_dst.png", im_dst)
 
 
 if __name__ == "__main__":
