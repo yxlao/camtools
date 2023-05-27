@@ -9,6 +9,7 @@ import camtools as ct
 from typing import List
 import tempfile
 from pathlib import Path
+import io
 
 
 class BBoxer:
@@ -172,11 +173,25 @@ class BBoxer:
         """
         sys.stdout.flush()
 
+        def print_key(key):
+            # Change the first letter to upper case.
+            key = key[0].upper() + key[1:]
+            print(f"[Keypress] {key}.")
+
+        def print_msg(*args, **kwargs):
+            # Simulate sprintf
+            string_io = io.StringIO()
+            print(*args, file=string_io, **kwargs)
+            msg = string_io.getvalue()
+            string_io.close()
+            prefix = " " * len("[Keypress] ")
+            print(f"{prefix}{msg}", end="")
+
         # Check if enter is pressed.
         if event.key == "enter":
-            print("[Keypress] Enter.")
+            print_key(event.key)
             if self.current_rec is None:
-                print("No new bounding box selected.")
+                print_msg("No new bounding box selected.")
             else:
                 current_bbox = self.current_rec.get_bbox()
                 bbox_exists = False
@@ -185,12 +200,12 @@ class BBoxer:
                         bbox_exists = True
                         break
                 if bbox_exists:
-                    print("Bounding box already exists. Not saving.")
+                    print_msg("Bounding box already exists. Not saving.")
                 else:
                     # Save to confirmed.
                     self.confirmed_recs.append(
                         BBoxer._copy_rec(self.current_rec))
-                    print(f"BBox saved: {self.current_rec.get_bbox()}.")
+                    print_msg(f"BBox saved: {self.current_rec.get_bbox()}.")
                     # Clear current.
                     self.current_rec = None
                     # Hide all rectangle selectors.
@@ -198,21 +213,22 @@ class BBoxer:
                         self.axis_to_selector[axis].set_visible(False)
             self._redraw()
 
-        elif event.key == "escape":
-            print("[Keypress] Escape.")
-            self._close()
         elif event.key == "backspace":
-            print("[Keypress] Backspace.")
+            print_key(event.key)
             if self.current_rec is not None:
                 self.current_rec = None
-                print("Current bounding box removed.")
+                print_msg("Current bounding box removed.")
             else:
                 if len(self.confirmed_recs) > 0:
                     self.confirmed_recs.pop()
-                    print("Last bounding box removed.")
+                    print_msg("Last bounding box removed.")
                 else:
-                    print("No bounding boxes to remove.")
+                    print_msg("No bounding boxes to remove.")
             self._redraw()
+
+        elif event.key == "escape":
+            print_key(event.key)
+            self._close()
 
     def _close(self):
         """
