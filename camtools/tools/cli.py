@@ -28,7 +28,7 @@ def main():
     # ct crop-boarders
     sub_parser = sub_parsers.add_parser(
         "crop-boarders",
-        help="Crop boarders of images. Example usage:\n"
+        help="Crop boarders of images.\n"
         "```\n"
         "ct crop-boarders *.png --pad_pixel 10 --skip_cropped --same_crop\n"
         "```",
@@ -40,7 +40,7 @@ def main():
     # ct draw-bboxes a.png b.png
     sub_parser = sub_parsers.add_parser(
         "draw-bboxes",
-        help="Draw bounding boxes on images. Example usage:\n"
+        help="Draw bounding boxes on images.\n"
         "```\n"
         "ct draw-bboxes path/to/a.png\n"
         "ct draw-bboxes path/to/a.png path/to/b.png\n"

@@ -54,6 +54,8 @@ class BBoxer:
             3. Interactively draw bounding boxes on images.
             4. Save images with bounding boxes to disk (with hard-coded paths).
         """
+        BBoxer._print_help_message()
+
         if len(self.src_paths) == 0:
             raise ValueError("No input images.")
 
@@ -264,9 +266,13 @@ class BBoxer:
         Save images with bounding boxes to disk. This function is called by the
         matplotlib event handler when the figure is closed.
 
-        If self.confirmed_rectangles is empty, then no bounding boxes will be
-        drawn, but the images will still be saved.
+        If self.confirmed_rectangles is empty, then no image will be saved.
         """
+        if len(self.confirmed_rectangles) == 0:
+            print("Make sure to press Enter to confirm bounding boxes.")
+            print("No bounding box to save. Exiting.")
+            return
+
         # Get the axis image shape in pixels.
         im_shape = self.axes[0].get_images()[0].get_array().shape
         im_height = im_shape[0]
@@ -322,7 +328,7 @@ class BBoxer:
         if event.key == "enter":
             print_key(event.key)
             if self.current_rectangle is None:
-                print_msg("No new BBox selected.")
+                print_msg("No new bounding boxes selected.")
             else:
                 current_bbox = self.current_rectangle.get_bbox()
                 bbox_exists = False
@@ -331,14 +337,14 @@ class BBoxer:
                         bbox_exists = True
                         break
                 if bbox_exists:
-                    print_msg("BBox already exists. Not saving.")
+                    print_msg("Bounding box already exists. Not saving.")
                 else:
                     # Save to confirmed.
                     self.confirmed_rectangles.append(
                         BBoxer._copy_rectangle(self.current_rectangle))
                     bbox_str = BBoxer._bbox_str(
                         self.current_rectangle.get_bbox())
-                    print_msg(f"BBox saved: {bbox_str}.")
+                    print_msg(f"Bounding box saved: {bbox_str}.")
                     # Clear current.
                     self.current_rectangle = None
                     # Hide all rectangle selectors.
@@ -353,14 +359,14 @@ class BBoxer:
                 # Hide all rectangle selectors.
                 for axis in self.axes:
                     self.axis_to_selector[axis].set_visible(False)
-                print_msg(f"Current BBox removed: {bbox_str},")
+                print_msg(f"Current bounding box removed: {bbox_str},")
             else:
                 if len(self.confirmed_rectangles) > 0:
                     last_rectangle = self.confirmed_rectangles.pop()
                     bbox_str = BBoxer._bbox_str(last_rectangle.get_bbox())
-                    print_msg(f"Last BBox removed: {bbox_str}")
+                    print_msg(f"Last bounding box removed: {bbox_str}")
                 else:
-                    print_msg("No BBox to remove.")
+                    print_msg("No bounding box to remove.")
             self._redraw()
         elif event.key == "+" or event.key == "=":
             print_key(event.key)
@@ -433,6 +439,16 @@ class BBoxer:
             spancoords='pixels',
             interactive=True,
         )
+
+    @staticmethod
+    def _print_help_message():
+        """
+        Print help messages of keyboard callbacks.
+        """
+        print("Enter    : Save current bounding box.")
+        print("Backspace: Remove current bounding box.")
+        print("+ or =   : Increase line width.")
+        print("- or _   : Decrease line width.")
 
 
 def instantiate_parser(parser):
