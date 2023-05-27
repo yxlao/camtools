@@ -248,9 +248,17 @@ class BBoxer:
 
         elif event.key == "+" or event.key == "=":
             print_key(event.key)
-            # increase self.linewidth
             self.linewidth += 1
-            print_msg(f"Line width: {self.linewidth}")
+            print_msg(f"Line width increased to: {self.linewidth}")
+            self._redraw()
+
+        elif event.key == "-" or event.key == "_":
+            print_key(event.key)
+            if self.linewidth > 1:
+                self.linewidth -= 1
+                print_msg(f"Line width decreased to: {self.linewidth}")
+            else:
+                print_msg(f"Line width already at minimum: {self.linewidth}")
             self._redraw()
 
         elif event.key == "escape":
