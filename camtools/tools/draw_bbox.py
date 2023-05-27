@@ -17,7 +17,7 @@ class BBoxer:
     Draw bounding boxes on images.
     """
 
-    def __init__(self, linewidth=1, edgecolor="r"):
+    def __init__(self, linewidth=1, edgecolor="red"):
         # Draw properties.
         self.linewidth = linewidth
         self.edgecolor = edgecolor
@@ -94,12 +94,15 @@ class BBoxer:
 
     @staticmethod
     def _copy_rec(rec: matplotlib.patches.Rectangle,
+                  linestyle: str = None,
                   linewidth: int = None,
                   edgecolor=None) -> matplotlib.patches.Rectangle:
         new_rec = matplotlib.patches.Rectangle(
             xy=(rec.xy[0], rec.xy[1]),
             width=rec.get_width(),
             height=rec.get_height(),
+            linestyle=linestyle
+            if linestyle is not None else rec.get_linestyle(),
             linewidth=linewidth
             if linewidth is not None else rec.get_linewidth(),
             edgecolor=edgecolor
@@ -127,7 +130,9 @@ class BBoxer:
         axis.imshow(im)
         for bbox in bboxes:
             axis.add_patch(
-                BBoxer._copy_rec(bbox, linewidth=linewidth,
+                BBoxer._copy_rec(bbox,
+                                 linestyle="-",
+                                 linewidth=linewidth,
                                  edgecolor=edgecolor))
         with tempfile.NamedTemporaryFile(suffix=".png") as f:
             plt.savefig(f.name, bbox_inches='tight')
@@ -147,8 +152,9 @@ class BBoxer:
             for axis in self.axes:
                 rec_ = axis.add_patch(
                     BBoxer._copy_rec(rec,
+                                     linestyle="-",
                                      linewidth=self.linewidth,
-                                     edgecolor="blue"))
+                                     edgecolor=self.edgecolor))
                 self.visible_recs.append(rec_)
 
         # Draw current rectangle.
@@ -156,6 +162,7 @@ class BBoxer:
             for axis in self.axes:
                 rec_ = axis.add_patch(
                     BBoxer._copy_rec(self.current_rec,
+                                     linestyle="--",
                                      linewidth=self.linewidth,
                                      edgecolor=self.edgecolor))
                 self.visible_recs.append(rec_)
