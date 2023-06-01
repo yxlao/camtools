@@ -90,10 +90,11 @@ def imwrite_depth(im_path, im, depth_scale=1000.0):
 
 def imread(im_path, alpha_mode=None):
     """
-    Read image, with no surprises. Float32 image [0, 1] will be returned.
-    The input image must be stored in uint8 format. If you're reading a depth
-    uint16 image, use imread_depth() instead.
-
+    Read image, with no surprises.
+    - Input : uint8 (divide by 255) or uint16 (divide by 65535) image.
+              If you're reading a depth uint16 image, use imread_depth() instead.
+    - Return: float32, RGB, range [0, 1] image will be returned.
+    
     Args:
         im_path: Path to image.
         alpha_mode: Specifies how to handle alpha channel.
@@ -125,6 +126,8 @@ def imread(im_path, alpha_mode=None):
     # Handle dtypes.
     if im.dtype == np.uint8:
         im = im.astype(np.float32) / 255.0
+    elif im.dtype == np.uint16:
+        im = im.astype(np.float32) / 65535.0
     else:
         raise ValueError(f"Unsupported image dtype: {im.dtype}")
 
