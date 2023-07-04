@@ -168,16 +168,16 @@ def im_depth_to_im_points(im_depth, K, T):
     return points
 
 
-def im_color_im_depth_to_colors_points(im_color, im_depth, K, T):
+def im_depth_im_color_to_points_colors(im_depth, im_color, K, T):
     """
-    Convert color and depth image to a colored point cloud. Assumes valid depths
+    Convert depth and color image to a colored point cloud. Assumes valid depths
     > 0 and < inf. Invalid depths are ignored. The depth image should already be
     in world scale. That is, each pixel value represents the distance between
     the camera center and the point in meters.
 
     Args:
-        im_color: color image (H, W, 3), float32/float64, in [0, 1].
         im_depth: depth image (H, W), float32, already in world scale.
+        im_color: color image (H, W, 3), float32/float64, in [0, 1].
         K: intrinsics (3, 3)
         T: extrinsics (4, 4)
 
