@@ -98,8 +98,9 @@ def apply_cropping_padding(
     if not src_im.ndim == 3:
         raise ValueError(f"src_im must be (H, W, 3), but got {src_im.shape}")
 
+    h, w, _, = src_im.shape
     crop_u, crop_d, crop_l, crop_r = cropping
-    dst_im = src_im[crop_u:-crop_d, crop_l:-crop_r, :]
+    dst_im = src_im[crop_u:h - crop_d, crop_l:w - crop_r, :]
     pad_u, pad_d, pad_l, pad_r = padding
     dst_im = np.pad(
         dst_im,
