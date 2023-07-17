@@ -79,6 +79,50 @@ def mesh_to_depth(mesh, K, T, height, width):
     return im_depth
 
 
+def mesh_to_depths(mesh, Ks, Ts, height, width):
+    """
+    Cast mesh to depth image given camera parameters and image dimensions.
+    Same as mesh_to_depth, but for multiple cameras.
+
+    Args:
+        mesh: Open3D mesh.
+        Ks: (N, 3, 3) array, camera intrinsic matrices.
+        Ts: (N, 4, 4) array, camera extrinsic matrices.
+        height: int, image height.
+        width: int, image width.
+
+    Return:
+        (N, height, width) array, float32, representing depth image. Invalid
+        depth is set to np.inf.
+    """
+    for K in Ks:
+        sanity.assert_K(K)
+    for T in Ts:
+        sanity.assert_T(T)
+
+    t_mesh = o3d.t.geometry.TriangleMesh(
+        vertex_positions=np.asarray(mesh.vertices).astype(np.float32),
+        triangle_indices=np.asarray(mesh.triangles),
+    )
+    scene = o3d.t.geometry.RaycastingScene()
+    scene.add_triangles(t_mesh)
+
+    im_depths = []
+    for K, T in zip(Ks, Ts):
+        rays = o3d.t.geometry.RaycastingScene.create_rays_pinhole(
+            intrinsic_matrix=K,
+            extrinsic_matrix=T,
+            width_px=width,
+            height_px=height,
+        )
+        ans = scene.cast_rays(rays)
+        im_depth = ans['t_hit'].numpy()
+        im_depths.append(im_depth)
+    im_depths = np.stack(im_depths, axis=0)
+
+    return im_depths
+
+
 def mesh_to_mask(mesh, K, T, height, width):
     """
     Cast mesh to mask image given camera parameters and image dimensions.
