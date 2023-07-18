@@ -13,7 +13,7 @@ def main():
 
     status = setup(
         name="camtools",
-        description="Camtools: Camera Tools for Computer Vision.",
+        description="CamTools: Camera Tools for Computer Vision.",
         packages=["camtools"],
         cmdclass=cmdclass,
         entry_points=entry_points,

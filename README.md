@@ -1,27 +1,12 @@
-# CamTools
+# CamTools: Camera Tools for Computer Vision
 
-Camtools: camera tools for computer vision. Useful for plotting, converting,
-projecting, and ray casting with camera parameters.
+CamTools is useful for plotting, converting, projecting, ray casting, and more
+with camera parameters. It follows the camera coordinate system with clear and
+easy-to-use APIs.
 
 <a href="https://github.com/yxlao/camtools/actions/workflows/formatter.yml">
 <img src="https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg" alt="Formatter">
 </a>
-
-## Installation
-
-```bash
-# Option 1: install from pip.
-pip install camtools
-
-# Option 2: install from git.
-pip install git+https://github.com/yxlao/camtools.git
-
-# Option 3: install from source.
-git clone https://github.com/yxlao/camtools.git
-cd camtools
-pip install -e .  # Dev mode, if you want to modify camtools.
-pip install .     # Install mode, if you want to use camtools only.
-```
 
 ## What can you do with CamTools?
 
@@ -55,7 +40,7 @@ pip install .     # Install mode, if you want to use camtools only.
    pixels = ct.project.points_to_pixel(points, K, T)
 
    # Back-project depth image ot 3D points.
-   points = ct.project.im_depth_to_points(depth, K, T)
+   points = ct.project.im_depth_to_points(im_depth, K, T)
 
    # Ray cast a triangle mesh to depth image.
    im_depth = ct.raycast.mesh_to_depths(mesh, Ks, Ts, height, width)
@@ -63,26 +48,25 @@ pip install .     # Install mode, if you want to use camtools only.
    # And more...
    ```
 
-4. Image I/O and depth I/O with no surprises.
+4. Image and depth I/O with no surprises.
+
+   Strict type checks and range checks are enforced. The image and depth I/O
+   APIs are specifically designed to solve the following pain points:
+
+   - Is my image of type `float32` or `uint8`?
+   - Does it have range `[0, 1]` or `[0, 255]`?
+   - Is it RGB or BGR?
+   - Do my image have an alpha channel?
+   - When saving depth image as integer-based `.png`, is it correctly scaled?
 
    ```python
    ct.io.imread()
    ct.io.imwrite()
-
    ct.io.imread_detph()
    ct.io.imwrite_depth()
    ```
 
-   Strict type checks and range checks are enforced. These APIs are specifically
-   designed to solve the following pain points:
-
-   - Is my image `float32` or `uint8`?
-   - Does it has range `[0, 1]` or `[0, 255]`?
-   - Is it RGB or BGR?
-   - Do my image have alpha channel?
-   - When saving depth image as integer-based `.png`, is it correctly scaled?
-
-5. Useful command-line tools (run in terminal).
+5. Command-line tools `ct` (runs in terminal).
 
    ```bash
    # Crop image boarders.
@@ -91,7 +75,7 @@ pip install .     # Install mode, if you want to use camtools only.
    # Draw synchronized bounding boxes interactively.
    ct draw-bboxes path/to/a.png path/to/b.png
 
-   # For more help.
+   # For more command-line tools.
    ct --help
    ```
 
@@ -105,13 +89,29 @@ pip install .     # Install mode, if you want to use camtools only.
    - Points normalization.
    - ...
 
-## Camera conventions
+## Installation
+
+```bash
+# Option 1: install from pip.
+pip install camtools
+
+# Option 2: install from git.
+pip install git+https://github.com/yxlao/camtools.git
+
+# Option 3: install from source.
+git clone https://github.com/yxlao/camtools.git
+cd camtools
+pip install -e .  # Dev mode, if you want to modify camtools.
+pip install .     # Install mode, if you want to use camtools only.
+```
+
+## Camera coordinate system
+
+We follow the standard OpenCV-style camera coordinate system as shown below.
 
 <p align="center">
    <img src="./camtools/assets/camera_coordinates.svg" width="360" />
 </p>
-
-We follow the standard pinhole camera model:
 
 - **Camera coordinate:** right-handed, with $Z$ pointing away from the camera
   towards the view direction and $Y$ axis pointing down. Note that this is
@@ -119,11 +119,11 @@ We follow the standard pinhole camera model:
   view direction and the $Y$ axis points up.
 - **Image coordinate:** starts from the top-left corner of the image, with $x$
   pointing right (corresponding to the image width) and $y$ pointing down
-  (corresponding to the image height). This is also consistent with OpenCV, but
-  pay attention that the 0-th dimension in the image array is the height (i.e.,
-  $y$) and the 1-th dimension is the width (i.e., $x$). That is:
-  - $x$ <=> width <=> column <=> the 1-th dimension
-  - $y$ <=> height <=> row <=> the 0-th dimension
+  (corresponding to the image height). This is consistent with OpenCV. Pay
+  attention that the 0th dimension in the image array is the height (i.e., $y$)
+  and the 1st dimension is the width (i.e., $x$). That is:
+  - $x$ <=> $u$ <=> width <=> column <=> the 1st dimension
+  - $y$ <=> $v$ <=> height <=> row <=> the 0th dimension
 - `K`: `(3, 3)` camera intrinsic matrix.
   ```python
   K = [[fx,  s, cx],
@@ -153,7 +153,7 @@ We follow the standard pinhole camera model:
   - `R` is a rotation matrix. It is an orthogonal matrix with determinant 1, as
     rotations preserve volume and orientation.
     - `R.T == np.linalg.inv(R)`
-    - `np.linalg.norm(R @ x) == np.linalg.norm(x)`, where `x` is a `(3, )` vector.
+    - `np.linalg.norm(R @ x) == np.linalg.norm(x)`, where `x` is a `(3,)` vector.
 - `t`: `(3,)` translation vector.
   ```python
   t = T[:3, 3]
