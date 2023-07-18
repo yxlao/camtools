@@ -17,12 +17,12 @@ def pad_0001(array):
     """
     if array.ndim == 2:
         if not array.shape == (3, 4):
-            raise ValueError(
-                f"Expected array of shape (3, 4), but got {array.shape}.")
+            raise ValueError(f"Expected array of shape (3, 4), but got {array.shape}.")
     elif array.ndim == 3:
         if not array.shape[-2:] == (3, 4):
             raise ValueError(
-                f"Expected array of shape (N, 3, 4), but got {array.shape}.")
+                f"Expected array of shape (N, 3, 4), but got {array.shape}."
+            )
     else:
         raise ValueError(
             f"Expected array of shape (3, 4) or (N, 3, 4), but got {array.shape}."
@@ -30,14 +30,12 @@ def pad_0001(array):
 
     if torch.is_tensor(array):
         if array.ndim == 2:
-            bottom = torch.tensor([0, 0, 0, 1],
-                                  dtype=array.dtype,
-                                  device=array.device)
+            bottom = torch.tensor([0, 0, 0, 1], dtype=array.dtype, device=array.device)
             return torch.cat([array, bottom[None, :]], dim=0)
         elif array.ndim == 3:
-            bottom_single = torch.tensor([0, 0, 0, 1],
-                                         dtype=array.dtype,
-                                         device=array.device)
+            bottom_single = torch.tensor(
+                [0, 0, 0, 1], dtype=array.dtype, device=array.device
+            )
             bottom = bottom_single[None, None, :].expand(array.shape[0], 1, 4)
             return torch.cat([array, bottom], dim=-2)
     else:
@@ -66,12 +64,12 @@ def rm_pad_0001(array, check_vals=False):
     # Check shapes.
     if array.ndim == 2:
         if not array.shape == (4, 4):
-            raise ValueError(
-                f"Expected array of shape (4, 4), but got {array.shape}.")
+            raise ValueError(f"Expected array of shape (4, 4), but got {array.shape}.")
     elif array.ndim == 3:
         if not array.shape[-2:] == (4, 4):
             raise ValueError(
-                f"Expected array of shape (N, 4, 4), but got {array.shape}.")
+                f"Expected array of shape (N, 4, 4), but got {array.shape}."
+            )
     else:
         raise ValueError(
             f"Expected array of shape (4, 4) or (N, 4, 4), but got {array.shape}."
@@ -83,15 +81,16 @@ def rm_pad_0001(array, check_vals=False):
             if array.ndim == 2:
                 bottom = array[3, :]
                 if not torch.allclose(
-                        bottom, torch.tensor([0, 0, 0, 1], dtype=array.dtype)):
+                    bottom, torch.tensor([0, 0, 0, 1], dtype=array.dtype)
+                ):
                     raise ValueError(
                         f"Expected bottom row to be [0, 0, 0, 1], but got {bottom}."
                     )
             elif array.ndim == 3:
                 bottom = array[:, 3:4, :]
-                expected_bottom = torch.tensor([0, 0, 0, 1],
-                                               dtype=array.dtype).expand(
-                                                   array.shape[0], 1, 4)
+                expected_bottom = torch.tensor([0, 0, 0, 1], dtype=array.dtype).expand(
+                    array.shape[0], 1, 4
+                )
                 if not torch.allclose(bottom, expected_bottom):
                     raise ValueError(
                         f"Expected bottom row to be {expected_bottom}, but got {bottom}."
@@ -107,8 +106,7 @@ def rm_pad_0001(array, check_vals=False):
                     )
             elif array.ndim == 3:
                 bottom = array[:, 3:4, :]
-                expected_bottom = np.broadcast_to([0, 0, 0, 1],
-                                                  (array.shape[0], 1, 4))
+                expected_bottom = np.broadcast_to([0, 0, 0, 1], (array.shape[0], 1, 4))
                 if not np.allclose(bottom, expected_bottom):
                     raise ValueError(
                         f"Expected bottom row to be {expected_bottom}, but got {bottom}."
@@ -289,21 +287,27 @@ def R_C_to_t(R, C):
 
 
 def roll_pitch_yaw_to_R(roll, pitch, yaw):
-    rx_roll = np.array([
-        [1, 0, 0],
-        [0, np.cos(roll), -np.sin(roll)],
-        [0, np.sin(roll), np.cos(roll)],
-    ])
-    ry_pitch = np.array([
-        [np.cos(pitch), 0, np.sin(pitch)],
-        [0, 1, 0],
-        [-np.sin(pitch), 0, np.cos(pitch)],
-    ])
-    rz_yaw = np.array([
-        [np.cos(yaw), -np.sin(yaw), 0],
-        [np.sin(yaw), np.cos(yaw), 0],
-        [0, 0, 1],
-    ])
+    rx_roll = np.array(
+        [
+            [1, 0, 0],
+            [0, np.cos(roll), -np.sin(roll)],
+            [0, np.sin(roll), np.cos(roll)],
+        ]
+    )
+    ry_pitch = np.array(
+        [
+            [np.cos(pitch), 0, np.sin(pitch)],
+            [0, 1, 0],
+            [-np.sin(pitch), 0, np.cos(pitch)],
+        ]
+    )
+    rz_yaw = np.array(
+        [
+            [np.cos(yaw), -np.sin(yaw), 0],
+            [np.sin(yaw), np.cos(yaw), 0],
+            [0, 0, 1],
+        ]
+    )
     R = rz_yaw @ ry_pitch @ rx_roll
     return R
 

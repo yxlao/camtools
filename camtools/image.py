@@ -5,8 +5,7 @@ from . import colormap
 from typing import Tuple, List
 
 
-def crop_white_boarders(
-    im: np.array, padding: Tuple[int] = (0, 0, 0, 0)) -> np.array:
+def crop_white_boarders(im: np.array, padding: Tuple[int] = (0, 0, 0, 0)) -> np.array:
     """
     Crop white boarders from an image.
 
@@ -98,9 +97,13 @@ def apply_cropping_padding(
     if not src_im.ndim == 3:
         raise ValueError(f"src_im must be (H, W, 3), but got {src_im.shape}")
 
-    h, w, _, = src_im.shape
+    (
+        h,
+        w,
+        _,
+    ) = src_im.shape
     crop_u, crop_d, crop_l, crop_r = cropping
-    dst_im = src_im[crop_u:h - crop_d, crop_l:w - crop_r, :]
+    dst_im = src_im[crop_u : h - crop_d, crop_l : w - crop_r, :]
     pad_u, pad_d, pad_l, pad_r = padding
     dst_im = np.pad(
         dst_im,
@@ -179,10 +182,7 @@ def get_post_croppings_paddings_shapes(src_shapes, croppings, paddings):
     return dst_shapes
 
 
-def overlay_mask_on_rgb(im_rgb,
-                        im_mask,
-                        overlay_alpha=0.4,
-                        overlay_color=[0, 0, 1]):
+def overlay_mask_on_rgb(im_rgb, im_mask, overlay_alpha=0.4, overlay_color=[0, 0, 1]):
     """
     Overlay mask on to of RGB image.
 
@@ -257,8 +257,7 @@ def ndc_coords_to_pixels(ndc_coords, im_size_wh, align_corners=False):
         dst_tl = np.array([-0.5, -0.5], dtype=dtype)
         dst_br = np.array([w - 0.5, h - 0.5], dtype=dtype)
 
-    dst_pixels = (ndc_coords - src_tl) / (src_br - src_tl) * (dst_br -
-                                                              dst_tl) + dst_tl
+    dst_pixels = (ndc_coords - src_tl) / (src_br - src_tl) * (dst_br - dst_tl) + dst_tl
 
     return dst_pixels
 
@@ -353,10 +352,7 @@ def recover_rotated_pixels(dst_pixels, src_wh, ccw_degrees):
         dst_pixels_recovered = np.stack([h - 1 - src_r, src_c], axis=1)
     else:
         raise ValueError(f"Invalid rotation angle: {ccw_degrees}.")
-    np.testing.assert_allclose(dst_pixels,
-                               dst_pixels_recovered,
-                               rtol=1e-5,
-                               atol=1e-5)
+    np.testing.assert_allclose(dst_pixels, dst_pixels_recovered, rtol=1e-5, atol=1e-5)
 
     return src_pixels
 
@@ -439,9 +435,7 @@ def resize(im, shape_wh, aspect_ratio_fill=None):
     if tmp_w == dst_w and tmp_h == dst_h:
         im_resize = im_tmp
     else:
-        im_resize = np.full(dst_numpy_shape,
-                            fill_value=aspect_ratio_fill,
-                            dtype=dtype)
+        im_resize = np.full(dst_numpy_shape, fill_value=aspect_ratio_fill, dtype=dtype)
         im_resize[:tmp_h, :tmp_w] = im_tmp
 
     # Final sanity checks for the reshaped image.
@@ -514,24 +508,25 @@ def recover_resized_pixels(dst_pixels, src_wh, dst_wh, keep_aspect_ratio=True):
     src_br = np.array([src_w - 0.5, src_h - 0.5])
     dst_tl = np.array([-0.5, -0.5])
     dst_br = np.array([tmp_w - 0.5, tmp_h - 0.5])
-    src_pixels = (dst_pixels - dst_tl) / (dst_br - dst_tl) * (src_br -
-                                                              src_tl) + src_tl
+    src_pixels = (dst_pixels - dst_tl) / (dst_br - dst_tl) * (src_br - src_tl) + src_tl
 
     return src_pixels
 
 
-def make_corres_image(im_src,
-                      im_dst,
-                      src_pixels,
-                      dst_pixels,
-                      confidences=None,
-                      texts=None,
-                      point_color=(0, 1, 0, 1.0),
-                      line_color=(0, 0, 1, 0.75),
-                      text_color=(1, 1, 1),
-                      point_size=1,
-                      line_width=1,
-                      sample_ratio=None):
+def make_corres_image(
+    im_src,
+    im_dst,
+    src_pixels,
+    dst_pixels,
+    confidences=None,
+    texts=None,
+    point_color=(0, 1, 0, 1.0),
+    line_color=(0, 0, 1, 0.75),
+    text_color=(1, 1, 1),
+    point_size=1,
+    line_width=1,
+    sample_ratio=None,
+):
     """
     Make correspondence image.
 
@@ -581,7 +576,7 @@ def make_corres_image(im_src,
     # Sample corres.
     sample_ratio = 1.0 if sample_ratio is None else sample_ratio
     if sample_ratio > 1.0 or sample_ratio < 0.0:
-        raise ValueError('sample_ratio should be in [0.0, 1.0]')
+        raise ValueError("sample_ratio should be in [0.0, 1.0]")
     elif sample_ratio == 1.0:
         pass
     else:
@@ -615,9 +610,7 @@ def make_corres_image(im_src,
             assert sample_ratio > 0.0 and sample_ratio <= 1.0
             num_points = len(src_pixels)
             num_samples = int(round(num_points * sample_ratio))
-            sample_indices = np.random.choice(num_points,
-                                              num_samples,
-                                              replace=False)
+            sample_indices = np.random.choice(num_points, num_samples, replace=False)
             src_pixels = src_pixels[sample_indices]
             dst_pixels = dst_pixels[sample_indices]
             confidences = confidences[sample_indices]
@@ -629,10 +622,8 @@ def make_corres_image(im_src,
 
             if confidences is None:
                 # Draw white points as mask.
-                im_point_mask = np.zeros(im_corres.shape[:2],
-                                         dtype=im_corres.dtype)
-                for (src_c, src_r), (dst_c,
-                                     dst_r) in zip(src_pixels, dst_pixels):
+                im_point_mask = np.zeros(im_corres.shape[:2], dtype=im_corres.dtype)
+                for (src_c, src_r), (dst_c, dst_r) in zip(src_pixels, dst_pixels):
                     cv2.circle(
                         im_point_mask,
                         (src_c, src_r),
@@ -649,17 +640,20 @@ def make_corres_image(im_src,
                     )
                 point_alpha = point_color[3] if len(point_color) == 4 else 1.0
                 point_color = point_color[:3]
-                im_corres = overlay_mask_on_rgb(im_corres,
-                                                im_point_mask,
-                                                overlay_alpha=point_alpha,
-                                                overlay_color=point_color)
+                im_corres = overlay_mask_on_rgb(
+                    im_corres,
+                    im_point_mask,
+                    overlay_alpha=point_alpha,
+                    overlay_color=point_color,
+                )
             else:
                 # Query color map for colors, given confidences from 0-1.
                 colors = colormap.query(confidences, colormap="viridis")
 
                 # Draw points.
                 for (src_c, src_r), (dst_c, dst_r), color in zip(
-                        src_pixels, dst_pixels, colors):
+                    src_pixels, dst_pixels, colors
+                ):
                     cv2.circle(
                         im_corres,
                         (src_c, src_r),
@@ -683,15 +677,18 @@ def make_corres_image(im_src,
             # Draw white lines as mask.
             im_line_mask = np.zeros(im_corres.shape[:2], dtype=im_corres.dtype)
             for (src_c, src_r), (dst_c, dst_r) in zip(src_pixels, dst_pixels):
-                cv2.line(im_line_mask, (src_c, src_r), (dst_c + w, dst_r), (1,),
-                         line_width)
+                cv2.line(
+                    im_line_mask, (src_c, src_r), (dst_c + w, dst_r), (1,), line_width
+                )
 
             line_alpha = line_color[3] if len(line_color) == 4 else 1.0
             line_color = line_color[:3]
-            im_corres = overlay_mask_on_rgb(im_corres,
-                                            im_line_mask,
-                                            overlay_alpha=line_alpha,
-                                            overlay_color=line_color)
+            im_corres = overlay_mask_on_rgb(
+                im_corres,
+                im_line_mask,
+                overlay_alpha=line_alpha,
+                overlay_color=line_color,
+            )
 
     # Draw texts.
     if texts:
@@ -712,14 +709,23 @@ def make_corres_image(im_src,
         font = cv2.FONT_HERSHEY_DUPLEX
         line_text_h_ratio = 1.2
         max_lines = 20
-        font_scale, line_h, text_h = get_scales(im_corres.shape[0], max_lines,
-                                                font, line_text_h_ratio)
+        font_scale, line_h, text_h = get_scales(
+            im_corres.shape[0], max_lines, font, line_text_h_ratio
+        )
         font_thickness = 2
         org = (line_h, line_h * 2)
 
         for text in texts:
-            im_corres = cv2.putText(im_corres, text, org, font, font_scale,
-                                    text_color, font_thickness, cv2.LINE_AA)
+            im_corres = cv2.putText(
+                im_corres,
+                text,
+                org,
+                font,
+                font_scale,
+                text_color,
+                font_thickness,
+                cv2.LINE_AA,
+            )
             org = (org[0], org[1] + line_h)
 
     assert im_corres.min() >= 0.0 and im_corres.max() <= 1.0

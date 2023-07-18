@@ -20,7 +20,8 @@ def query(points, colormap="viridis"):
         raise ValueError(
             "Matplotlib's colormap has different behavior for ints and floats. "
             "To unify behavior, we require floats (between 0-1 if valid). "
-            f"However, dtype of {points.dtype} is used.")
+            f"However, dtype of {points.dtype} is used."
+        )
 
     cmap = matplotlib.cm.get_cmap(colormap)
     colors = cmap(points)[..., :3]  # Remove alpha.
@@ -61,7 +62,7 @@ def main():
     colors = query(np.linspace(0, 1, num=width))
     im = np.zeros((height, width, 3), dtype=np.float32)
     for i in range(width):
-        im[:, i:i + 1, :] = colors[i]
+        im[:, i : i + 1, :] = colors[i]
 
     im_path = "colormap.png"
     io.imwrite(im_path, im)

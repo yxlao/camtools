@@ -94,7 +94,7 @@ def imread(im_path, alpha_mode=None):
     - Input : uint8 (divide by 255) or uint16 (divide by 65535) image.
               If you're reading a depth uint16 image, use imread_depth() instead.
     - Return: float32, RGB, range [0, 1] image will be returned.
-    
+
     Args:
         im_path: Path to image.
         alpha_mode: Specifies how to handle alpha channel.
@@ -137,8 +137,9 @@ def imread(im_path, alpha_mode=None):
     elif im.ndim == 3:
         if im.shape[2] == 4:
             if alpha_mode is None:
-                raise ValueError(f"{im_path} has an alpha channel, alpha_mode "
-                                 f"must be specified.")
+                raise ValueError(
+                    f"{im_path} has an alpha channel, alpha_mode " f"must be specified."
+                )
             elif alpha_mode == "keep":
                 pass
             elif alpha_mode == "ignore":
@@ -155,8 +156,9 @@ def imread(im_path, alpha_mode=None):
             elif alpha_mode == "black":
                 im = im[..., :3] * im[..., 3:]
             else:
-                raise ValueError(f"Unexpected alpha_mode: {alpha_mode} for a "
-                                 "4-channel image.")
+                raise ValueError(
+                    f"Unexpected alpha_mode: {alpha_mode} for a " "4-channel image."
+                )
         elif im.shape[2] == 3:
             pass
         else:
@@ -179,8 +181,10 @@ def imread(im_path, alpha_mode=None):
 
     # This can be avoided.
     if im.min() > 1 or im.max() < 0:
-        raise ValueError(f"Internal Error. Image must be in range [0, 1], but "
-                         f"got [{im.min()}, {im.max()}]")
+        raise ValueError(
+            f"Internal Error. Image must be in range [0, 1], but "
+            f"got [{im.min()}, {im.max()}]"
+        )
 
     return im
 

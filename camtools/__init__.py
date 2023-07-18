@@ -13,4 +13,7 @@ from . import raycast
 from . import sanity
 from . import solver
 from . import stat
-from .version import __version__
+
+import pkg_resources
+
+__version__ = pkg_resources.get_distribution("camtools").version
