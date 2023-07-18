@@ -13,7 +13,7 @@ dependencies = [
   "torch>=1.13.1",
   "matplotlib>=3.3.4",
 ]
-description = "Camtools: camera tools for computer vision."
+description = "CamTools: Camera Tools for Computer Vision."
 license = {text = "MIT"}
 name = "camtools"
 readme = "README.md"
