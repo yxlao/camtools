@@ -1,11 +1,12 @@
 # CamTools: Camera Tools for Computer Vision
 
-CamTools is useful for plotting, converting, projecting, ray casting, and more
-with camera parameters. It follows the camera coordinate system with clear and
-easy-to-use APIs.
+CamTools is a useful tool for handling cameras in computer vision. It can be
+used for plotting, converting, projecting, ray casting, and doing more with
+camera parameters. It follows the standard camera coordinate system with clear
+and easy-to-use APIs.
 
 <a href="https://github.com/yxlao/camtools/actions/workflows/formatter.yml">
-<img src="https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg" alt="Formatter">
+  <img src="https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg" alt="Formatter">
 </a>
 
 ## What can you do with CamTools?
