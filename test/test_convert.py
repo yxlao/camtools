@@ -1,28 +1,28 @@
 import numpy as np
 import camtools as ct
 
-np.set_printoptions(formatter={'float': '{: 0.2f}'.format})
+np.set_printoptions(formatter={"float": "{: 0.2f}".format})
 
 
 def test_R_t_to_cameracenter():
-    T = np.array([
-        [0.132521, 0.00567408, 0.991163, 0.0228366],
-        [-0.709094, -0.698155, 0.0988047, 0.535268],
-        [0.692546, -0.715923, -0.0884969, 16.0856],
-        [0, 0, 0, 1],
-    ])
+    T = np.array(
+        [
+            [0.132521, 0.00567408, 0.991163, 0.0228366],
+            [-0.709094, -0.698155, 0.0988047, 0.535268],
+            [0.692546, -0.715923, -0.0884969, 16.0856],
+            [0, 0, 0, 1],
+        ]
+    )
     R = T[:3, :3]
     t = T[:3, 3]
     expected_camera_center = [-10.7635, 11.8896, 1.348]
     camera_center = ct.convert.R_t_to_C(R, t)
-    np.testing.assert_allclose(expected_camera_center,
-                               camera_center,
-                               rtol=1e-5,
-                               atol=1e-5)
+    np.testing.assert_allclose(
+        expected_camera_center, camera_center, rtol=1e-5, atol=1e-5
+    )
 
 
 def test_P_to_K_R_t():
-
     def P_to_K_R_t_manual(P):
         """
         https://ros-developer.com/tag/decomposeprojectionmatrix/
@@ -73,11 +73,13 @@ def test_P_to_K_R_t():
     sensor_width = 10
 
     # Ground truth matrices
-    K = np.array([
-        [focal_length * width / sensor_width, 0, width / 2],
-        [0, focal_length * height / sensor_height, height / 2],
-        [0, 0, 1],
-    ])
+    K = np.array(
+        [
+            [focal_length * width / sensor_width, 0, width / 2],
+            [0, focal_length * height / sensor_height, height / 2],
+            [0, 0, 1],
+        ]
+    )
     R = ct.convert.roll_pitch_yaw_to_R(np.pi / 4, np.pi / 10, -np.pi / 6)
     t = np.array([[1.0], [2.1], [-1.4]]).squeeze()
 

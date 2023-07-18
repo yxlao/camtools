@@ -70,8 +70,10 @@ class BBoxer:
         # Check all images are of the same shape.
         for im_src in im_srcs:
             if im_src.shape != im_srcs[0].shape:
-                raise ValueError("Images must have the same shape "
-                                 f"{im_src.shape} != {im_srcs[0].shape}")
+                raise ValueError(
+                    "Images must have the same shape "
+                    f"{im_src.shape} != {im_srcs[0].shape}"
+                )
 
         # Register fig and axes.
         self.fig, self.axes = plt.subplots(1, len(im_srcs))
@@ -88,8 +90,8 @@ class BBoxer:
             self._register_rectangle_selector(axis)
 
         # Register other handlers.
-        self.fig.canvas.mpl_connect('key_press_event', self._on_keypress)
-        self.fig.canvas.mpl_connect('close_event', self._on_close)
+        self.fig.canvas.mpl_connect("key_press_event", self._on_keypress)
+        self.fig.canvas.mpl_connect("close_event", self._on_close)
 
         plt.show()
 
@@ -101,10 +103,12 @@ class BBoxer:
         return f"Bbox({bbox.x0:.2f}, {bbox.y0:.2f}, {bbox.x1:.2f}, {bbox.y1:.2f})"
 
     @staticmethod
-    def _copy_rectangle(rectangle: matplotlib.patches.Rectangle,
-                        linestyle: str = None,
-                        linewidth: int = None,
-                        edgecolor=None) -> matplotlib.patches.Rectangle:
+    def _copy_rectangle(
+        rectangle: matplotlib.patches.Rectangle,
+        linestyle: str = None,
+        linewidth: int = None,
+        edgecolor=None,
+    ) -> matplotlib.patches.Rectangle:
         """
         Copy rectangle with new properties.
         """
@@ -112,23 +116,22 @@ class BBoxer:
             xy=(rectangle.xy[0], rectangle.xy[1]),
             width=rectangle.get_width(),
             height=rectangle.get_height(),
-            linestyle=linestyle
-            if linestyle is not None else rectangle.get_linestyle(),
-            linewidth=linewidth
-            if linewidth is not None else rectangle.get_linewidth(),
-            edgecolor=edgecolor
-            if edgecolor is not None else rectangle.get_edgecolor(),
+            linestyle=linestyle if linestyle is not None else rectangle.get_linestyle(),
+            linewidth=linewidth if linewidth is not None else rectangle.get_linewidth(),
+            edgecolor=edgecolor if edgecolor is not None else rectangle.get_edgecolor(),
             facecolor=rectangle.get_facecolor(),
         )
         return new_rectangle
 
     @staticmethod
-    def _overlay_rectangle_on_image(im: np.ndarray,
-                                    tl_xy: Tuple[int, int],
-                                    br_xy: Tuple[int, int],
-                                    linewidth_px: int,
-                                    edgecolor: str,
-                                    squarecorners: bool = True) -> np.ndarray:
+    def _overlay_rectangle_on_image(
+        im: np.ndarray,
+        tl_xy: Tuple[int, int],
+        br_xy: Tuple[int, int],
+        linewidth_px: int,
+        edgecolor: str,
+        squarecorners: bool = True,
+    ) -> np.ndarray:
         """
         Draw red rectangletangular bounding box on image using OpenCV.
 
@@ -146,13 +149,13 @@ class BBoxer:
 
         def fill_connected_component(mat, x, y):
             """
-                Mat: (h, w) single channel float32 image.
-                    0.0: empty pixel.
-                    1.0: filled pixel.
-                    -1.0: invalid pixel.
-                x: x coordinate of pixel to start filling from.
-                y: y coordinate of pixel to start filling from.
-                """
+            Mat: (h, w) single channel float32 image.
+                0.0: empty pixel.
+                1.0: filled pixel.
+                -1.0: invalid pixel.
+            x: x coordinate of pixel to start filling from.
+            y: y coordinate of pixel to start filling from.
+            """
             mat = np.copy(mat)
             # mat can only contain 0, -1, or 1.
             assert np.all(np.isin(mat, [-1.0, 0.0, 1.0]))
@@ -187,12 +190,14 @@ class BBoxer:
 
         # Draw white lines on black im_mask. These lines have "rounded" corners.
         # Later we will fill "rounded" corners to square corners.
-        cv2.rectangle(im_mask,
-                      pt1=tl_xy,
-                      pt2=br_xy,
-                      color=1.0,
-                      thickness=linewidth_px,
-                      lineType=cv2.LINE_8)
+        cv2.rectangle(
+            im_mask,
+            pt1=tl_xy,
+            pt2=br_xy,
+            color=1.0,
+            thickness=linewidth_px,
+            lineType=cv2.LINE_8,
+        )
 
         if squarecorners:
             ys, xs = np.where(im_mask > 0.0)
@@ -203,10 +208,10 @@ class BBoxer:
                 tl_bound = (np.min(xs), np.min(ys))  # Inclusive
                 br_bound = (np.max(xs), np.max(ys))  # Inclusive
                 # 2. Mark everything outside the bound as invalid: -1.
-                im_mask[:, :tl_bound[0]] = -1.0  # Left
-                im_mask[:, br_bound[0] + 1:] = -1.0  # Right
-                im_mask[:tl_bound[1], :] = -1.0  # Top
-                im_mask[br_bound[1] + 1:, :] = -1.0  # Bottom
+                im_mask[:, : tl_bound[0]] = -1.0  # Left
+                im_mask[:, br_bound[0] + 1 :] = -1.0  # Right
+                im_mask[: tl_bound[1], :] = -1.0  # Top
+                im_mask[br_bound[1] + 1 :, :] = -1.0  # Bottom
                 # 3. Start from the 4 corners, fill connected components.
                 # This will only fill 0 pixels to 1.
                 corners = [
@@ -216,8 +221,7 @@ class BBoxer:
                     (br_bound[0], br_bound[1]),  # Bottom-right
                 ]
                 for corner in corners:
-                    im_mask = fill_connected_component(im_mask, corner[0],
-                                                       corner[1])
+                    im_mask = fill_connected_component(im_mask, corner[0], corner[1])
                 # 4. Undo mask invalid pixels.
                 im_mask[im_mask == -1.0] = 0.0
 
@@ -241,20 +245,26 @@ class BBoxer:
         for rectangle in self.confirmed_rectangles:
             for axis in self.axes:
                 rectangle_ = axis.add_patch(
-                    BBoxer._copy_rectangle(rectangle,
-                                           linestyle="-",
-                                           linewidth=self.linewidth,
-                                           edgecolor=self.edgecolor))
+                    BBoxer._copy_rectangle(
+                        rectangle,
+                        linestyle="-",
+                        linewidth=self.linewidth,
+                        edgecolor=self.edgecolor,
+                    )
+                )
                 self.axes_owned_rectangles.append(rectangle_)
 
         # Draw current rectangle.
         if self.current_rectangle is not None:
             for axis in self.axes:
                 rectangle_ = axis.add_patch(
-                    BBoxer._copy_rectangle(self.current_rectangle,
-                                           linestyle="--",
-                                           linewidth=self.linewidth,
-                                           edgecolor=self.edgecolor))
+                    BBoxer._copy_rectangle(
+                        self.current_rectangle,
+                        linestyle="--",
+                        linewidth=self.linewidth,
+                        edgecolor=self.edgecolor,
+                    )
+                )
                 self.axes_owned_rectangles.append(rectangle_)
 
         # Ask matplotlib to redraw the current figure.
@@ -278,8 +288,7 @@ class BBoxer:
         im_height = im_shape[0]
 
         axis = self.axes[0]
-        bbox = axis.get_window_extent().transformed(
-            self.fig.dpi_scale_trans.inverted())
+        bbox = axis.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
         axis_height = bbox.height * self.fig.dpi
 
         # Get the linewidth in pixels.
@@ -287,9 +296,7 @@ class BBoxer:
         linewidth_px = linewidth_px / axis_height * im_height
         linewidth_px = int(round(linewidth_px))
 
-        dst_paths = [
-            p.parent / f"bbox_{p.stem}{p.suffix}" for p in self.src_paths
-        ]
+        dst_paths = [p.parent / f"bbox_{p.stem}{p.suffix}" for p in self.src_paths]
         for src_path, dst_path in zip(self.src_paths, dst_paths):
             im_dst = ct.io.imread(src_path)
             for rectangle in self.confirmed_rectangles:
@@ -301,7 +308,8 @@ class BBoxer:
                     tl_xy=tl_xy,
                     br_xy=br_xy,
                     linewidth_px=linewidth_px,
-                    edgecolor=self.edgecolor)
+                    edgecolor=self.edgecolor,
+                )
             ct.io.imwrite(dst_path, im_dst)
             print(f"Saved {dst_path}")
 
@@ -314,7 +322,7 @@ class BBoxer:
         def print_key(key):
             # Change the first letter to upper case.
             key = key[0].upper() + key[1:]
-            print(f"[Keypress] \"{key}\".")
+            print(f'[Keypress] "{key}".')
 
         def print_msg(*args, **kwargs):
             # Simulate sprintf
@@ -341,9 +349,9 @@ class BBoxer:
                 else:
                     # Save to confirmed.
                     self.confirmed_rectangles.append(
-                        BBoxer._copy_rectangle(self.current_rectangle))
-                    bbox_str = BBoxer._bbox_str(
-                        self.current_rectangle.get_bbox())
+                        BBoxer._copy_rectangle(self.current_rectangle)
+                    )
+                    bbox_str = BBoxer._bbox_str(self.current_rectangle.get_bbox())
                     print_msg(f"Bounding box saved: {bbox_str}.")
                     # Clear current.
                     self.current_rectangle = None
@@ -395,7 +403,7 @@ class BBoxer:
         """
         Callback function on matplotlib window close.
         """
-        print('Closing...')
+        print("Closing...")
         self._save()
 
     def _register_rectangle_selector(self, axis):
@@ -413,7 +421,7 @@ class BBoxer:
                 np.abs(y1 - y2),
                 linewidth=self.linewidth,
                 edgecolor=self.edgecolor,
-                facecolor='none',
+                facecolor="none",
             )
 
             # Hide other selectors.
@@ -436,7 +444,7 @@ class BBoxer:
             button=[1],
             minspanx=5,
             minspany=5,
-            spancoords='pixels',
+            spancoords="pixels",
             interactive=True,
         )
 

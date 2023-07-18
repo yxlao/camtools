@@ -1,0 +1,30 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61.0"]
+
+[project]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python",
+]
+dependencies = [
+  "open3d>=0.16.0",
+  "opencv-python>=4.6.0.66",
+  "torch>=1.13.1",
+  "matplotlib>=3.3.4",
+]
+description = "Camtools: camera tools for computer vision."
+license = {text = "MIT"}
+name = "camtools"
+readme = "README.md"
+requires-python = ">=3.6.0"
+version = "0.0.1"
+
+[project.urls]
+Homepage = "https://github.com/yxlao/camtools"
+
+[project.optional-dependencies]
+dev = [
+  "black>=23.3.0",
+  "pytest==7.1.2",
+]

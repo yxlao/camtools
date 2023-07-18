@@ -94,8 +94,12 @@ def image_lpips(im_pd, im_gt, im_mask=None):
         loss_fn = lpips.LPIPS(net="alex")
         image_lpips.static_vars["loss_fn"] = loss_fn
 
-    ans = loss_fn.forward(torch.from_numpy(pr),
-                          torch.from_numpy(gt)).cpu().detach().numpy()
+    ans = (
+        loss_fn.forward(torch.from_numpy(pr), torch.from_numpy(gt))
+        .cpu()
+        .detach()
+        .numpy()
+    )
     return float(ans)
 
 
@@ -162,10 +166,9 @@ def image_lpips_with_paths(im_pd_path, im_gt_path, im_mask_path=None):
     return image_lpips(im_pd, im_gt, im_mask)
 
 
-def load_im_pd_im_gt_im_mask_for_eval(im_pd_path,
-                                      im_gt_path,
-                                      im_mask_path=None,
-                                      alpha_mode="white"):
+def load_im_pd_im_gt_im_mask_for_eval(
+    im_pd_path, im_gt_path, im_mask_path=None, alpha_mode="white"
+):
     """
     Load prediction, ground truth, and mask images for image metric evaluation.
 
@@ -191,8 +194,7 @@ def load_im_pd_im_gt_im_mask_for_eval(im_pd_path,
             None, im_mask will be returned as all 1s.
     """
     if alpha_mode != "white":
-        raise NotImplementedError(
-            "Currently only alpha_mode=\"white\" is supported.")
+        raise NotImplementedError('Currently only alpha_mode="white" is supported.')
 
     # Prepare im_gt.
     # (h, w, 3) or (h, w, 4), float32.

@@ -5,35 +5,31 @@ import torch
 def assert_numpy(x, name=None):
     if not isinstance(x, np.ndarray):
         maybe_name = f" {name}" if name is not None else ""
-        raise ValueError(
-            f"Expected{maybe_name} to be numpy array, but got {type(x)}.")
+        raise ValueError(f"Expected{maybe_name} to be numpy array, but got {type(x)}.")
 
 
 def assert_torch(x, name=None):
     if not torch.is_tensor(x):
         maybe_name = f" {name}" if name is not None else ""
-        raise ValueError(
-            f"Expected{maybe_name} to be torch tensor, but got {type(x)}.")
+        raise ValueError(f"Expected{maybe_name} to be torch tensor, but got {type(x)}.")
 
 
 def assert_K(K):
     if K.shape != (3, 3):
-        raise ValueError(
-            f"K must has shape (3, 3), but got {K} of shape {K.shape}.")
+        raise ValueError(f"K must has shape (3, 3), but got {K} of shape {K.shape}.")
 
 
 def assert_T(T):
     if T.shape != (4, 4):
-        raise ValueError(
-            f"T must has shape (4, 4), but got {T} of shape {T.shape}.")
+        raise ValueError(f"T must has shape (4, 4), but got {T} of shape {T.shape}.")
     if torch.is_tensor(T):
         is_valid = torch.allclose(
-            T[3, :], torch.tensor([0, 0, 0, 1], dtype=T.dtype, device=T.device))
+            T[3, :], torch.tensor([0, 0, 0, 1], dtype=T.dtype, device=T.device)
+        )
     else:
         is_valid = np.allclose(T[3, :], np.array([0, 0, 0, 1]))
     if not is_valid:
-        raise ValueError(
-            f"T must has [0, 0, 0, 1] the bottom row, but got {T}.")
+        raise ValueError(f"T must has [0, 0, 0, 1] the bottom row, but got {T}.")
 
 
 def assert_pose(pose):
@@ -43,13 +39,12 @@ def assert_pose(pose):
         )
     if torch.is_tensor(pose):
         is_valid = torch.allclose(
-            pose[3, :],
-            torch.tensor([0, 0, 0, 1], dtype=pose.dtype, device=pose.device))
+            pose[3, :], torch.tensor([0, 0, 0, 1], dtype=pose.dtype, device=pose.device)
+        )
     else:
         is_valid = np.allclose(pose[3, :], np.array([0, 0, 0, 1]))
     if not is_valid:
-        raise ValueError(
-            f"pose must has [0, 0, 0, 1] the bottom row, but got {pose}.")
+        raise ValueError(f"pose must has [0, 0, 0, 1] the bottom row, but got {pose}.")
 
 
 def assert_shape(x, shape, name=None):
@@ -67,8 +62,7 @@ def assert_shape(x, shape, name=None):
 
     if not shape_valid:
         name_must = f"{name} must" if name is not None else "Must"
-        raise ValueError(
-            f"{name_must} has shape {shape}, but got shape {x.shape}.")
+        raise ValueError(f"{name_must} has shape {shape}, but got shape {x.shape}.")
 
 
 def assert_shape_nx3(x, name=None):
@@ -116,4 +110,5 @@ def assert_same_device(*tensors):
         devices = [t.device for t in tensors]
         if not all(devices[0] == d for d in devices):
             raise ValueError(
-                f"All tensors must be on the same device, bui got {devices}.")
+                f"All tensors must be on the same device, bui got {devices}."
+            )

@@ -1,5 +1,9 @@
 {
-    "editor.formatOnSave": true,
-    "editor.formatOnSaveMode": "file",
-    "files.trimTrailingWhitespace": true
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "files.trimTrailingWhitespace": true,
+  "python.formatting.provider": "none",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  }
 }

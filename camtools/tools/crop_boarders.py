@@ -71,11 +71,9 @@ def entry_point(parser, args):
     The parser argument is not used.
     """
     if args.pad_pixel < 0:
-        raise ValueError(
-            f"pad_pixel must be non-negative, but got {args.pad_pixel}")
+        raise ValueError(f"pad_pixel must be non-negative, but got {args.pad_pixel}")
     if args.pad_ratio < 0:
-        raise ValueError(
-            f"pad_ratio must be non-negative, but got {args.pad_ratio}")
+        raise ValueError(f"pad_ratio must be non-negative, but got {args.pad_ratio}")
 
     # Determine src and dst paths.
     if isinstance(args.input, list):
@@ -88,13 +86,13 @@ def entry_point(parser, args):
     if args.inplace:
         if args.skip_cropped:
             raise ValueError(
-                "Cannot specify --skip_cropped when --inplace is specified.")
+                "Cannot specify --skip_cropped when --inplace is specified."
+            )
         dst_paths = src_paths
     else:
         if args.skip_cropped:
             dst_paths = [
-                src_path.parent / f"cropped_{src_path.name}"
-                for src_path in src_paths
+                src_path.parent / f"cropped_{src_path.name}" for src_path in src_paths
             ]
             skipped_src_paths = [p for p in src_paths if p in dst_paths]
             src_paths = [p for p in src_paths if p not in dst_paths]
@@ -103,19 +101,16 @@ def entry_point(parser, args):
                 for src_path in skipped_src_paths:
                     print(f"  - {src_path}")
         dst_paths = [
-            src_path.parent / f"cropped_{src_path.name}"
-            for src_path in src_paths
+            src_path.parent / f"cropped_{src_path.name}" for src_path in src_paths
         ]
 
     # Read.
     src_ims = [ct.io.imread(src_path) for src_path in src_paths]
     for src_im in src_ims:
         if not src_im.dtype == np.float32:
-            raise ValueError(
-                f"Input image {src_path} must be of dtype float32.")
+            raise ValueError(f"Input image {src_path} must be of dtype float32.")
         if not src_im.ndim == 3 or not src_im.shape[2] == 3:
-            raise ValueError(
-                f"Input image {src_path} must be of shape (H, W, 3).")
+            raise ValueError(f"Input image {src_path} must be of shape (H, W, 3).")
     num_ims = len(src_ims)
 
     # Compute.
@@ -124,15 +119,14 @@ def entry_point(parser, args):
         shapes = [im.shape for im in src_ims]
         if not all([s == shapes[0] for s in shapes]):
             raise ValueError(
-                "All images must be of the same shape when --same_crop is "
-                "specified.")
+                "All images must be of the same shape when --same_crop is " "specified."
+            )
 
         # Stack images.
         src_ims_stacked = np.concatenate(src_ims, axis=2)
 
         # Compute cropping boarders.
-        crop_u, crop_d, crop_l, crop_r = ct.image.compute_cropping(
-            src_ims_stacked)
+        crop_u, crop_d, crop_l, crop_r = ct.image.compute_cropping(src_ims_stacked)
         croppings = [(crop_u, crop_d, crop_l, crop_r)] * num_ims
 
         # Compute padding.
@@ -173,15 +167,16 @@ def entry_point(parser, args):
                 h, w, _ = dst_shape
                 dh = max_h - h
                 dw = max_w - w
-                extra_paddings.append((
-                    dh // 2,
-                    dh - dh // 2,
-                    dw // 2,
-                    dw - dw // 2,
-                ))
+                extra_paddings.append(
+                    (
+                        dh // 2,
+                        dh - dh // 2,
+                        dw // 2,
+                        dw - dw // 2,
+                    )
+                )
             for i in range(num_ims):
-                paddings[i] = tuple(
-                    np.array(paddings[i]) + np.array(extra_paddings[i]))
+                paddings[i] = tuple(np.array(paddings[i]) + np.array(extra_paddings[i]))
 
     # Apply.
     dst_ims = ct.image.apply_croppings_paddings(
@@ -192,19 +187,19 @@ def entry_point(parser, args):
 
     # Save.
     for (
-            src_path,
-            dst_path,
-            src_im,
-            dst_im,
-            cropping,
-            padding,
+        src_path,
+        dst_path,
+        src_im,
+        dst_im,
+        cropping,
+        padding,
     ) in zip(
-            src_paths,
-            dst_paths,
-            src_ims,
-            dst_ims,
-            croppings,
-            paddings,
+        src_paths,
+        dst_paths,
+        src_ims,
+        dst_ims,
+        croppings,
+        paddings,
     ):
         out_dir = dst_path.parent
         if not out_dir.exists():

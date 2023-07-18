@@ -74,7 +74,7 @@ def mesh_to_depth(mesh, K, T, height, width):
         height_px=height,
     )
     ans = scene.cast_rays(rays)
-    im_depth = ans['t_hit'].numpy()
+    im_depth = ans["t_hit"].numpy()
 
     return im_depth
 
@@ -116,7 +116,7 @@ def mesh_to_depths(mesh, Ks, Ts, height, width):
             height_px=height,
         )
         ans = scene.cast_rays(rays)
-        im_depth = ans['t_hit'].numpy()
+        im_depth = ans["t_hit"].numpy()
         im_depths.append(im_depth)
     im_depths = np.stack(im_depths, axis=0)
 

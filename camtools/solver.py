@@ -19,11 +19,9 @@ def line_intersection_3d(src_points=None, dst_points=None):
         https://math.stackexchange.com/a/1762491/209055
     """
     if src_points.ndim != 2 or src_points.shape[1] != 3:
-        raise ValueError(
-            f"src_points must be (N, 3), but got {src_points.shape}.")
+        raise ValueError(f"src_points must be (N, 3), but got {src_points.shape}.")
     if dst_points.ndim != 2 or dst_points.shape[1] != 3:
-        raise ValueError(
-            f"dst_points must be (N, 3), but got {dst_points.shape}.")
+        raise ValueError(f"dst_points must be (N, 3), but got {dst_points.shape}.")
 
     dirs = dst_points - src_points
     dirs = dirs / np.linalg.norm(dirs, axis=1).reshape((-1, 1))
@@ -39,14 +37,16 @@ def line_intersection_3d(src_points=None, dst_points=None):
     sxy = np.sum(nx * ny)
     sxz = np.sum(nx * nz)
     syz = np.sum(ny * nz)
-    s = np.array([
-        [sxx, sxy, sxz],
-        [sxy, syy, syz],
-        [sxz, syz, szz],
-    ])
+    s = np.array(
+        [
+            [sxx, sxy, sxz],
+            [sxy, syy, syz],
+            [sxz, syz, szz],
+        ]
+    )
 
     # RHS
-    # yapf: disable
+    # fmt: off
     cx = np.sum(src_points[:, 0] * (nx**2 - 1) +
                 src_points[:, 1] * nx * ny     +
                 src_points[:, 2] * nx * nz)
@@ -57,7 +57,7 @@ def line_intersection_3d(src_points=None, dst_points=None):
                 src_points[:, 1] * ny * nz     +
                 src_points[:, 2] * (nz**2 - 1))
     c = np.array([cx, cy, cz])
-    # yapf: enable
+    # fmt: on
 
     return np.linalg.solve(s, c)
 

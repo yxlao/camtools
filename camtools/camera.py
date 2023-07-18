@@ -22,14 +22,18 @@ def create_camera_frame(T, size=0.1, color=[0, 0, 1]):
     R, t = T[:3, :3], T[:3, 3]
 
     C0 = convert.R_t_to_C(R, t).ravel()
-    C1 = (C0 + R.T.dot(
-        np.array([[-size], [-size], [3 * size]], dtype=np.float32)).ravel())
-    C2 = (C0 + R.T.dot(
-        np.array([[-size], [+size], [3 * size]], dtype=np.float32)).ravel())
-    C3 = (C0 + R.T.dot(
-        np.array([[+size], [+size], [3 * size]], dtype=np.float32)).ravel())
-    C4 = (C0 + R.T.dot(
-        np.array([[+size], [-size], [3 * size]], dtype=np.float32)).ravel())
+    C1 = (
+        C0 + R.T.dot(np.array([[-size], [-size], [3 * size]], dtype=np.float32)).ravel()
+    )
+    C2 = (
+        C0 + R.T.dot(np.array([[-size], [+size], [3 * size]], dtype=np.float32)).ravel()
+    )
+    C3 = (
+        C0 + R.T.dot(np.array([[+size], [+size], [3 * size]], dtype=np.float32)).ravel()
+    )
+    C4 = (
+        C0 + R.T.dot(np.array([[+size], [-size], [3 * size]], dtype=np.float32)).ravel()
+    )
 
     ls = o3d.geometry.LineSet()
     points = np.array([C0, C1, C2, C3, C4])
@@ -42,14 +46,15 @@ def create_camera_frame(T, size=0.1, color=[0, 0, 1]):
     return ls
 
 
-def create_camera_frames(Ts,
-                         size=0.1,
-                         color=[0, 0, 1],
-                         start_color=[0, 1, 0],
-                         end_color=[1, 0, 0],
-                         center_line=True,
-                         center_line_color=[1, 0, 0]):
-
+def create_camera_frames(
+    Ts,
+    size=0.1,
+    color=[0, 0, 1],
+    start_color=[0, 1, 0],
+    end_color=[1, 0, 0],
+    center_line=True,
+    center_line_color=[1, 0, 0],
+):
     camera_frames = o3d.geometry.LineSet()
     for index, T in enumerate(Ts):
         if index == 0:
@@ -83,9 +88,11 @@ def create_camera_center_ray(K, T, size=0.1, color=[0, 0, 1]):
     # Assumes that the camera offset is exactly at the center of the image.
     col = K[0, 2]
     row = K[1, 2]
-    points = np.array([
-        [col, row, 1],
-    ])
+    points = np.array(
+        [
+            [col, row, 1],
+        ]
+    )
 
     # Transform to camera space
     points = (np.linalg.inv(K) @ points.T).T
@@ -100,9 +107,11 @@ def create_camera_center_ray(K, T, size=0.1, color=[0, 0, 1]):
 
     # Create line set
     points = np.vstack((C, points))
-    lines = np.array([
-        [0, 1],
-    ])
+    lines = np.array(
+        [
+            [0, 1],
+        ]
+    )
     ls = o3d.geometry.LineSet()
     ls.points = o3d.utility.Vector3dVector(points)
     ls.lines = o3d.utility.Vector2iVector(lines)
@@ -143,12 +152,14 @@ def create_camera_ray_frame(K, T, size=0.1, color=[0, 0, 1]):
     # The rays are plotted in the center of each corner pixel.
     w = (K[0, 2] + 0.5) * 2 - 1
     h = (K[1, 2] + 0.5) * 2 - 1
-    points = np.array([
-        [0, 0, 1],
-        [w, 0, 1],
-        [w, h, 1],
-        [0, h, 1],
-    ])
+    points = np.array(
+        [
+            [0, 0, 1],
+            [w, 0, 1],
+            [w, h, 1],
+            [0, h, 1],
+        ]
+    )
 
     # Transform to camera space
     points = (np.linalg.inv(K) @ points.T).T
@@ -163,16 +174,18 @@ def create_camera_ray_frame(K, T, size=0.1, color=[0, 0, 1]):
 
     # Create line set
     points = np.vstack((C, points))
-    lines = np.array([
-        [0, 1],
-        [0, 2],
-        [0, 3],
-        [0, 4],
-        [1, 2],
-        [2, 3],
-        [3, 4],
-        [4, 1],
-    ])
+    lines = np.array(
+        [
+            [0, 1],
+            [0, 2],
+            [0, 3],
+            [0, 4],
+            [1, 2],
+            [2, 3],
+            [3, 4],
+            [4, 1],
+        ]
+    )
     ls = o3d.geometry.LineSet()
     ls.points = o3d.utility.Vector3dVector(points)
     ls.lines = o3d.utility.Vector2iVector(lines)
@@ -188,20 +201,24 @@ def _wrap_dim(dim: int, max_dim: int, inclusive: bool = False) -> int:
     max = max_dim if inclusive else max_dim - 1
 
     if dim < min or dim > max:
-        raise ValueError(f"Index out-of-range: dim == {dim}, "
-                         f"but it must satisfy {min} <= dim <= {max}.")
+        raise ValueError(
+            f"Index out-of-range: dim == {dim}, "
+            f"but it must satisfy {min} <= dim <= {max}."
+        )
     if dim < 0:
         dim += max_dim
     return dim
 
 
-def create_camera_ray_frames(Ks,
-                             Ts,
-                             size=0.1,
-                             color=[0, 0, 1],
-                             highlight_color_map=None,
-                             center_line=True,
-                             center_line_color=[1, 0, 0]):
+def create_camera_ray_frames(
+    Ks,
+    Ts,
+    size=0.1,
+    color=[0, 0, 1],
+    highlight_color_map=None,
+    center_line=True,
+    center_line_color=[1, 0, 0],
+):
     """
     Args:
         Ks: List of 3x3 camera intrinsics matrices.
@@ -233,10 +250,7 @@ def create_camera_ray_frames(Ks,
             frame_color = highlight_color_map[index]
         else:
             frame_color = color
-        camera_frame = create_camera_ray_frame(K,
-                                               T,
-                                               size=size,
-                                               color=frame_color)
+        camera_frame = create_camera_ray_frame(K, T, size=size, color=frame_color)
         ls += camera_frame
 
     # Draw camera center lines.
