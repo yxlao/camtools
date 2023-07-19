@@ -40,7 +40,7 @@ and easy-to-use APIs.
    # Project 3D points to pixels.
    pixels = ct.project.points_to_pixel(points, K, T)
 
-   # Back-project depth image ot 3D points.
+   # Back-project depth image to 3D points.
    points = ct.project.im_depth_to_points(im_depth, K, T)
 
    # Ray cast a triangle mesh to depth image.
@@ -57,7 +57,7 @@ and easy-to-use APIs.
    - Is my image of type `float32` or `uint8`?
    - Does it have range `[0, 1]` or `[0, 255]`?
    - Is it RGB or BGR?
-   - Do my image have an alpha channel?
+   - Does my image have an alpha channel?
    - When saving depth image as integer-based `.png`, is it correctly scaled?
 
    ```python
