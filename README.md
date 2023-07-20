@@ -28,6 +28,7 @@ and easy-to-use APIs.
 
    ```python
    pose = ct.convert.T_to_pose(T)     # Convert T to pose
+   T    = ct.convert.T_to_pose(pose)  # Convert pose to T
    R, t = ct.convert.T_to_R_t(T)      # Convert T to R and t
    C    = ct.convert.pose_to_C(pose)  # Convert pose to camera center
    K, T = ct.convert.P_to_K_T(P)      # Decompose projection matrix to K and T
