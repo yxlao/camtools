@@ -92,18 +92,27 @@ and easy-to-use APIs.
 
 ## Installation
 
+To install CamTools, simply do:
+
 ```bash
-# Option 1: install from pip.
 pip install camtools
+```
 
-# Option 2: install from git.
-pip install git+https://github.com/yxlao/camtools.git
+Alternatively, you can install CamTools from source with one of the following
+methods:
 
-# Option 3: install from source.
+```bash
 git clone https://github.com/yxlao/camtools.git
 cd camtools
-pip install -e .  # Dev mode, if you want to modify camtools.
-pip install .     # Install mode, if you want to use camtools only.
+
+# Installation mode, if you want to use camtools only.
+pip install .
+
+# Dev mode, if you want to modify camtools on the fly.
+pip install -e .
+
+# Dev mode and dev dependencies, if you want to modify camtools and run tests.
+pip install -e .[dev]
 ```
 
 ## Camera coordinate system
