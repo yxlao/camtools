@@ -1,5 +1,4 @@
-# Test install camtools from pypi and import
-name: PyPI Test
+name: PyPI
 
 on:
   push:

@@ -11,8 +11,8 @@ and easy-to-use APIs.
 <a href="https://github.com/yxlao/camtools/actions/workflows/unit_test.yml">
 <img src="https://github.com/yxlao/camtools/actions/workflows/unit_test.yml/badge.svg" alt="Unit Test">
 </a>
-<a href="https://github.com/yxlao/camtools/actions/workflows/pypi_test.yml">
-<img src="https://github.com/yxlao/camtools/actions/workflows/pypi_test.yml/badge.svg" alt="PyPI">
+<a href="https://github.com/yxlao/camtools/actions/workflows/pypi.yml">
+<img src="https://github.com/yxlao/camtools/actions/workflows/pypi.yml/badge.svg" alt="PyPI">
 </a>
 
 ## What can you do with CamTools?
