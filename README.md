@@ -1,9 +1,9 @@
 # CamTools: Camera Tools for Computer Vision
 
-CamTools is a useful tool for handling cameras in computer vision. It can be
-used for plotting, converting, projecting, ray casting, and doing more with
-camera parameters. It follows the standard camera coordinate system with clear
-and easy-to-use APIs.
+CamTools is a collection of tools for handling cameras in computer vision. It
+can be used for plotting, converting, projecting, ray casting, and doing more
+with camera parameters. It follows the standard camera coordinate system with
+clear and easy-to-use APIs.
 
 <a href="https://github.com/yxlao/camtools/actions/workflows/formatter.yml">
 <img src="https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg" alt="Formatter">
@@ -34,10 +34,10 @@ and easy-to-use APIs.
 
    ```python
    pose = ct.convert.T_to_pose(T)     # Convert T to pose
-   T    = ct.convert.T_to_pose(pose)  # Convert pose to T
+   T    = ct.convert.pose_to_T(pose)  # Convert pose to T
    R, t = ct.convert.T_to_R_t(T)      # Convert T to R and t
    C    = ct.convert.pose_to_C(pose)  # Convert pose to camera center
-   K, T = ct.convert.P_to_K_T(P)      # Decompose projection matrix to K and T
+   K, T = ct.convert.P_to_K_T(P)      # Decompose projection matrix P to K and T
                                       # And more...
    ```
 
@@ -124,10 +124,36 @@ pip install -e .[dev]
 
 ## Camera coordinate system
 
+A homogeneous point `[X, Y, Z, 1]` in the world coordinate can be projected to a
+homogeneous point `[x, y, 1]` in the image (pixel) coordinate using the
+following equation:
+
+$$
+\lambda
+\left[\begin{array}{l}
+x \\
+y \\
+1
+\end{array}\right]=\left[\begin{array}{ccc}
+f_{x} & 0 & c_{x} \\
+0 & f_{y} & c_{y} \\
+0 & 0 & 1
+\end{array}\right]\left[\begin{array}{llll}
+R_{00} & R_{01} & R_{02} & t_{0} \\
+R_{10} & R_{11} & R_{12} & t_{1} \\
+R_{20} & R_{21} & R_{22} & t_{2}
+\end{array}\right]\left[\begin{array}{c}
+X \\
+Y \\
+Z \\
+1
+\end{array}\right].
+$$
+
 We follow the standard OpenCV-style camera coordinate system as shown below.
 
 <p align="center">
-   <img src="./camtools/assets/camera_coordinates.svg" width="360" />
+   <img src="./camtools/assets/camera_coordinates.svg" width="480" />
 </p>
 
 - **Camera coordinate:** right-handed, with $Z$ pointing away from the camera
@@ -149,20 +175,17 @@ We follow the standard OpenCV-style camera coordinate system as shown below.
   ```
 - `T` or `W2C`: `(4, 4)` camera extrinsic matrix.
   ```python
-  T = [[R  | t   = [[R_01, R_02, R_03, t_0],
-        0  | 1]]    [R_11, R_12, R_13, t_1],
-                    [R_21, R_22, R_23, t_2],
-                    [   0,    0,    0,   1]]
+  T = [[R  | t   = [[R00, R01, R02, t0],
+        0  | 1]]    [R10, R11, R12, t1],
+                    [R20, R21, R22, t2],
+                    [  0,   0,   0,  1]]
   ```
   - `T` is also known as the world-to-camera `W2C` matrix, which transforms a
     point in the world coordinate to the camera coordinate.
   - `T`'s shape is `(4, 4)`, not `(3, 4)`.
-  - `T` must be invertible, where `np.linalg.inv(T) = pose`.
+  - `T` is the inverse of `pose`, i.e., `np.linalg.inv(T) == pose`.
   - The camera center `C` in world coordinate is projected to `[0, 0, 0, 1]` in
-    camera coordinate, i.e.,
-    ```python
-    T @ C = np.array([0, 0, 0, 1]).T
-    ```
+    camera coordinate.
 - `R`: `(3, 3)` rotation matrix.
   ```python
   R = T[:3, :3]
@@ -170,16 +193,14 @@ We follow the standard OpenCV-style camera coordinate system as shown below.
   - `R` is a rotation matrix. It is an orthogonal matrix with determinant 1, as
     rotations preserve volume and orientation.
     - `R.T == np.linalg.inv(R)`
-    - `np.linalg.norm(R @ x) == np.linalg.norm(x)`, where `x` is a `(3,)` vector.
+    - `np.linalg.norm(R @ x) == np.linalg.norm(x)`, where `x` is a `(3,)`
+      vector.
 - `t`: `(3,)` translation vector.
   ```python
   t = T[:3, 3]
   ```
   - `t`'s shape is `(3,)`, not `(3, 1)`.
 - `pose` or `C2W`: `(4, 4)` camera pose matrix. It is the inverse of `T`.
-  ```python
-  pose = T.inv()
-  ```
   - `pose` is also known as the camera-to-world `C2W` matrix, which transforms a
     point in the camera coordinate to the world coordinate.
   - `pose` is the inverse of `T`, i.e., `pose == np.linalg.inv(T)`.
@@ -201,7 +222,7 @@ We follow the standard OpenCV-style camera coordinate system as shown below.
   - `P`'s shape is `(3, 4)`, not `(4, 4)`.
   - It is possible to decompose `P` into intrinsic and extrinsic matrices by QR
     decomposition.
-  - Don't confuse `P` with `pose`.
+  - Don't confuse `P` with `pose`. Don't confuse `P` with `T`.
 - For more details, please refer to the following blog posts:
   [part 1](https://ksimek.github.io/2012/08/14/decompose/),
   [part 2](https://ksimek.github.io/2012/08/22/extrinsic/),
