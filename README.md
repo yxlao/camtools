@@ -130,6 +130,10 @@ We follow the standard OpenCV-style camera coordinate system as shown below.
    <img src="./camtools/assets/camera_coordinates.svg" width="480" />
 </p>
 
+A homogeneous point `[X, Y, Z, 1].T` in the world coordinate is projected to a
+homogeneous point in the pixel coordinate `[x, y, 1].T` by the following
+equation:
+
 $$
 \lambda
 \left[\begin{array}{l}
@@ -149,7 +153,7 @@ X \\
 Y \\
 Z \\
 1
-\end{array}\right]
+\end{array}\right].
 $$
 
 - **Camera coordinate:** right-handed, with $Z$ pointing away from the camera
