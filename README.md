@@ -1,9 +1,9 @@
 # CamTools: Camera Tools for Computer Vision
 
-CamTools is a useful tool for handling cameras in computer vision. It can be
-used for plotting, converting, projecting, ray casting, and doing more with
-camera parameters. It follows the standard camera coordinate system with clear
-and easy-to-use APIs.
+CamTools is a collection of tools for handling cameras in computer vision. It
+can be used for plotting, converting, projecting, ray casting, and doing more
+with camera parameters. It follows the standard camera coordinate system with
+clear and easy-to-use APIs.
 
 <a href="https://github.com/yxlao/camtools/actions/workflows/formatter.yml">
 <img src="https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg" alt="Formatter">
@@ -34,10 +34,10 @@ and easy-to-use APIs.
 
    ```python
    pose = ct.convert.T_to_pose(T)     # Convert T to pose
-   T    = ct.convert.T_to_pose(pose)  # Convert pose to T
+   T    = ct.convert.pose_to_T(pose)  # Convert pose to T
    R, t = ct.convert.T_to_R_t(T)      # Convert T to R and t
    C    = ct.convert.pose_to_C(pose)  # Convert pose to camera center
-   K, T = ct.convert.P_to_K_T(P)      # Decompose projection matrix to K and T
+   K, T = ct.convert.P_to_K_T(P)      # Decompose projection matrix P to K and T
                                       # And more...
    ```
 
@@ -177,9 +177,6 @@ We follow the standard OpenCV-style camera coordinate system as shown below.
   ```
   - `t`'s shape is `(3,)`, not `(3, 1)`.
 - `pose` or `C2W`: `(4, 4)` camera pose matrix. It is the inverse of `T`.
-  ```python
-  pose = T.inv()
-  ```
   - `pose` is also known as the camera-to-world `C2W` matrix, which transforms a
     point in the camera coordinate to the world coordinate.
   - `pose` is the inverse of `T`, i.e., `pose == np.linalg.inv(T)`.
@@ -201,7 +198,7 @@ We follow the standard OpenCV-style camera coordinate system as shown below.
   - `P`'s shape is `(3, 4)`, not `(4, 4)`.
   - It is possible to decompose `P` into intrinsic and extrinsic matrices by QR
     decomposition.
-  - Don't confuse `P` with `pose`.
+  - Don't confuse `P` with `pose`. Don't confuse `P` with `T`.
 - For more details, please refer to the following blog posts:
   [part 1](https://ksimek.github.io/2012/08/14/decompose/),
   [part 2](https://ksimek.github.io/2012/08/22/extrinsic/),
