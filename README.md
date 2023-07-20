@@ -124,8 +124,8 @@ pip install -e .[dev]
 
 ## Camera coordinate system
 
-A homogeneous 3D point `[X, Y, Z, 1]` in the world coordinate can be projected
-to a homogeneous 2d pixel `[x, y, 1]` in the image (pixel) coordinate using the
+A homogeneous point `[X, Y, Z, 1]` in the world coordinate can be projected to a
+homogeneous point `[x, y, 1]` in the image (pixel) coordinate using the
 following equation:
 
 $$
