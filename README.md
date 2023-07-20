@@ -7,7 +7,7 @@ clear and easy-to-use APIs.
 
 [![Formatter](https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/formatter.yml)
 [![Unit Test](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml)
-[![PyPI Test](https://github.com/yxlao/camtools/actions/workflows/pypi_test.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/pypi_test.yml)
+[![PyPI](https://github.com/yxlao/camtools/actions/workflows/pypi.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/pypi.yml)
 
 ## What can you do with CamTools?
 
