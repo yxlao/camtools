@@ -159,18 +159,16 @@ We follow the standard OpenCV-style camera coordinate system as shown below.
   - `T`'s shape is `(4, 4)`, not `(3, 4)`.
   - `T` is the inverse of `pose`, i.e., `np.linalg.inv(T) == pose`.
   - The camera center `C` in world coordinate is projected to `[0, 0, 0, 1]` in
-    camera coordinate, i.e.,
-    ```python
-    T @ C == np.array([0, 0, 0, 1]).T
-    ```
-- `R`: `(3, 3)` rotation matrix. It is the upper-left 3x3 submatrix of `T`.
+    camera coordinate.
+- `R`: `(3, 3)` rotation matrix.
   ```python
   R = T[:3, :3]
   ```
   - `R` is a rotation matrix. It is an orthogonal matrix with determinant 1, as
     rotations preserve volume and orientation.
     - `R.T == np.linalg.inv(R)`
-    - `np.linalg.norm(R @ x) == np.linalg.norm(x)`, where `x` is a `(3,)` vector.
+    - `np.linalg.norm(R @ x) == np.linalg.norm(x)`, where `x` is a `(3,)`
+      vector.
 - `t`: `(3,)` translation vector.
   ```python
   t = T[:3, 3]
