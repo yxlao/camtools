@@ -5,15 +5,9 @@ can be used for plotting, converting, projecting, ray casting, and doing more
 with camera parameters. It follows the standard camera coordinate system with
 clear and easy-to-use APIs.
 
-<a href="https://github.com/yxlao/camtools/actions/workflows/formatter.yml">
-<img src="https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg" alt="Formatter">
-</a>
-<a href="https://github.com/yxlao/camtools/actions/workflows/unit_test.yml">
-<img src="https://github.com/yxlao/camtools/actions/workflows/unit_test.yml/badge.svg" alt="Unit Test">
-</a>
-<a href="https://github.com/yxlao/camtools/actions/workflows/pypi.yml">
-<img src="https://github.com/yxlao/camtools/actions/workflows/pypi.yml/badge.svg" alt="PyPI">
-</a>
+[![Formatter](https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/formatter.yml)
+[![Unit Test](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml)
+[![PyPI Test](https://github.com/yxlao/camtools/actions/workflows/pypi_test.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/pypi_test.yml)
 
 ## What can you do with CamTools?
 
