@@ -171,10 +171,10 @@ $$
   ```
 - `T` or `W2C`: `(4, 4)` camera extrinsic matrix.
   ```python
-  T = [[R  | t   = [[R_00, R_01, R_02, t_0],
-        0  | 1]]    [R_10, R_11, R_12, t_1],
-                    [R_20, R_21, R_22, t_2],
-                    [   0,    0,    0,   1]]
+  T = [[R  | t   = [[R00, R01, R02, t0],
+        0  | 1]]    [R10, R11, R12, t1],
+                    [R20, R21, R22, t2],
+                    [  0,   0,   0,  1]]
   ```
   - `T` is also known as the world-to-camera `W2C` matrix, which transforms a
     point in the world coordinate to the camera coordinate.
