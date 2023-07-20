@@ -6,7 +6,13 @@ camera parameters. It follows the standard camera coordinate system with clear
 and easy-to-use APIs.
 
 <a href="https://github.com/yxlao/camtools/actions/workflows/formatter.yml">
-  <img src="https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg" alt="Formatter">
+<img src="https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg" alt="Formatter">
+</a>
+<a href="https://github.com/yxlao/camtools/actions/workflows/unit_test.yml">
+<img src="https://github.com/yxlao/camtools/actions/workflows/unit_test.yml/badge.svg" alt="Unit Test">
+</a>
+<a href="https://github.com/yxlao/camtools/actions/workflows/pypi.yml">
+<img src="https://github.com/yxlao/camtools/actions/workflows/pypi.yml/badge.svg" alt="PyPI">
 </a>
 
 ## What can you do with CamTools?
@@ -28,6 +34,7 @@ and easy-to-use APIs.
 
    ```python
    pose = ct.convert.T_to_pose(T)     # Convert T to pose
+   T    = ct.convert.T_to_pose(pose)  # Convert pose to T
    R, t = ct.convert.T_to_R_t(T)      # Convert T to R and t
    C    = ct.convert.pose_to_C(pose)  # Convert pose to camera center
    K, T = ct.convert.P_to_K_T(P)      # Decompose projection matrix to K and T
@@ -92,18 +99,27 @@ and easy-to-use APIs.
 
 ## Installation
 
+To install CamTools, simply do:
+
 ```bash
-# Option 1: install from pip.
 pip install camtools
+```
 
-# Option 2: install from git.
-pip install git+https://github.com/yxlao/camtools.git
+Alternatively, you can install CamTools from source with one of the following
+methods:
 
-# Option 3: install from source.
+```bash
 git clone https://github.com/yxlao/camtools.git
 cd camtools
-pip install -e .  # Dev mode, if you want to modify camtools.
-pip install .     # Install mode, if you want to use camtools only.
+
+# Installation mode, if you want to use camtools only.
+pip install .
+
+# Dev mode, if you want to modify camtools on the fly.
+pip install -e .
+
+# Dev mode and dev dependencies, if you want to modify camtools and run tests.
+pip install -e .[dev]
 ```
 
 ## Camera coordinate system
