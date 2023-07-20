@@ -127,7 +127,7 @@ pip install -e .[dev]
 We follow the standard OpenCV-style camera coordinate system as shown below.
 
 <p align="center">
-   <img src="./camtools/assets/camera_coordinates.svg" width="360" />
+   <img src="./camtools/assets/camera_coordinates.svg" width="400" />
 </p>
 
 $$
