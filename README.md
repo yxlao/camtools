@@ -130,6 +130,28 @@ We follow the standard OpenCV-style camera coordinate system as shown below.
    <img src="./camtools/assets/camera_coordinates.svg" width="360" />
 </p>
 
+$$
+\lambda
+\left[\begin{array}{l}
+x \\
+y \\
+1
+\end{array}\right]=\left[\begin{array}{ccc}
+f_{x} & 0 & c_{x} \\
+0 & f_{y} & c_{y} \\
+0 & 0 & 1
+\end{array}\right]\left[\begin{array}{llll}
+r_{00} & r_{01} & r_{02} & t_{0} \\
+r_{10} & r_{11} & r_{12} & t_{1} \\
+r_{20} & r_{21} & r_{22} & t_{2}
+\end{array}\right]\left[\begin{array}{c}
+X \\
+Y \\
+Z \\
+1
+\end{array}\right]
+$$
+
 - **Camera coordinate:** right-handed, with $Z$ pointing away from the camera
   towards the view direction and $Y$ axis pointing down. Note that this is
   different from the Blender convention, where $Z$ points towards the opposite
@@ -141,27 +163,6 @@ We follow the standard OpenCV-style camera coordinate system as shown below.
   and the 1st dimension is the width (i.e., $x$). That is:
   - $x$ <=> $u$ <=> width <=> column <=> the 1st dimension
   - $y$ <=> $v$ <=> height <=> row <=> the 0th dimension
-- $$
-  \lambda
-  \left[\begin{array}{l}
-  x \\
-  y \\
-  1
-  \end{array}\right]=\left[\begin{array}{ccc}
-  f_{x} & 0 & c_{x} \\
-  0 & f_{y} & c_{y} \\
-  0 & 0 & 1
-  \end{array}\right]\left[\begin{array}{llll}
-  r_{00} & r_{01} & r_{02} & t_{0} \\
-  r_{10} & r_{11} & r_{12} & t_{1} \\
-  r_{20} & r_{21} & r_{22} & t_{2}
-  \end{array}\right]\left[\begin{array}{c}
-  X \\
-  Y \\
-  Z \\
-  1
-  \end{array}\right]
-  $$
 - `K`: `(3, 3)` camera intrinsic matrix.
   ```python
   K = [[fx,  s, cx],
