@@ -20,6 +20,9 @@ readme = "README.md"
 requires-python = ">=3.6.0"
 version = "0.1.1"
 
+[tool.setuptools]
+packages = ["camtools", "camtools.tools"]
+
 [project.urls]
 Homepage = "https://github.com/yxlao/camtools"
 
