@@ -157,13 +157,13 @@ We follow the standard OpenCV-style camera coordinate system as shown below.
   - `T` is also known as the world-to-camera `W2C` matrix, which transforms a
     point in the world coordinate to the camera coordinate.
   - `T`'s shape is `(4, 4)`, not `(3, 4)`.
-  - `T` must be invertible, where `np.linalg.inv(T) = pose`.
+  - `T` is the inverse of `pose`, i.e., `np.linalg.inv(T) == pose`.
   - The camera center `C` in world coordinate is projected to `[0, 0, 0, 1]` in
     camera coordinate, i.e.,
     ```python
-    T @ C = np.array([0, 0, 0, 1]).T
+    T @ C == np.array([0, 0, 0, 1]).T
     ```
-- `R`: `(3, 3)` rotation matrix.
+- `R`: `(3, 3)` rotation matrix. It is the upper-left 3x3 submatrix of `T`.
   ```python
   R = T[:3, :3]
   ```
