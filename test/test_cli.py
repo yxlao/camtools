@@ -1,4 +1,3 @@
-from pathlib import Path
 import subprocess
 
 
@@ -25,6 +24,13 @@ def _run_and_test_command(cmd: str, required_stdout: str = None):
             raise AssertionError(
                 f"Required stdout not found in output of {cmd}: {std_out}"
             )
+
+
+def test_ct():
+    _run_and_test_command(
+        cmd="ct --help",
+        required_stdout="usage: ct",
+    )
 
 
 def test_crop_boarders():
