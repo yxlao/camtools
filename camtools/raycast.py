@@ -5,9 +5,11 @@ from . import sanity
 from . import convert
 
 
-def gen_rays(K, T, pixels):
+def gen_rays_from_pixels(K, T, pixels=None):
     """
     Args:
+        K: (3, 3) array, camera intrinsic matrix.
+        T: (4, 4) array, camera extrinsic matrix.
         pixels: image coordinates, (N, 2), order (col, row).
 
     Return:
@@ -36,6 +38,26 @@ def gen_rays(K, T, pixels):
     # Tile camera center C
     centers = np.tile(C, (dirs.shape[0], 1))
 
+    return centers, dirs
+
+
+def gen_rays(K, T, height, width):
+    """
+    Args:
+        K: (3, 3) array, camera intrinsic matrix.
+        T: (4, 4) array, camera extrinsic matrix.
+        height: int, image height.
+        width: int, image width.
+
+    Return:
+        (centers, dirs)
+        centers: camera center, (N, 3).
+        dirs: ray directions, (N, 3), normalized to unit length.
+
+    This function calls gen_rays_from_pixels with all pixels in the image.
+    """
+    pixels = np.mgrid[:width, :height].reshape(2, -1).T
+    centers, dirs = gen_rays_from_pixels(K, T, pixels)
     return centers, dirs
 
 
