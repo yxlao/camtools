@@ -51,8 +51,8 @@ def mesh_to_depth(mesh, K, T, height, width):
         width: int, image width.
 
     Return:
-        (height, width) array, float32, representing depth image. Invalid depth
-        is set to np.inf.
+        (height, width) array, float32, representing depth image. Invalid depths
+        are set to np.inf.
 
     Note: this is not meant to be used repeatedly with the same mesh. If you
     need to perform ray casting of the same mesh multiple times, you should
@@ -67,14 +67,17 @@ def mesh_to_depth(mesh, K, T, height, width):
     )
     scene = o3d.t.geometry.RaycastingScene()
     scene.add_triangles(t_mesh)
+
     rays = o3d.t.geometry.RaycastingScene.create_rays_pinhole(
         intrinsic_matrix=K,
         extrinsic_matrix=T,
         width_px=width,
         height_px=height,
     )
+    ray_lengths = np.linalg.norm(rays[:, :, 3:].numpy(), axis=2)
+
     ans = scene.cast_rays(rays)
-    im_depth = ans["t_hit"].numpy()
+    im_depth = ans["t_hit"].numpy() * ray_lengths
 
     return im_depth
 
@@ -93,7 +96,7 @@ def mesh_to_depths(mesh, Ks, Ts, height, width):
 
     Return:
         (N, height, width) array, float32, representing depth image. Invalid
-        depth is set to np.inf.
+        depths are set to np.inf.
     """
     for K in Ks:
         sanity.assert_K(K)
@@ -115,8 +118,9 @@ def mesh_to_depths(mesh, Ks, Ts, height, width):
             width_px=width,
             height_px=height,
         )
+        ray_lengths = np.linalg.norm(rays[:, :, 3:].numpy(), axis=2)
         ans = scene.cast_rays(rays)
-        im_depth = ans["t_hit"].numpy()
+        im_depth = ans["t_hit"].numpy() * ray_lengths
         im_depths.append(im_depth)
     im_depths = np.stack(im_depths, axis=0)
 
