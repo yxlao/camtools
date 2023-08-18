@@ -342,6 +342,7 @@ def P_to_K_R_t(P):
     ) = cv2.decomposeProjectionMatrix(P)
 
     K = camera_matrix
+    K = K / K[2, 2]
     R = rot_matrix
     t = -rot_matrix @ (trans_vect[:3] / trans_vect[3])
 
