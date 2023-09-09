@@ -168,20 +168,19 @@ def pose_to_T(pose):
 
 def T_opengl_to_opencv(T_opengl):
     """
-    Converts blender T to pinhole. Compared to the pinhole model, Blender has
-    the Y and Z axes flipped, while the X axis is the same.
+    Convert T from OpenGL convention to OpenCV convention.
 
     - OpenCV
         - +X: Right
         - +Y: Down
         - +Z: The view direction, pointing forward and away from the camera
-        - Used in: COLMAP, camtools default
+        - Used in: OpenCV, COLMAP, camtools default
     - OpenGL
         - +X: Right
         - +Y: Up
         - +Z: The negative view direction, pointing back and away from the camera
         - -Z: The view direction
-        - Used in: Blender, Nerfstudio
+        - Used in: OpenGL, Blender, Nerfstudio
     """
     sanity.assert_T(T_opengl)
 
@@ -197,20 +196,19 @@ def T_opengl_to_opencv(T_opengl):
 
 def T_opencv_to_opengl(T):
     """
-    Converts pinhole T to blender. Compared to the pinhole model, Blender has
-    the Y and Z axes flipped, while the X axis is the same.
+    Convert T from OpenCV convention to OpenGL convention.
 
     - OpenCV
         - +X: Right
         - +Y: Down
         - +Z: The view direction, pointing forward and away from the camera
-        - Used in: COLMAP, camtools default
+        - Used in: OpenCV, COLMAP, camtools default
     - OpenGL
         - +X: Right
         - +Y: Up
         - +Z: The negative view direction, pointing back and away from the camera
         - -Z: The view direction
-        - Used in: Blender, Nerfstudio
+        - Used in: OpenGL, Blender, Nerfstudio
     """
     sanity.assert_T(T)
 
@@ -227,20 +225,19 @@ def T_opencv_to_opengl(T):
 
 def pose_opengl_to_opencv(pose_opengl):
     """
-    Converts blender pose to pinhole. Compared to the pinhole model, Blender has
-    the Y and Z axes flipped, while the X axis is the same.
+    Convert pose from OpenGL convention to OpenCV convention.
 
     - OpenCV
         - +X: Right
         - +Y: Down
         - +Z: The view direction, pointing forward and away from the camera
-        - Used in: COLMAP, camtools default
+        - Used in: OpenCV, COLMAP, camtools default
     - OpenGL
         - +X: Right
         - +Y: Up
         - +Z: The negative view direction, pointing back and away from the camera
         - -Z: The view direction
-        - Used in: Blender, Nerfstudio
+        - Used in: OpenGL, Blender, Nerfstudio
     """
     sanity.assert_pose(pose_opengl)
     pose = np.copy(pose_opengl)
@@ -250,20 +247,19 @@ def pose_opengl_to_opencv(pose_opengl):
 
 def pose_opencv_to_opengl(pose):
     """
-    Converts pinhole pose to blender. Compared to the pinhole model, Blender has
-    the Y and Z axes flipped, while the X axis is the same.
+    Convert pose from OpenCV convention to OpenGL convention.
 
     - OpenCV
         - +X: Right
         - +Y: Down
         - +Z: The view direction, pointing forward and away from the camera
-        - Used in: COLMAP, camtools default
+        - Used in: OpenCV, COLMAP, camtools default
     - OpenGL
         - +X: Right
         - +Y: Up
         - +Z: The negative view direction, pointing back and away from the camera
         - -Z: The view direction
-        - Used in: Blender, Nerfstudio
+        - Used in: OpenGL, Blender, Nerfstudio
     """
     sanity.assert_pose(pose)
     pose_opengl = np.copy(pose)
