@@ -155,8 +155,12 @@ We follow the standard OpenCV-style camera coordinate system as shown below.
 
 - **Camera coordinate:** right-handed, with $Z$ pointing away from the camera
   towards the view direction and $Y$ axis pointing down. Note that this is
-  different from the Blender convention, where $Z$ points towards the opposite
-  view direction and the $Y$ axis points up.
+  different from the OpenGL/Blender convention, where $Z$ points towards the
+  opposite view direction and the $Y$ axis points up. To convert between the
+  OpenCV camera coordinates and the OpenGL-style coordinates, use the conversion
+  functions such as `ct.convert.T_opencv_to_opengl()`,
+  `ct.convert.T_opengl_to_opencv()`, `ct.convert.pose_opencv_to_opengl()`, and
+  `ct.convert.pose_opengl_to_opencv()`, etc.
 - **Image coordinate:** starts from the top-left corner of the image, with $x$
   pointing right (corresponding to the image width) and $y$ pointing down
   (corresponding to the image height). This is consistent with OpenCV. Pay
