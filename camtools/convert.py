@@ -166,7 +166,7 @@ def pose_to_T(pose):
     return np.linalg.inv(pose)
 
 
-def T_opengl_to_opencv(T_blender):
+def T_opengl_to_opencv(T_opengl):
     """
     Converts blender T to pinhole. Compared to the pinhole model, Blender has
     the Y and Z axes flipped, while the X axis is the same.
@@ -183,13 +183,13 @@ def T_opengl_to_opencv(T_blender):
         - -Z: The view direction
         - Used in: Blender, Nerfstudio
     """
-    sanity.assert_T(T_blender)
+    sanity.assert_T(T_opengl)
 
     R_b2p = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
 
-    R_blender, t_blender = T_to_R_t(T_blender)
-    R = R_b2p @ R_blender
-    t = t_blender @ R_b2p
+    R_opengl, t_opengl = T_to_R_t(T_opengl)
+    R = R_b2p @ R_opengl
+    t = t_opengl @ R_b2p
     T = R_t_to_T(R, t)
 
     return T
@@ -218,14 +218,14 @@ def T_opencv_to_opengl(T):
     R_p2b = R_b2p.T
 
     R, t = T_to_R_t(T)
-    R_blender = R_p2b @ R
-    t_blender = t @ R_p2b
-    T_blender = R_t_to_T(R_blender, t_blender)
+    R_opengl = R_p2b @ R
+    t_opengl = t @ R_p2b
+    T_opengl = R_t_to_T(R_opengl, t_opengl)
 
-    return T_blender
+    return T_opengl
 
 
-def pose_opengl_to_opencv(pose_blender):
+def pose_opengl_to_opencv(pose_opengl):
     """
     Converts blender pose to pinhole. Compared to the pinhole model, Blender has
     the Y and Z axes flipped, while the X axis is the same.
@@ -242,8 +242,8 @@ def pose_opengl_to_opencv(pose_blender):
         - -Z: The view direction
         - Used in: Blender, Nerfstudio
     """
-    sanity.assert_pose(pose_blender)
-    pose = np.copy(pose_blender)
+    sanity.assert_pose(pose_opengl)
+    pose = np.copy(pose_opengl)
     pose[0:3, 1:3] *= -1
     return pose
 
@@ -266,9 +266,9 @@ def pose_opencv_to_opengl(pose):
         - Used in: Blender, Nerfstudio
     """
     sanity.assert_pose(pose)
-    pose_blender = np.copy(pose)
-    pose_blender[0:3, 1:3] *= -1
-    return pose_blender
+    pose_opengl = np.copy(pose)
+    pose_opengl[0:3, 1:3] *= -1
+    return pose_opengl
 
 
 def R_t_to_C(R, t):
