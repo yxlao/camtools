@@ -157,7 +157,7 @@ def main():
     resolution = 12
     radius = 1.0
     thetas = np.linspace(0, np.pi, resolution, endpoint=False)
-    thetas = thetas[5:6]
+    thetas = thetas[2:8]
     phis = np.linspace(0, 2 * np.pi, resolution, endpoint=False)
 
     thetas_phis = list(itertools.product(thetas, phis))
