@@ -2,6 +2,8 @@ import camtools as ct
 import numpy as np
 import open3d as o3d
 
+np.set_printoptions(precision=4, suppress=True)
+
 
 def euler_to_R(yaw, pitch, roll):
     """
@@ -92,20 +94,33 @@ def polar_to_T_towards_origin(radius, theta, phi):
 
     Args:
         r (float): Radius, distance from the origin.
-        theta (float): Inclination, angle in the x-y plane.
-        phi (float): Azimuth, angle from the z-axis.
+        theta (float): Inclination, angle w.r.t. positive polar (+z) axis.
+            Range: [0, pi].
+        phi (float): Azimuth, rotation angle from the initial meridian (x-y) plane.
+            Range: [0, 2*pi].
 
     Returns:
         T of shape (4, 4).
     """
+    print(f"radius: {radius:.4f}, theta: {theta:.4f}, phi: {phi:.4f}")
     x = radius * np.sin(theta) * np.cos(phi)
     y = radius * np.sin(theta) * np.sin(phi)
     z = radius * np.cos(theta)
 
-    # Camera looking from the origin towards the Y-axis, up is Z-axis.
-    init_R = euler_to_R(0, 0, -np.pi / 2)
+    print(f"x: {x:.4f}, y: {y:.4f}, z: {z:.4f}")
+
+    # Before    : look at +Z, up is -Y.
+    # After init: look at +X, up is +Z.
+    init_R = euler_to_R(np.pi / 2, 0, -np.pi / 2)
+    theta_R = np.eye(3)
+    phi_R = np.eye(3)
+
+    # Rotating along z axis for phi degrees.
+    theta_R = euler_to_R(phi, 0, 0)
+
+    R = phi_R @ theta_R @ init_R
     pose = np.eye(4)
-    pose[:3, :3] = init_R
+    pose[:3, :3] = R
     pose[:3, 3] = [x, y, z]
     T = ct.convert.pose_to_T(pose)
 
@@ -132,8 +147,9 @@ def main():
     # # Create camera at x-y plane in a circle around the origin.
     num_cams = 12
     radius = 1.0
-    thetas = np.linspace(0, 2 * np.pi, num_cams, endpoint=False)
-    Ts = [polar_to_T_towards_origin(radius, theta, 0) for theta in thetas]
+    thetas = np.linspace(0, np.pi, num_cams, endpoint=False)
+    phis = np.linspace(0, 2 * np.pi, num_cams, endpoint=False)
+    Ts = [polar_to_T_towards_origin(radius, np.pi / 2, phi) for phi in phis]
     Ks = [K for _ in range(num_cams)]
 
     cameras = ct.camera.create_camera_ray_frames(Ks=Ks, Ts=Ts)
