@@ -138,12 +138,13 @@ def create_camera_center_rays(Ks, Ts, size=0.1, color=[0, 0, 1]):
     return camera_rays
 
 
-def _create_camera_ray_frame(K, T, image_wh, size, color):
+def _create_camera_ray_frame(K, T, image_wh, size, color, disable_up_triangle):
     """
     K: (3, 3)
     T: (4, 4)
     image:_wh: (2,)
     size: float
+    disable_up_triangle: bool
     """
     T, K, color = np.asarray(T), np.asarray(K), np.asarray(color)
     sanity.assert_T(T)
@@ -186,7 +187,7 @@ def _create_camera_ray_frame(K, T, image_wh, size, color):
         return points_3d_world
 
     # Camera frame line set.
-    frame_points_2d = np.array(
+    points_2d = np.array(
         [
             [0, 0],
             [w, 0],
@@ -194,9 +195,9 @@ def _create_camera_ray_frame(K, T, image_wh, size, color):
             [0, h],
         ]
     )
-    frame_points_3d = points_2d_to_3d_world(frame_points_2d)
-    frame_points = np.vstack((C, frame_points_3d))
-    frame_lines = np.array(
+    points_3d = points_2d_to_3d_world(points_2d)
+    points = np.vstack((C, points_3d))
+    lines = np.array(
         [
             [0, 1],
             [0, 2],
@@ -208,35 +209,36 @@ def _create_camera_ray_frame(K, T, image_wh, size, color):
             [4, 1],
         ]
     )
-    frame_ls = o3d.geometry.LineSet()
-    frame_ls.points = o3d.utility.Vector3dVector(frame_points)
-    frame_ls.lines = o3d.utility.Vector2iVector(frame_lines)
-    frame_ls.paint_uniform_color(color)
+    ls = o3d.geometry.LineSet()
+    ls.points = o3d.utility.Vector3dVector(points)
+    ls.lines = o3d.utility.Vector2iVector(lines)
+    ls.paint_uniform_color(color)
 
-    # "Up triangle" line set.
-    up_gap = 0.1 * h
-    up_height = 0.5 * h
-    up_points_2d = np.array(
-        [
-            [up_gap, -up_gap],
-            [w - up_gap, -up_gap],
-            [w / 2, -up_gap - up_height],
-        ]
-    )
-    up_points = points_2d_to_3d_world(up_points_2d)
-    up_lines = np.array(
-        [
-            [0, 1],
-            [1, 2],
-            [2, 0],
-        ]
-    )
-    up_ls = o3d.geometry.LineSet()
-    up_ls.points = o3d.utility.Vector3dVector(up_points)
-    up_ls.lines = o3d.utility.Vector2iVector(up_lines)
-    up_ls.paint_uniform_color(color)
+    if not disable_up_triangle:
+        up_gap = 0.1 * h
+        up_height = 0.5 * h
+        up_points_2d = np.array(
+            [
+                [up_gap, -up_gap],
+                [w - up_gap, -up_gap],
+                [w / 2, -up_gap - up_height],
+            ]
+        )
+        up_points = points_2d_to_3d_world(up_points_2d)
+        up_lines = np.array(
+            [
+                [0, 1],
+                [1, 2],
+                [2, 0],
+            ]
+        )
+        up_ls = o3d.geometry.LineSet()
+        up_ls.points = o3d.utility.Vector3dVector(up_points)
+        up_ls.lines = o3d.utility.Vector2iVector(up_lines)
+        up_ls.paint_uniform_color(color)
+        ls += up_ls
 
-    return frame_ls + up_ls
+    return ls
 
 
 def _wrap_dim(dim: int, max_dim: int, inclusive: bool = False) -> int:
@@ -264,6 +266,7 @@ def create_camera_ray_frames(
     highlight_color_map=None,
     center_line=True,
     center_line_color=[1, 0, 0],
+    disable_up_triangle=False,
 ):
     """
     Args:
@@ -281,6 +284,7 @@ def create_camera_ray_frames(
             camera is highlighted.
         center_line: If True, the camera center line will be drawn.
         center_line_color: Color of the camera center line.
+        disable_up_triangle: If True, the up triangle will not be drawn.
     """
     if len(Ts) != len(Ks):
         raise ValueError(f"len(Ts) != len(Ks): {len(Ts)} != {len(Ks)}")
@@ -331,6 +335,7 @@ def create_camera_ray_frames(
             image_wh=image_wh,
             size=size,
             color=frame_color,
+            disable_up_triangle=disable_up_triangle,
         )
         ls += camera_frame
 
