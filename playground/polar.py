@@ -4,22 +4,35 @@ import open3d as o3d
 
 
 def euler_to_R(yaw, pitch, roll):
+    """
+    Convert Euler angles to rotation matrix. Given a unit vector x, R @ x is x rotated by applying yaw, pitch, and roll consecutively.
+    Ref: https://en.wikipedia.org/wiki/Euler_angles
+
+    Args:
+        yaw (float): Rotation around the z-axis (from x-axis to y-axis).
+        pitch (float): Rotation around the y-axis (from z-axis to x-axis).
+        roll (float): Rotation around the x-axis (from y-axis to z-axis).
+
+    Returns:
+        Rotation matrix R of shape (3, 3).
+    """
+    y, p, r = yaw, pitch, roll
     R = np.array(
         [
             [
-                np.cos(yaw) * np.cos(pitch),
-                np.cos(yaw) * np.sin(pitch) * np.sin(roll) - np.sin(yaw) * np.cos(roll),
-                np.cos(yaw) * np.sin(pitch) * np.cos(roll) + np.sin(yaw) * np.sin(roll),
+                np.cos(y) * np.cos(p),
+                np.cos(y) * np.sin(p) * np.sin(r) - np.sin(y) * np.cos(r),
+                np.cos(y) * np.sin(p) * np.cos(r) + np.sin(y) * np.sin(r),
             ],
             [
-                np.sin(yaw) * np.cos(pitch),
-                np.sin(yaw) * np.sin(pitch) * np.sin(roll) + np.cos(yaw) * np.cos(roll),
-                np.sin(yaw) * np.sin(pitch) * np.cos(roll) - np.cos(yaw) * np.sin(roll),
+                np.sin(y) * np.cos(p),
+                np.sin(y) * np.sin(p) * np.sin(r) + np.cos(y) * np.cos(r),
+                np.sin(y) * np.sin(p) * np.cos(r) - np.cos(y) * np.sin(r),
             ],
             [
-                -np.sin(pitch),
-                np.cos(pitch) * np.sin(roll),
-                np.cos(pitch) * np.cos(roll),
+                -np.sin(p),
+                np.cos(p) * np.sin(r),
+                np.cos(p) * np.cos(r),
             ],
         ]
     )
@@ -70,9 +83,12 @@ def two_unit_vectors_to_R(v1, v2):
     return UU
 
 
-def polar_to_pose_towards_origin(r, theta, phi):
+def polar_to_pose_lookat_origin_up_z(r, theta, phi):
     """
-    Convert polar coordinates (ISO convention) to pose pointing towards the origin.
+    Convert polar coordinates (ISO convention) to pose, where the cameras
+    looks at the origin from a distance r, and the camera up direction alines
+    with the z-axis (the angle between the up direction and the z-axis is
+    smaller than pi/2.
 
     Args:
         r (float): Radius, distance from the origin.
@@ -111,9 +127,10 @@ def main():
     )
 
     x, y, z = 0.0, 0.0, 0.0
-    R = np.eye(3)
+    # Camera looking from the origin towards the Y-axis, up is Z-axis.
+    init_R = euler_to_R(0, 0, -np.pi / 2)
     pose = np.eye(4)
-    pose[:3, :3] = R
+    pose[:3, :3] = init_R
     pose[:3, 3] = [x, y, z]
     T = ct.convert.pose_to_T(pose)
 
@@ -121,9 +138,7 @@ def main():
     Ts = [T]
 
     axes = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0)
-    camera = ct.camera.create_camera_ray_frames(
-        Ks=Ks, Ts=Ts, size=1.0, disable_up_triangle=True
-    )
+    camera = ct.camera.create_camera_ray_frames(Ks=Ks, Ts=Ts, size=2.0)
     o3d.visualization.draw_geometries([camera, axes])
 
     # # Create camera at x-y plane in a circle around the origin.
