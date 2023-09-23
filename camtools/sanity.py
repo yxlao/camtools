@@ -65,6 +65,20 @@ def assert_shape(x, shape, name=None):
         raise ValueError(f"{name_must} has shape {shape}, but got shape {x.shape}.")
 
 
+def assert_shape_ndim(x, ndim, name=None):
+    """
+    Assert that x is a tensor with nd dimensions.
+
+    Args:
+        x: tensor
+        nd: number of dimensions
+        name: name of tensor
+    """
+    if x.ndim != ndim:
+        name_must = f"{name} must" if name is not None else "Must"
+        raise ValueError(f"{name_must} have {ndim} dimensions, but got {x.ndim}.")
+
+
 def assert_shape_nx3(x, name=None):
     assert_shape(x, (None, 3), name=name)
 
@@ -79,6 +93,10 @@ def assert_shape_4x4(x, name=None):
 
 def assert_shape_3x4(x, name=None):
     assert_shape(x, (3, 4), name=name)
+
+
+def assert_shape_3x3(x, name=None):
+    assert_shape(x, (3, 3), name=name)
 
 
 def assert_shape_3(x, name=None):

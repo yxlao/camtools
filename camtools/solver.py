@@ -150,3 +150,33 @@ def closest_points_of_line_pairs(src_os, src_ds, dst_os, dst_ds):
     dst_ps = dst_os + dst_ts.reshape((-1, 1)) * dst_ds
 
     return src_ps, dst_ps
+
+
+def point_plane_distance_three_points(point, plane_points):
+    """
+    Compute the distance between a point and a plane defined by three points.
+
+    Args:
+        point: (3,), point
+        plane_points: (3, 3), three points on the plane
+    """
+    if isinstance(point, list):
+        point = np.array(point)
+    if isinstance(plane_points, list):
+        plane_points = np.array(plane_points)
+
+    sanity.assert_shape_3(point, name="point")
+    sanity.assert_shape_3x3(plane_points, name="plane_points")
+
+    plane_a, plane_b, plane_c = plane_points
+
+    # Compute the normal vector of the plane.
+    plane_ab = plane_b - plane_a
+    plane_ac = plane_c - plane_a
+    plane_n = np.cross(plane_ab, plane_ac)
+    plane_n = plane_n / np.linalg.norm(plane_n)
+
+    # Compute the distance between the point and the plane.
+    # Ref: https://mathworld.wolfram.com/Point-PlaneDistance.html
+    distance = np.abs(np.dot(plane_n, point - plane_a))
+    return distance
