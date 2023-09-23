@@ -19,27 +19,31 @@ def euler_to_R(yaw, pitch, roll):
     Returns:
         Rotation matrix R of shape (3, 3).
     """
-    y, p, r = yaw, pitch, roll
+    sin_y = np.sin(yaw)
+    cos_y = np.cos(yaw)
+    sin_p = np.sin(pitch)
+    cos_p = np.cos(pitch)
+    sin_r = np.sin(roll)
+    cos_r = np.cos(roll)
     R = np.array(
         [
             [
-                np.cos(y) * np.cos(p),
-                np.cos(y) * np.sin(p) * np.sin(r) - np.sin(y) * np.cos(r),
-                np.cos(y) * np.sin(p) * np.cos(r) + np.sin(y) * np.sin(r),
+                cos_y * cos_p,
+                cos_y * sin_p * sin_r - sin_y * cos_r,
+                cos_y * sin_p * cos_r + sin_y * sin_r,
             ],
             [
-                np.sin(y) * np.cos(p),
-                np.sin(y) * np.sin(p) * np.sin(r) + np.cos(y) * np.cos(r),
-                np.sin(y) * np.sin(p) * np.cos(r) - np.cos(y) * np.sin(r),
+                sin_y * cos_p,
+                sin_y * sin_p * sin_r + cos_y * cos_r,
+                sin_y * sin_p * cos_r - cos_y * sin_r,
             ],
             [
-                -np.sin(p),
-                np.cos(p) * np.sin(r),
-                np.cos(p) * np.cos(r),
+                -sin_p,
+                cos_p * sin_r,
+                cos_p * cos_r,
             ],
         ]
     )
-
     return R
 
 
@@ -65,23 +69,12 @@ def polar_to_T_towards_origin(radius, theta, phi):
     y = radius * np.sin(theta) * np.sin(phi)
     z = radius * np.cos(theta)
 
-    print(
-        f"radius={radius:.2f}, theta={theta:.2f}, phi={phi:.2f}, "
-        f"x={x:.2f}, y={y:.2f}, z={z:.2f}"
-    )
-
     # Before    : look at +Z, up is -Y.
     # After init: look at +X, up is +Z.
     init_R = euler_to_R(-np.pi / 2, 0, -np.pi / 2)
-    theta_R = np.eye(3)
-    phi_R = np.eye(3)
-
     # Rotate along z axis.
-    phi_R = euler_to_R(0, 0, 0)
     phi_R = euler_to_R(phi + np.pi, 0, 0)
-
     # Rotate along y axis.
-    theta_R = euler_to_R(0, 0, 0)
     theta_R = euler_to_R(0, (np.pi / 2 - theta), 0)
 
     # Combine rotations, the order matters.
