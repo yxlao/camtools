@@ -43,49 +43,6 @@ def euler_to_R(yaw, pitch, roll):
     return R
 
 
-def two_unit_vectors_to_R(v1, v2):
-    """
-    Find rotation matrix R such that R @ v1 = v2.
-
-    Args:
-        v1 (np.ndarray): Vector of shape (3,). v1 will be normalized.
-        v2 (np.ndarray): Vector of shape (3,). v2 will be normalized.
-
-    Returns:
-        Rotation matrix R of shape (3, 3).
-
-
-    """
-    v1 = v1 / np.linalg.norm(v1)
-    v2 = v2 / np.linalg.norm(v2)
-
-    # GG = @(A,B) [ dot(A,B) -norm(cross(A,B)) 0;\
-    #             norm(cross(A,B)) dot(A,B)  0;\
-    #             0              0           1];
-    # FFi = @(A,B) [ A (B-dot(A,B)*A)/norm(B-dot(A,B)*A) cross(B,A) ];
-    # UU = @(Fi,G) Fi*G*inv(Fi);
-
-    GG = np.array(
-        [
-            [np.dot(v1, v2), -np.linalg.norm(np.cross(v1, v2)), 0],
-            [np.linalg.norm(np.cross(v1, v2)), np.dot(v1, v2), 0],
-            [0, 0, 1],
-        ]
-    )
-    FFi = np.array(
-        [
-            [
-                v1,
-                (v2 - np.dot(v1, v2) * v1) / np.linalg.norm(v2 - np.dot(v1, v2) * v1),
-                np.cross(v2, v1),
-            ],
-        ]
-    )
-    UU = FFi @ GG @ np.linalg.inv(FFi)
-
-    return UU
-
-
 def polar_to_T_towards_origin(radius, theta, phi):
     """
     Convert polar coordinates (ISO convention) to T, where the cameras looks at
@@ -119,14 +76,15 @@ def polar_to_T_towards_origin(radius, theta, phi):
     theta_R = np.eye(3)
     phi_R = np.eye(3)
 
-    # Rotating along z axis for phi degrees.
+    # Rotate along z axis.
     phi_R = euler_to_R(0, 0, 0)
     phi_R = euler_to_R(phi + np.pi, 0, 0)
 
-    # Rotating along y axis for theta degrees.
+    # Rotate along y axis.
     theta_R = euler_to_R(0, 0, 0)
     theta_R = euler_to_R(0, (np.pi / 2 - theta), 0)
 
+    # Combine rotations, the order matters.
     R = phi_R @ theta_R @ init_R
     pose = np.eye(4)
     pose[:3, :3] = R
@@ -146,18 +104,10 @@ def main():
         ]
     )
 
-    # Ks = [K]
-    # Ts = [T]
-
-    # axes = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0)
-    # camera = ct.camera.create_camera_ray_frames(Ks=Ks, Ts=Ts, size=2.0)
-    # o3d.visualization.draw_geometries([camera, axes])
-
-    # # Create camera at x-y plane in a circle around the origin.
+    # Create camera at x-y plane in a circle around the origin.
     resolution = 12
     radius = 1.0
-    thetas = np.linspace(0, np.pi, resolution, endpoint=False)
-    thetas = thetas[2:8]
+    thetas = np.linspace(0, np.pi, resolution, endpoint=False)[1:]
     phis = np.linspace(0, 2 * np.pi, resolution, endpoint=False)
 
     thetas_phis = list(itertools.product(thetas, phis))
