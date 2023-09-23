@@ -114,15 +114,20 @@ def polar_to_T_towards_origin(radius, theta, phi):
     )
 
     # Before    : look at +Z, up is -Y.
-    # After init: look at +X, up is +Z.
+    # After init: look at -X, up is +Z.
     init_R = euler_to_R(np.pi / 2, 0, -np.pi / 2)
     theta_R = np.eye(3)
     phi_R = np.eye(3)
 
     # Rotating along z axis for phi degrees.
-    theta_R = euler_to_R(phi, 0, 0)
+    phi_R = euler_to_R(0, 0, 0)
+    # phi_R = euler_to_R(phi, 0, 0)
 
-    R = phi_R @ theta_R @ init_R
+    # Rotating along y axis for theta degrees.
+    theta_R = euler_to_R(0, 0, 0)
+    # theta_R = euler_to_R(0, -(np.pi / 2 - theta), 0)
+
+    R = theta_R @ phi_R @ init_R
     pose = np.eye(4)
     pose[:3, :3] = R
     pose[:3, 3] = [x, y, z]
@@ -152,7 +157,7 @@ def main():
     resolution = 12
     radius = 1.0
     thetas = np.linspace(0, np.pi, resolution, endpoint=False)
-    thetas = thetas[2:-2]
+    thetas = thetas[5:6]
     phis = np.linspace(0, 2 * np.pi, resolution, endpoint=False)
 
     thetas_phis = list(itertools.product(thetas, phis))
