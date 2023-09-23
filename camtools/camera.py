@@ -2,6 +2,7 @@ import open3d as o3d
 import numpy as np
 from . import convert
 from . import sanity
+from . import solver
 
 
 def create_camera_center_line(Ts, color=np.array([1, 0, 0])):
@@ -137,44 +138,65 @@ def create_camera_center_rays(Ks, Ts, size=0.1, color=[0, 0, 1]):
     return camera_rays
 
 
-def create_camera_ray_frame(K, T, size=0.1, color=[0, 0, 1]):
+def _create_camera_ray_frame(K, T, image_wh, size, color):
     """
-    K: 3x3
-    T: 4x4
+    K: (3, 3)
+    T: (4, 4)
+    image:_wh: (2,)
+    size: float
     """
     T, K, color = np.asarray(T), np.asarray(K), np.asarray(color)
     sanity.assert_T(T)
     sanity.assert_K(K)
     sanity.assert_shape_3(color, "color")
 
-    # Pick 4 corner points
-    # Assumes that the camera offset is exactly at the center of the image.
-    # The rays are plotted in the center of each corner pixel.
-    w = (K[0, 2] + 0.5) * 2 - 1
-    h = (K[1, 2] + 0.5) * 2 - 1
-    points = np.array(
-        [
-            [0, 0, 1],
-            [w, 0, 1],
-            [w, h, 1],
-            [0, h, 1],
-        ]
-    )
+    w, h = image_wh
+    if not isinstance(w, (int, np.integer)) or not isinstance(h, (int, np.integer)):
+        raise ValueError(f"image_wh must be integer, but got {image_wh}.")
 
-    # Transform to camera space
-    points = (np.linalg.inv(K) @ points.T).T
-
-    # Normalize to have 1 distance
-    points = points / np.linalg.norm(points, axis=1, keepdims=True) * size
-
-    # Transform to world space
     R, _ = convert.T_to_R_t(T)
     C = convert.T_to_C(T)
-    points = (np.linalg.inv(R) @ points.T).T + C
 
-    # Create line set
-    points = np.vstack((C, points))
-    lines = np.array(
+    # Compute distance of camera plane to origin.
+    camera_plane_points_2d_homo = np.array(
+        [
+            [0, 0, 1],
+            [w - 1, 0, 1],
+            [0, h - 1, 1],
+        ]
+    )
+    camera_plane_points_3d = (np.linalg.inv(K) @ camera_plane_points_2d_homo.T).T
+    camera_plane_dist = solver.point_plane_distance_three_points(
+        [0, 0, 0], camera_plane_points_3d
+    )
+
+    def points_2d_to_3d_world(points_2d):
+        """
+        Convert 2D points to 2D points in world coordinates.
+        The points will be normalized by camera_plane_dist and scaled by size.
+        """
+        # Convert to homo coords.
+        points_2d_homo = np.hstack((points_2d, np.ones((len(points_2d), 1))))
+        # Camera space in world scale.
+        points_3d_cam = (np.linalg.inv(K) @ points_2d_homo.T).T
+        # Normalize to have distance 1 and scale by size.
+        points_3d_cam = points_3d_cam / camera_plane_dist * size
+        # Transform to world space.
+        points_3d_world = (np.linalg.inv(R) @ points_3d_cam.T).T + C
+        return points_3d_world
+
+    # Camera frame line set.
+    frame_points_2d = np.array(
+        [
+            [0, 0],
+            [w, 0],
+            [w, h],
+            [0, h],
+        ]
+    )
+    frame_points_3d = points_2d_to_3d_world(frame_points_2d)
+    frame_points = np.vstack((C, frame_points_3d))
+    frame_lines = np.array(
         [
             [0, 1],
             [0, 2],
@@ -186,12 +208,35 @@ def create_camera_ray_frame(K, T, size=0.1, color=[0, 0, 1]):
             [4, 1],
         ]
     )
-    ls = o3d.geometry.LineSet()
-    ls.points = o3d.utility.Vector3dVector(points)
-    ls.lines = o3d.utility.Vector2iVector(lines)
-    ls.paint_uniform_color(color)
+    frame_ls = o3d.geometry.LineSet()
+    frame_ls.points = o3d.utility.Vector3dVector(frame_points)
+    frame_ls.lines = o3d.utility.Vector2iVector(frame_lines)
+    frame_ls.paint_uniform_color(color)
 
-    return ls
+    # "Up triangle" line set.
+    up_gap = 0.1 * h
+    up_height = 0.5 * h
+    up_points_2d = np.array(
+        [
+            [up_gap, -up_gap],
+            [w - up_gap, -up_gap],
+            [w / 2, -up_gap - up_height],
+        ]
+    )
+    up_points = points_2d_to_3d_world(up_points_2d)
+    up_lines = np.array(
+        [
+            [0, 1],
+            [1, 2],
+            [2, 0],
+        ]
+    )
+    up_ls = o3d.geometry.LineSet()
+    up_ls.points = o3d.utility.Vector3dVector(up_points)
+    up_ls.lines = o3d.utility.Vector2iVector(up_lines)
+    up_ls.paint_uniform_color(color)
+
+    return frame_ls + up_ls
 
 
 def _wrap_dim(dim: int, max_dim: int, inclusive: bool = False) -> int:
@@ -213,6 +258,7 @@ def _wrap_dim(dim: int, max_dim: int, inclusive: bool = False) -> int:
 def create_camera_ray_frames(
     Ks,
     Ts,
+    image_whs=None,
     size=0.1,
     color=[0, 0, 1],
     highlight_color_map=None,
@@ -223,7 +269,10 @@ def create_camera_ray_frames(
     Args:
         Ks: List of 3x3 camera intrinsics matrices.
         Ts: List of 4x4 camera extrinsics matrices.
-        size: Size of the camera camera frame.
+        image_whs: List of image width and height. If None, the image width and
+            height are determined from the camera intrinsics by assuming that
+            the camera offset is exactly at the center of the image.
+        size: Distance from the camera center to image plane in world coordinates.
         color: Color of the camera frame.
         highlight_color_map: A map of camera_index to color, specifying the
             colors of the highlighted cameras. Index wrapping is supported.
@@ -233,7 +282,33 @@ def create_camera_ray_frames(
         center_line: If True, the camera center line will be drawn.
         center_line_color: Color of the camera center line.
     """
-    assert len(Ts) == len(Ks)
+    if len(Ts) != len(Ks):
+        raise ValueError(f"len(Ts) != len(Ks): {len(Ts)} != {len(Ks)}")
+    for K in Ks:
+        sanity.assert_K(K)
+    for T in Ts:
+        sanity.assert_T(T)
+
+    if image_whs is None:
+        image_whs = []
+        for K in Ks:
+            w = int((K[0, 2] + 0.5) * 2)
+            h = int((K[1, 2] + 0.5) * 2)
+            image_whs.append([w, h])
+    else:
+        if len(image_whs) != len(Ts):
+            raise ValueError(
+                f"len(image_whs) != len(Ts): {len(image_whs)} != {len(Ts)}"
+            )
+        for image_wh in image_whs:
+            # Must be 2D.
+            sanity.assert_shape_ndim(image_wh, nd=2)
+            # Must be integer.
+            w, h = image_wh
+            if not isinstance(w, (int, np.integer)) or not isinstance(
+                h, (int, np.integer)
+            ):
+                raise ValueError(f"image_wh must be integer, but got {image_wh}.")
 
     # Wrap the highlight_color_map dimensions.
     if highlight_color_map is not None:
@@ -245,12 +320,18 @@ def create_camera_ray_frames(
 
     # Draw camera frames.
     ls = o3d.geometry.LineSet()
-    for index, (T, K) in enumerate(zip(Ts, Ks)):
+    for index, (T, K, image_wh) in enumerate(zip(Ts, Ks, image_whs)):
         if highlight_color_map is not None and index in highlight_color_map:
             frame_color = highlight_color_map[index]
         else:
             frame_color = color
-        camera_frame = create_camera_ray_frame(K, T, size=size, color=frame_color)
+        camera_frame = _create_camera_ray_frame(
+            K,
+            T,
+            image_wh=image_wh,
+            size=size,
+            color=frame_color,
+        )
         ls += camera_frame
 
     # Draw camera center lines.
