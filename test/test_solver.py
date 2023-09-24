@@ -15,3 +15,4 @@ def test_point_plane_distance_three_points():
     plane_points = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
     ref_dist = 1 / np.sqrt(3)
     dist = ct.solver.point_plane_distance_three_points(point, plane_points)
+    np.testing.assert_allclose(dist, ref_dist)
