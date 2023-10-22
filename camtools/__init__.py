@@ -7,12 +7,10 @@ from . import image
 from . import io
 from . import metric
 from . import normalize
-from . import plot
 from . import project
 from . import raycast
 from . import sanity
 from . import solver
-from . import stat
 from . import transform
 
 import pkg_resources
