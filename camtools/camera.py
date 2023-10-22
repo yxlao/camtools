@@ -171,6 +171,8 @@ def create_camera_frames(
     center_ray=False,
 ):
     """
+    Draw camera frames in line sets.
+
     Args:
         Ks: List of 3x3 camera intrinsics matrices. You can set Ks to None if
             the intrinsics are not available. In this case, a dummy intrinsics
@@ -191,6 +193,9 @@ def create_camera_frames(
         up_triangle: If True, the up triangle will be drawn.
         center_ray: If True, the ray from camera center to the center pixel in
             the image plane will be drawn.
+
+    Return:
+        An Open3D LinetSet containing all the camera frames.
     """
     if Ks is None:
         cx = 320
