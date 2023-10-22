@@ -13,6 +13,7 @@ from . import raycast
 from . import sanity
 from . import solver
 from . import stat
+from . import transform
 
 import pkg_resources
 
