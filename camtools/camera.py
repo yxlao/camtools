@@ -19,13 +19,22 @@ def create_camera_center_line(Ts, color=np.array([1, 0, 0])):
     return ls
 
 
-def _create_camera_frame(K, T, image_wh, size, color, up_triangle):
+def _create_camera_frame(
+    K,
+    T,
+    image_wh,
+    size,
+    color,
+    up_triangle,
+    center_ray,
+):
     """
     K: (3, 3)
     T: (4, 4)
     image:_wh: (2,)
     size: float
     up_triangle: bool
+    center_ray: bool
     """
     T, K, color = np.asarray(T), np.asarray(K), np.asarray(color)
     sanity.assert_T(T)
@@ -119,6 +128,17 @@ def _create_camera_frame(K, T, image_wh, size, color, up_triangle):
         up_ls.paint_uniform_color(color)
         ls += up_ls
 
+    if center_ray:
+        center_px_2d = np.array([[(w - 1) / 2, (h - 1) / 2]])
+        center_px_3d = points_2d_to_3d_world(center_px_2d)
+        center_ray_points = np.vstack((C, center_px_3d))
+        center_ray_lines = np.array([[0, 1]])
+        center_ray_ls = o3d.geometry.LineSet()
+        center_ray_ls.points = o3d.utility.Vector3dVector(center_ray_points)
+        center_ray_ls.lines = o3d.utility.Vector2iVector(center_ray_lines)
+        center_ray_ls.paint_uniform_color(color)
+        ls += center_ray_ls
+
     return ls
 
 
@@ -148,6 +168,7 @@ def create_camera_frames(
     center_line=True,
     center_line_color=(1, 0, 0),
     up_triangle=True,
+    center_ray=False,
 ):
     """
     Args:
@@ -168,6 +189,8 @@ def create_camera_frames(
         center_line: If True, the camera center line will be drawn.
         center_line_color: Color of the camera center line.
         up_triangle: If True, the up triangle will be drawn.
+        center_ray: If True, the ray from camera center to the center pixel in
+            the image plane will be drawn.
     """
     if Ks is None:
         cx = 320
@@ -226,6 +249,7 @@ def create_camera_frames(
             size=size,
             color=frame_color,
             up_triangle=up_triangle,
+            center_ray=center_ray,
         )
         ls += camera_frame
 
@@ -248,6 +272,7 @@ def create_camera_frames_with_Ts(
     center_line=True,
     center_line_color=(1, 0, 0),
     up_triangle=True,
+    center_ray=False,
 ):
     """
     Returns ct.camera.create_camera_frames(Ks=None, Ts, ...).
@@ -262,4 +287,5 @@ def create_camera_frames_with_Ts(
         center_line=center_line,
         center_line_color=center_line_color,
         up_triangle=up_triangle,
+        center_ray=center_ray,
     )
