@@ -270,7 +270,9 @@ def create_camera_ray_frames(
 ):
     """
     Args:
-        Ks: List of 3x3 camera intrinsics matrices.
+        Ks: List of 3x3 camera intrinsics matrices. You can set Ks to None if
+            the intrinsics are not available. In this case, a dummy intrinsics
+            matrix will be used.
         Ts: List of 4x4 camera extrinsics matrices.
         image_whs: List of image width and height. If None, the image width and
             height are determined from the camera intrinsics by assuming that
@@ -286,6 +288,13 @@ def create_camera_ray_frames(
         center_line_color: Color of the camera center line.
         disable_up_triangle: If True, the up triangle will not be drawn.
     """
+    if Ks is None:
+        cx = 320
+        cy = 240
+        fx = 320
+        fy = 320
+        K = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
+        Ks = [K for _ in range(len(Ts))]
     if len(Ts) != len(Ks):
         raise ValueError(f"len(Ts) != len(Ks): {len(Ts)} != {len(Ks)}")
     for K in Ks:
