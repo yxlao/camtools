@@ -19,7 +19,7 @@ clear and easy-to-use APIs.
    ```python
    import camtools as ct
    import open3d as o3d
-   cameras = ct.camera.create_camera_ray_frames(Ks, Ts)
+   cameras = ct.camera.create_camera_frames(Ks, Ts)
    o3d.visualization.draw_geometries([cameras])
    ```
 
