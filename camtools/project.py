@@ -1,26 +1,11 @@
+"""
+Functions for projecting 2D->3D or 3D->2D.
+"""
+
 import numpy as np
 import torch
 from . import sanity
 from . import convert
-
-
-def homo_project(points, mat):
-    sanity.assert_shape_nx3(points, name="points")
-    sanity.assert_shape_4x4(mat, name="mat")
-    sanity.assert_same_device(points, mat)
-
-    N = len(points)
-    if torch.is_tensor(mat):
-        ones = torch.ones((N, 1), dtype=points.dtype, device=points.device)
-        points_homo = torch.hstack((points, ones))
-    else:
-        ones = np.ones((N, 1))
-        points_homo = np.hstack((points, ones))
-
-    # (mat @ points_homo.T).T
-    points_out = points_homo @ mat.T
-    points_out = points_out[:, :3] / points_out[:, 3:]
-    return points_out
 
 
 def points_to_pixel(points, K, T):
