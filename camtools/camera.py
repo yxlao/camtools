@@ -19,13 +19,13 @@ def create_camera_center_line(Ts, color=np.array([1, 0, 0])):
     return ls
 
 
-def _create_camera_frame(K, T, image_wh, size, color, disable_up_triangle):
+def _create_camera_frame(K, T, image_wh, size, color, up_triangle):
     """
     K: (3, 3)
     T: (4, 4)
     image:_wh: (2,)
     size: float
-    disable_up_triangle: bool
+    up_triangle: bool
     """
     T, K, color = np.asarray(T), np.asarray(K), np.asarray(color)
     sanity.assert_T(T)
@@ -95,7 +95,7 @@ def _create_camera_frame(K, T, image_wh, size, color, disable_up_triangle):
     ls.lines = o3d.utility.Vector2iVector(lines)
     ls.paint_uniform_color(color)
 
-    if not disable_up_triangle:
+    if up_triangle:
         up_gap = 0.1 * h
         up_height = 0.5 * h
         up_points_2d = np.array(
@@ -147,7 +147,7 @@ def create_camera_frames(
     highlight_color_map=None,
     center_line=True,
     center_line_color=(1, 0, 0),
-    disable_up_triangle=False,
+    up_triangle=True,
 ):
     """
     Args:
@@ -167,7 +167,7 @@ def create_camera_frames(
             camera is highlighted.
         center_line: If True, the camera center line will be drawn.
         center_line_color: Color of the camera center line.
-        disable_up_triangle: If True, the up triangle will not be drawn.
+        up_triangle: If True, the up triangle will be drawn.
     """
     if Ks is None:
         cx = 320
@@ -225,7 +225,7 @@ def create_camera_frames(
             image_wh=image_wh,
             size=size,
             color=frame_color,
-            disable_up_triangle=disable_up_triangle,
+            up_triangle=up_triangle,
         )
         ls += camera_frame
 
@@ -247,7 +247,7 @@ def create_camera_frames_with_Ts(
     highlight_color_map=None,
     center_line=True,
     center_line_color=(1, 0, 0),
-    disable_up_triangle=False,
+    up_triangle=True,
 ):
     """
     Returns ct.camera.create_camera_frames(Ks=None, Ts, ...).
@@ -261,5 +261,5 @@ def create_camera_frames_with_Ts(
         highlight_color_map=highlight_color_map,
         center_line=center_line,
         center_line_color=center_line_color,
-        disable_up_triangle=disable_up_triangle,
+        up_triangle=up_triangle,
     )
