@@ -1,9 +1,7 @@
 from pathlib import Path
-import argparse
-import numpy as np
-import cv2
 import camtools as ct
 import os
+import tempfile
 
 
 def instantiate_parser(parser):
@@ -23,8 +21,8 @@ def instantiate_parser(parser):
         "--quality",
         "-q",
         type=int,
-        default=80,
-        help="Quality of the output JPEG image, 1-100. Default is 80.",
+        default=95,
+        help="Quality of the output JPEG image, 1-100. Default is 95.",
     )
     return parser
 
@@ -54,20 +52,13 @@ def entry_point(parser, args):
     # Compute dst_paths.
     dst_paths = []
     for src_path in src_paths:
-        if args.inplace:
-            if ct.io.is_jpg_path(src_path):
-                dst_paths.append(src_path)
-            elif ct.io.is_png_path(src_path):
-                dst_paths.append(src_path.with_suffix(".jpg"))
-            else:
-                raise ValueError(f"Unsupported image type: {src_path}")
+        if ct.io.is_jpg_path(src_path):
+            dst_path = src_path
         else:
-            if ct.io.is_jpg_path(src_path):
-                dst_paths.append(src_path.parent / f"compressed_{src_path.name}")
-            elif ct.io.is_png_path(src_path):
-                dst_paths.append(src_path.parent / f"compressed_{src_path.name}.jpg")
-            else:
-                raise ValueError(f"Unsupported image type: {src_path}")
+            dst_path = src_path.with_suffix(".jpg")
+        if not args.inplace:
+            dst_path = dst_path.parent / f"compressed_{dst_path.name}"
+        dst_paths.append(dst_path)
 
     # Print summary.
     pwd = Path.cwd().resolve().absolute()
@@ -77,12 +68,111 @@ def entry_point(parser, args):
         print(f"    dst: {Path(os.path.relpath(path=dst_path, start=pwd))}")
     print(f"[Configs]")
     inplace_str = "src will be deleted" if args.inplace else "src will be kept"
-    print(f"  - inplace: {inplace_str}")
-    print(f"  - quality: {args.quality}")
+    print(f"  - num_images: {len(src_paths)}")
+    print(f"  -    quality: {args.quality}")
+    print(f"  -    inplace: {inplace_str}")
 
     # Confirm.
     if ct.utility.query_yes_no("Proceed?", default=False):
-        print("Proceeding.")
+        compress_images(
+            src_paths=src_paths,
+            dst_paths=dst_paths,
+            quality=args.quality,
+            delete_src=args.inplace,
+        )
     else:
         print("Aborted.")
         return 0
+
+
+def compress_image_and_return_sizes(
+    src_path: Path,
+    dst_path: Path,
+    quality: int = 95,
+    delete_src: bool = False,
+):
+    """
+    Compress image.
+
+    Args:
+        src_path: Path to image.
+            - Only ".jpg" or ".png" is supported.
+            - Directory will be created if it does not exist.
+        dst_path: Path to image.
+            - Only ".jpg" or ".png" is supported.
+            - Directory will be created if it does not exist.
+        quality: Quality of the output JPEG image, 1-100. Default is 95.
+        delete_src: If True, the src_path will be deleted.
+
+    Return:
+        (src_size, dst_size): Tuple of (src_size, dst_size) in bytes.
+
+    Notes:
+        - You should not use this to save a depth image (typically uint16).
+        - Float image will get a range check to ensure it is in [0, 1].
+    """
+    src_path = Path(src_path)
+    dst_path = Path(dst_path)
+    if not ct.io.is_jpg_path(dst_path):
+        raise ValueError(f"dst_path must be a JPG file: {dst_path}")
+
+    # Read.
+    im = ct.io.imread(src_path)
+    src_size = src_path.stat().st_size
+
+    # Write to a temporary file to get the file size.
+    fp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=True)
+    ct.io.imwrite(fp.name, im, quality=quality)
+    dst_size = Path(fp.name).stat().st_size
+
+    # Copy to the destination.
+    dst_path.parent.mkdir(parents=True, exist_ok=True)
+    fp.seek(0)
+    with open(dst_path, "wb") as dst_fp:
+        dst_fp.write(fp.read())
+    fp.close()
+
+    if delete_src and src_path != dst_path:
+        src_path.unlink()
+
+    return src_size, dst_size
+
+
+def compress_images(
+    src_paths,
+    dst_paths,
+    quality: int = 95,
+    delete_src: bool = False,
+):
+    """
+    Compress images (PNGs will be converted to JPGs)
+
+    Args:
+        src_paths: List of source image paths.
+        dst_paths: List of destination image paths.
+        quality: Quality of the output JPEG image, 1-100. Default is 95.
+        delete_src: If True, the src_path will be deleted.
+    """
+
+    src_sizes = []
+    dst_sizes = []
+    for src_path, dst_path in zip(src_paths, dst_paths):
+        src_size, dst_size = compress_image_and_return_sizes(
+            src_path=src_path,
+            dst_path=dst_path,
+            quality=quality,
+            delete_src=delete_src,
+        )
+        src_sizes.append(src_size)
+        dst_sizes.append(dst_size)
+
+    # Print summary, reporting total nums, and total sizes in MB.
+    src_total_size_mb = sum(src_sizes) / 1024 / 1024
+    dst_total_size_mb = sum(dst_sizes) / 1024 / 1024
+    compression_ratio = dst_total_size_mb / src_total_size_mb
+    print(f"[Summary]")
+    print(
+        f"Compressed {len(src_paths)} images: "
+        f"{src_total_size_mb:.2f} MB -> {dst_total_size_mb:.2f} MB "
+        f"(compression ratio: {compression_ratio:.2f})"
+    )
