@@ -12,10 +12,19 @@ def query_yes_no(question, default=None):
         Returns True for "yes" or False for "no".
 
     Examples:
+        ```python
         if query_yes_no("Continue?", default="yes"):
             print("Proceeding.")
         else:
             print("Aborted.")
+        ```
+
+        ```python
+        if not query_yes_no("Continue?", default="yes"):
+            print("Aborted.")
+            return  # Or exit(0)
+        print("Proceeding.")
+        ```
     """
     if default is None:
         prompt = "[y/n]"
