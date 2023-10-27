@@ -4,7 +4,15 @@ import numpy as np
 from pathlib import Path
 
 
-def imwrite(im_path, im):
+def is_jpg_path(path):
+    return Path(path).suffix.lower() in [".jpg", ".jpeg"]
+
+
+def is_png_path(path):
+    return Path(path).suffix.lower() in [".png"]
+
+
+def imwrite(im_path, im, quality: int = 95):
     """
     Write image, with no surprises.
 
@@ -15,6 +23,7 @@ def imwrite(im_path, im):
         im: Numpy array.
             - ndims: Must be 1 or 3. Otherwise, an exception will be thrown.
             - dtype: Must be uint8, float32, float64.
+        quality: Quality of the output JPEG image, 1-100. Default is 95.
 
     Notes:
         - You should not use this to save a depth image (typically uint16).
@@ -22,7 +31,9 @@ def imwrite(im_path, im):
     """
     im_path = Path(im_path)
 
-    assert im_path.suffix in (".jpg", ".png")
+    assert is_jpg_path(im_path) or is_png_path(
+        im_path
+    ), f"{im_path} is not a JPG or PNG file."
     assert isinstance(im, np.ndarray)
     assert im.ndim in (1, 3)
     assert im.dtype in [np.uint8, np.float32, np.float64]
@@ -47,7 +58,10 @@ def imwrite(im_path, im):
     # Write.
     im_dir = im_path.parent
     im_dir.mkdir(parents=True, exist_ok=True)
-    cv2.imwrite(str(im_path), im)
+    if is_jpg_path(im_path):
+        cv2.imwrite(str(im_path), im, [cv2.IMWRITE_JPEG_QUALITY, quality])
+    else:
+        cv2.imwrite(str(im_path), im)
 
 
 def imwrite_depth(im_path, im, depth_scale=1000.0):
@@ -76,7 +90,7 @@ def imwrite_depth(im_path, im, depth_scale=1000.0):
     """
     im_path = Path(im_path)
 
-    assert im_path.suffix == ".png"
+    assert is_png_path(im_path), f"{im_path} is not a PNG file."
     assert isinstance(im, np.ndarray)
     assert im.dtype in [np.float32, np.float64]
     assert im.ndim == 2
@@ -117,7 +131,9 @@ def imread(im_path, alpha_mode=None):
         - If image dtype is uint16, an exception will be thrown.
     """
     im_path = Path(im_path)
-    assert im_path.suffix in (".jpg", ".png")
+    assert is_jpg_path(im_path) or is_png_path(
+        im_path
+    ), f"{im_path} is not a JPG or PNG file."
     assert im_path.is_file(), f"{im_path} is not a file."
 
     # Read.
@@ -215,7 +231,7 @@ def imread_depth(im_path, depth_scale=1000.0):
         practice is to use 0 as invalid depth.
     """
     im_path = Path(im_path)
-    assert im_path.suffix == ".png"
+    assert is_png_path(im_path), f"{im_path} is not a PNG file."
     assert im_path.is_file(), f"{im_path} is not a file."
 
     im = cv2.imread(str(im_path), cv2.IMREAD_UNCHANGED)

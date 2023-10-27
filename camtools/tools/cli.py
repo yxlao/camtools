@@ -37,7 +37,7 @@ def main():
     sub_parser = ct.tools.crop_boarders.instantiate_parser(sub_parser)
     sub_parser.set_defaults(func=ct.tools.crop_boarders.entry_point)
 
-    # ct draw-bboxes a.png b.png
+    # ct draw-bboxes
     sub_parser = sub_parsers.add_parser(
         "draw-bboxes",
         help="Draw bounding boxes on images.\n"
@@ -49,6 +49,19 @@ def main():
     )
     sub_parser = ct.tools.draw_bboxes.instantiate_parser(sub_parser)
     sub_parser.set_defaults(func=ct.tools.draw_bboxes.entry_point)
+
+    # ct compress-images
+    sub_parser = sub_parsers.add_parser(
+        "compress-images",
+        help="Compress images (PNGs will be converted to JPGs)\n"
+        "```\n"
+        "ct compress-images *.png --quality 80\n"
+        "ct compress-images -r images --quality 80 --inplace\n"
+        "```",
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    sub_parser = ct.tools.compress_images.instantiate_parser(sub_parser)
+    sub_parser.set_defaults(func=ct.tools.compress_images.entry_point)
 
     args = main_parser.parse_args()
     if args.subcommand in sub_parsers.choices.keys():

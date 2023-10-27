@@ -12,6 +12,7 @@ from . import raycast
 from . import sanity
 from . import solver
 from . import transform
+from . import utility
 
 import pkg_resources
 
