@@ -162,7 +162,6 @@ def entry_point(parser, args):
         quality=args.quality,
         delete_src=args.inplace,
         min_jpg_compression_ratio=args.min_jpg_compression_ratio,
-        update_texts_in_dir=update_texts_in_dir,
     )
 
     # Print stats.
@@ -291,25 +290,28 @@ def compress_image_and_return_stat(
     src_size = src_path.stat().st_size
 
     # Write to a temporary file to get the file size.
-    fp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=True)
-    ct.io.imwrite(fp.name, im, quality=quality)
-    dst_size = Path(fp.name).stat().st_size
-    compression_ratio = dst_size / src_size
+    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=True) as fp:
+        ct.io.imwrite(fp.name, im, quality=quality)
+        dst_size = Path(fp.name).stat().st_size
+        compression_ratio = dst_size / src_size
 
-    dst_path.parent.mkdir(parents=True, exist_ok=True)
-    if ct.io.is_jpg_path(src_path) and compression_ratio > min_jpg_compression_ratio:
-        # The image is already compressed. Direct copy src_path to dst_path.
-        # This avoids recompressing an image that is already compressed.
-        # Keep the modification time, creation time, and permissions.
-        if src_path != dst_path:
-            shutil.copy2(src=src_path, dst=dst_path)
-        stat["is_direct_copy"] = True
-    else:
-        # Copy from temp file to dst_path.
-        fp.seek(0)
-        with open(dst_path, "wb") as dst_fp:
-            dst_fp.write(fp.read())
-        stat["is_direct_copy"] = False
+        dst_path.parent.mkdir(parents=True, exist_ok=True)
+        if (
+            ct.io.is_jpg_path(src_path)
+            and compression_ratio > min_jpg_compression_ratio
+        ):
+            # The image is already compressed. Direct copy src_path to dst_path.
+            # This avoids recompressing an image that is already compressed.
+            # Keep the modification time, creation time, and permissions.
+            if src_path != dst_path:
+                shutil.copy2(src=src_path, dst=dst_path)
+            stat["is_direct_copy"] = True
+        else:
+            # Copy from temp file to dst_path.
+            fp.seek(0)
+            with open(dst_path, "wb") as dst_fp:
+                dst_fp.write(fp.read())
+            stat["is_direct_copy"] = False
 
     # Recompute dst_size.
     dst_size = dst_path.stat().st_size
@@ -317,9 +319,6 @@ def compress_image_and_return_stat(
     stat["src_size"] = src_size
     stat["dst_size"] = dst_size
     stat["compression_ratio"] = compression_ratio
-
-    # Clean up.
-    fp.close()
 
     # Remove the source file if necessary.
     if delete_src and src_path != dst_path:
@@ -365,7 +364,6 @@ def compress_images(
     quality: int,
     delete_src: bool,
     min_jpg_compression_ratio: float,
-    update_texts_in_dir: Path,
 ):
     """
     Compress images (PNGs will be converted to JPGs)
@@ -375,8 +373,6 @@ def compress_images(
         dst_paths: List of destination image paths.
         quality: Quality of the output JPEG image, 1-100. Default is 95.
         delete_src: If True, the src_path will be deleted.
-        update_texts_in_dir: If not None, all text files in the directory
-            will be updated to reflect the new image paths.
         min_jpg_compression_ratio: Minimum compression ratio for jpg->jpg
             compression. If the compression ratio is above this value, the image
             will not be compressed. This avoids compressing an image that is
