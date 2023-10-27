@@ -2,6 +2,7 @@ from pathlib import Path
 import camtools as ct
 import os
 import tempfile
+import json
 
 
 def instantiate_parser(parser):
@@ -176,3 +177,19 @@ def compress_images(
         f"{src_total_size_mb:.2f} MB -> {dst_total_size_mb:.2f} MB "
         f"(compression ratio: {compression_ratio:.2f})"
     )
+
+    # Write log.
+    # This can be used to rename paths in texts such as Tex or Markdown.
+    # Json file is a list of dicts.
+    json_path = Path(tempfile.gettempdir()) / "compress_images_log.json"
+    json_data = []
+    for src_path, dst_path in zip(src_paths, dst_paths):
+        json_data.append(
+            {
+                "src_path": str(src_path),
+                "dst_path": str(dst_path),
+            }
+        )
+    with open(json_path, "w") as fp:
+        json.dump(json_data, fp, indent=4)
+    print(f"Log written to {json_path}")
