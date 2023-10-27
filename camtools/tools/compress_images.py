@@ -13,6 +13,16 @@ def instantiate_parser(parser):
         nargs="+",
     )
     parser.add_argument(
+        "--png_only",
+        action="store_true",
+        help="If specified, only PNG files will be processed.",
+    )
+    parser.add_argument(
+        "--flatten_alpha_channel",
+        action="store_true",
+        help="If specified, the alpha channel will be flattened to white.",
+    )
+    parser.add_argument(
         "--inplace",
         "-i",
         action="store_true",
@@ -46,9 +56,14 @@ def entry_point(parser, args):
         src_paths += list(src_dir.glob("**/*"))
     else:
         src_paths += args.input
-    src_paths = [
-        path for path in src_paths if ct.io.is_jpg_path(path) or ct.io.is_png_path(path)
-    ]
+    if args.png_only:
+        src_paths = [path for path in src_paths if ct.io.is_png_path(path)]
+    else:
+        src_paths = [
+            path
+            for path in src_paths
+            if ct.io.is_jpg_path(path) or ct.io.is_png_path(path)
+        ]
     src_paths = [path.resolve().absolute() for path in src_paths]
     missing_paths = [path for path in src_paths if not path.is_file()]
     if not src_paths:
@@ -86,16 +101,16 @@ def entry_point(parser, args):
     print(f"[To be updated]")
     inplace_str = "src will be deleted" if args.inplace else "src will be kept"
     if args.update_texts_in_dir is not None:
-        print(f"  -         num_images: {len(src_paths)} files")
-        print(f"  -            quality: {args.quality}")
-        print(f"  -            inplace: {inplace_str}")
+        print(f"  - num_images         : {len(src_paths)} files")
+        print(f"  - quality            : {args.quality}")
+        print(f"  - inplace            : {inplace_str}")
         print(
             f"  - update_texts_in_dir: {update_texts_in_dir} ({len(text_paths)} files)"
         )
     else:
         print(f"  - num_images: {len(src_paths)} files")
-        print(f"  -    quality: {args.quality}")
-        print(f"  -    inplace: {inplace_str}")
+        print(f"  - quality   : {args.quality}")
+        print(f"  - inplace   : {inplace_str}")
 
     # Confirm.
     if ct.utility.query_yes_no("Proceed?", default=False):
@@ -238,14 +253,8 @@ def compress_images(
     )
 
     if update_texts_in_dir is not None:
-        # Collect all text paths.
-        root_dir = update_texts_in_dir.resolve().absolute()
-        text_paths = get_all_text_paths(root_dir)
-        print(f"[Updating {len(text_paths)} text files]")
-        for text_path in text_paths:
-            print(f"  - {text_path}")
-
         # Print update dict.
+        root_dir = update_texts_in_dir.resolve().absolute()
         replace_dict = {}
         for src_path, dst_path in zip(src_paths, dst_paths):
             src_path = src_path.relative_to(root_dir)
@@ -255,6 +264,12 @@ def compress_images(
         print(f"[With replace dict of {len(keys)} patterns]")
         for key in keys:
             print(f"  - {key} -> {replace_dict[key]}")
+
+        # Collect all text paths.
+        text_paths = get_all_text_paths(root_dir)
+        print(f"[Updating {len(text_paths)} text files]")
+        for text_path in text_paths:
+            print(f"  - {text_path}")
 
         prompt = "Continue?"
         if ct.utility.query_yes_no(prompt, default=False):
