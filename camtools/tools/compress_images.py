@@ -2,7 +2,6 @@ from pathlib import Path
 import camtools as ct
 import os
 import tempfile
-import json
 import shutil
 
 
