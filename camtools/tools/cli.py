@@ -53,10 +53,11 @@ def main():
     # ct compress-images
     sub_parser = sub_parsers.add_parser(
         "compress-images",
-        help="Compress images (PNGs will be converted to JPGs)\n"
+        help="Compress images (png will also be converted to jpg)\n"
         "```\n"
         "ct compress-images *.png --quality 80\n"
-        "ct compress-images -r images --quality 80 --inplace\n"
+        "ct compress-images image_dir --quality 80 --inplace\n"
+        "ct compress-images ~/paper/my-paper/figures -i -u ~/paper/my-paper/\n"
         "```",
         formatter_class=argparse.RawTextHelpFormatter,
     )
