@@ -21,6 +21,7 @@ def instantiate_parser(parser):
     )
     parser.add_argument(
         "--quality",
+        "-q",
         type=int,
         default=80,
         help="Quality of the output JPEG image, 1-100. Default is 80.",
