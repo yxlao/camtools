@@ -19,6 +19,7 @@ def instantiate_parser(parser):
     )
     parser.add_argument(
         "--flatten_alpha_channel",
+        "-f",
         action="store_true",
         help="If specified, the alpha channel will be flattened to white.",
     )
@@ -71,6 +72,22 @@ def entry_point(parser, args):
     if missing_paths:
         raise ValueError(f"Missing files: {missing_paths}")
 
+    # Handle PNG file's alpha channel.
+    src_paths_with_alpha = []
+    png_paths = [src_path for src_path in src_paths if ct.io.is_png_path(src_path)]
+    for src_path in png_paths:
+        im = ct.io.imread(src_path, alpha_mode="keep")
+        if im.shape[2] == 4:
+            src_paths_with_alpha.append(src_path)
+    if len(src_paths_with_alpha) > 0:
+        # Skip PNG files with alpha channel if flatten is not specified.
+        if not args.flatten_alpha_channel:
+            src_paths = [
+                src_path
+                for src_path in src_paths
+                if src_path not in src_paths_with_alpha
+            ]
+
     # Compute dst_paths.
     dst_paths = []
     for src_path in src_paths:
@@ -98,6 +115,20 @@ def entry_point(parser, args):
     for src_path, dst_path in zip(src_paths, dst_paths):
         print(f"  - src: {Path(os.path.relpath(path=src_path, start=pwd))}")
         print(f"    dst: {Path(os.path.relpath(path=dst_path, start=pwd))}")
+    if len(src_paths_with_alpha) > 0:
+        if args.flatten_alpha_channel:
+            print("[PNG files with alpha channel (to be flattened)]")
+            for src_path in src_paths_with_alpha:
+                print(f"  - {Path(os.path.relpath(path=src_path, start=pwd))}")
+            f"They will be skipped."
+        else:
+            print("[PNG files with alpha channel (to be skipped)]")
+            for src_path in src_paths_with_alpha:
+                print(f"  - {Path(os.path.relpath(path=src_path, start=pwd))}")
+            print(
+                f"{len(src_paths_with_alpha)} PNG files have alpha channel. "
+                f"They will be skipped."
+            )
     print(f"[To be updated]")
     inplace_str = "src will be deleted" if args.inplace else "src will be kept"
     if args.update_texts_in_dir is not None:
@@ -105,7 +136,8 @@ def entry_point(parser, args):
         print(f"  - quality            : {args.quality}")
         print(f"  - inplace            : {inplace_str}")
         print(
-            f"  - update_texts_in_dir: {update_texts_in_dir} ({len(text_paths)} files)"
+            f"  - update_texts_in_dir: {update_texts_in_dir} "
+            f"({len(text_paths)} files)"
         )
     else:
         print(f"  - num_images: {len(src_paths)} files")
