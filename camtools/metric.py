@@ -1,18 +1,29 @@
 import numpy as np
 
+
+from skimage.metrics import peak_signal_noise_ratio
+from skimage.metrics import structural_similarity
+import torch
+import lpips
+from pathlib import Path
+
 from . import image
 from . import io
 from . import sanity
 
 
-def image_psnr(im_pd, im_gt, im_mask=None):
+def image_psnr(
+    im_pd: np.ndarray,
+    im_gt: np.ndarray,
+    im_mask: np.ndarray = None,
+) -> float:
     """
     Computes PSNR given images in numpy arrays.
 
     Args:
-        im_pd: numpy array, (h, w, 3), float32, range [0..1].
-        im_gt: numpy array, (h, w, 3), float32, range [0..1].
-        im_mask: numpy array, (h, w), float32, range [0..1].
+        im_pd: numpy array, (h, w, 3), float32, range [0, 1], enforced.
+        im_gt: numpy array, (h, w, 3), float32, range [0, 1], enforced.
+        im_mask: numpy array, (h, w), float32, range [0, 1], enforced.
             Value > 0.5 means foreground. None means all foreground.
 
     Returns:
@@ -23,24 +34,26 @@ def image_psnr(im_pd, im_gt, im_mask=None):
         im_mask = np.ones((h, w), dtype=np.float32)
     _check_inputs(im_pd, im_gt, im_mask)
 
-    from skimage.metrics import peak_signal_noise_ratio as psnr
-
     im_mask = im_mask[:, :, None]  # (h, w) -> (h, w, 1)
     pr = im_pd[im_mask[:, :, 0] > 0.5].ravel()
     gt = im_gt[im_mask[:, :, 0] > 0.5].ravel()
     assert pr.dtype == gt.dtype and pr.dtype == np.float32
-    ans = psnr(gt, pr)
+    ans = peak_signal_noise_ratio(gt, pr)
     return float(ans)
 
 
-def image_ssim(im_pd, im_gt, im_mask=None):
+def image_ssim(
+    im_pd: np.ndarray,
+    im_gt: np.ndarray,
+    im_mask: np.ndarray = None,
+) -> float:
     """
     Computes SSIM given images in numpy arrays.
 
     Args:
-        im_pd: numpy array, (h, w, 3), float32, range [0..1].
-        im_gt: numpy array, (h, w, 3), float32, range [0..1].
-        im_mask: numpy array, (h, w), float32, range [0..1].
+        im_pd: numpy array, (h, w, 3), float32, range [0, 1], enforced.
+        im_gt: numpy array, (h, w, 3), float32, range [0, 1], enforced.
+        im_mask: numpy array, (h, w), float32, range [0, 1], enforced.
             Value > 0.5 means foreground. None means all foreground.
 
     Returns:
@@ -51,24 +64,32 @@ def image_ssim(im_pd, im_gt, im_mask=None):
         im_mask = np.ones((h, w), dtype=np.float32)
     _check_inputs(im_pd, im_gt, im_mask)
 
-    from skimage.metrics import structural_similarity as ssim
-
     im_mask = im_mask[:, :, None]  # (h, w) -> (h, w, 1)
     pr = im_pd * im_mask
     gt = im_gt * im_mask
     assert pr.dtype == gt.dtype and pr.dtype == np.float32
-    mean, S = ssim(pr, gt, channel_axis=-1, full=True)
+    mean, S = structural_similarity(
+        pr,
+        gt,
+        channel_axis=-1,
+        data_range=1.0,
+        full=True,
+    )
     return float(S[im_mask[:, :, 0] > 0.5].mean())
 
 
-def image_lpips(im_pd, im_gt, im_mask=None):
+def image_lpips(
+    im_pd: np.ndarray,
+    im_gt: np.ndarray,
+    im_mask: np.ndarray = None,
+) -> float:
     """
     Computes LPIPS given images in numpy arrays.
 
     Args:
-        im_pd: numpy array, (h, w, 3), float32, range [0..1].
-        im_gt: numpy array, (h, w, 3), float32, range [0..1].
-        im_mask: numpy array, (h, w), float32, range [0..1].
+        im_pd: numpy array, (h, w, 3), float32, range [0, 1], enforced.
+        im_gt: numpy array, (h, w, 3), float32, range [0, 1], enforced.
+        im_mask: numpy array, (h, w), float32, range [0, 1], enforced.
             Value > 0.5 means foreground. None means all foreground.
 
     Returns:
@@ -78,9 +99,6 @@ def image_lpips(im_pd, im_gt, im_mask=None):
         h, w = im_pd.shape[:2]
         im_mask = np.ones((h, w), dtype=np.float32)
     _check_inputs(im_pd, im_gt, im_mask)
-
-    import torch
-    import lpips
 
     im_mask = im_mask[:, :, None]  # (h, w) -> (h, w, 1)
     pr = im_mask * (im_pd * 2 - 1)
@@ -94,19 +112,18 @@ def image_lpips(im_pd, im_gt, im_mask=None):
         loss_fn = lpips.LPIPS(net="alex")
         image_lpips.static_vars["loss_fn"] = loss_fn
 
-    ans = (
-        loss_fn.forward(torch.from_numpy(pr), torch.from_numpy(gt))
-        .cpu()
-        .detach()
-        .numpy()
-    )
+    ans = loss_fn.forward(torch.tensor(pr), torch.tensor(gt)).cpu().detach().numpy()
     return float(ans)
 
 
 image_lpips.static_vars = {}
 
 
-def image_psnr_with_paths(im_pd_path, im_gt_path, im_mask_path=None):
+def image_psnr_with_paths(
+    im_pd_path: Path,
+    im_gt_path: Path,
+    im_mask_path: Path = None,
+) -> float:
     """
     Args:
         im_pd_path: Path to the rendered RGB image. The image will be resized to
@@ -127,7 +144,11 @@ def image_psnr_with_paths(im_pd_path, im_gt_path, im_mask_path=None):
     return image_psnr(im_pd, im_gt, im_mask)
 
 
-def image_ssim_with_paths(im_pd_path, im_gt_path, im_mask_path=None):
+def image_ssim_with_paths(
+    im_pd_path: Path,
+    im_gt_path: Path,
+    im_mask_path: Path = None,
+) -> float:
     """
     Args:
         im_pd_path: Path to the rendered RGB image. The image will be resized to
@@ -148,7 +169,11 @@ def image_ssim_with_paths(im_pd_path, im_gt_path, im_mask_path=None):
     return image_ssim(im_pd, im_gt, im_mask)
 
 
-def image_lpips_with_paths(im_pd_path, im_gt_path, im_mask_path=None):
+def image_lpips_with_paths(
+    im_pd_path: Path,
+    im_gt_path: Path,
+    im_mask_path: Path = None,
+) -> float:
     """
     Args:
         im_pd_path: Path to the rendered RGB image. The image will be resized to
@@ -167,8 +192,11 @@ def image_lpips_with_paths(im_pd_path, im_gt_path, im_mask_path=None):
 
 
 def load_im_pd_im_gt_im_mask_for_eval(
-    im_pd_path, im_gt_path, im_mask_path=None, alpha_mode="white"
-):
+    im_pd_path: Path,
+    im_gt_path: Path,
+    im_mask_path: Path = None,
+    alpha_mode: str = "white",
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Load prediction, ground truth, and mask images for image metric evaluation.
 
@@ -236,7 +264,11 @@ def load_im_pd_im_gt_im_mask_for_eval(
     return im_pd, im_gt, im_mask
 
 
-def _check_inputs(im_pd, im_gt, im_mask):
+def _check_inputs(
+    im_pd: np.ndarray,
+    im_gt: np.ndarray,
+    im_mask: np.ndarray = None,
+) -> None:
     # Instance type.
     sanity.assert_numpy(im_pd, name="im_pd")
     sanity.assert_numpy(im_gt, name="im_gt")
@@ -261,8 +293,8 @@ def _check_inputs(im_pd, im_gt, im_mask):
 
     # Range.
     if im_pd.max() > 1.0 or im_pd.min() < 0.0:
-        raise ValueError("im_pd must be in range [0..1]")
+        raise ValueError("im_pd must be in range [0, 1]")
     if im_gt.max() > 1.0 or im_gt.min() < 0.0:
-        raise ValueError("im_gt must be in range [0..1]")
+        raise ValueError("im_gt must be in range [0, 1]")
     if im_mask.max() > 1.0 or im_mask.min() < 0.0:
-        raise ValueError("im_mask must be in range [0..1]")
+        raise ValueError("im_mask must be in range [0, 1]")

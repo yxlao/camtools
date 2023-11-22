@@ -12,8 +12,10 @@ classifiers = [
 dependencies = [
   "open3d>=0.16.0",
   "opencv-python>=4.5.1.48",
-  "torch>=1.8.0",
   "matplotlib>=3.3.4",
+  "scikit-image>=0.16.2",
+  "torch>=1.8.0",
+  "lpips>=0.1.4",
 ]
 description = "CamTools: Camera Tools for Computer Vision."
 license = {text = "MIT"}
