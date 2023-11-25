@@ -6,6 +6,7 @@ from skimage.metrics import structural_similarity
 import torch
 import lpips
 from pathlib import Path
+from typing import Tuple
 
 from . import image
 from . import io
@@ -196,7 +197,7 @@ def load_im_pd_im_gt_im_mask_for_eval(
     im_gt_path: Path,
     im_mask_path: Path = None,
     alpha_mode: str = "white",
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Load prediction, ground truth, and mask images for image metric evaluation.
 
