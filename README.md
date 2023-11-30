@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./camtools/assets/camtools_logo_dark_720px.png">
-    <img alt="CamTools Logo" src="./camtools/assets/camtools_logo_light_720px.png" width="360">
+    <img alt="CamTools Logo" src="./camtools/assets/.png" width="360">
   </picture>
 </p>
 
