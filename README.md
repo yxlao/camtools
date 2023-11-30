@@ -1,7 +1,7 @@
 # CamTools: Camera Tools for Computer Vision
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./camtools/assets/camtools_logo_light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="./camtools/assets/camtools_logo_dark.png">
   <img alt="CamTools Logo" src="./camtools/assets/camtools_logo_light.png">
 </picture>
 
