@@ -3,8 +3,8 @@
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/174a7b528ecbb92d6d224ac1265d4502ac5c641d/camtools/assets/camtools_logo_dark_720px.png">
     <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/174a7b528ecbb92d6d224ac1265d4502ac5c641d/camtools/assets/camtools_logo_light_720px.png" width="360">
   </picture>
-  <h1 align="center">CamTools: Camera Tools for Computer Vision</h1>
 </p>
+<h1 align="center">CamTools: Camera Tools for Computer Vision</h1>
 
 CamTools is a collection of tools for handling cameras in computer vision. It
 can be used for plotting, converting, projecting, ray casting, and doing more
