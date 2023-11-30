@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./camtools/assets/camtools_logo_dark_720px.png">
-    <img alt="CamTools Logo" src="./camtools/assets/camtools_logo_light_720px.png" width="360">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/174a7b528ecbb92d6d224ac1265d4502ac5c641d/camtools/assets/camtools_logo_dark_720px.png">
+    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/174a7b528ecbb92d6d224ac1265d4502ac5c641d/camtools/assets/camtools_logo_light_720px.png" width="360">
   </picture>
 </p>
 
