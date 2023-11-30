@@ -5,7 +5,7 @@
   </picture>
 </p>
 
-# CamTools: Camera Tools for Computer Vision
+<h1 align="center">CamTools: Camera Tools for Computer Vision</h1>
 
 CamTools is a collection of tools for handling cameras in computer vision. It
 can be used for plotting, converting, projecting, ray casting, and doing more
