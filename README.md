@@ -4,12 +4,12 @@
     <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/04448a6db30ee8b41e6d69078f7f3633d1437bfc/camtools/assets/camtools_logo_light_720px.png" width="360">
   </picture>
 </p>
-<p align="center">
+<!-- <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camtools_logo_dark_720px.png">
     <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camtools_logo_light_720px.png" width="360">
   </picture>
-</p>
+</p> -->
 <h1 align="center">Camera Tools for Computer Vision</h1>
 
 [![Formatter](https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/formatter.yml)
