@@ -11,6 +11,13 @@ can be used for plotting, converting, projecting, ray casting, and doing more
 with camera parameters. It follows the standard camera coordinate system with
 clear and easy-to-use APIs.
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./camtools/assets/camera_coordinates_dark.png">
+    <img alt="CamTools Logo" src="./camtools/assets/camera_coordinates_light.png" width="360">
+  </picture>
+</p>
+
 [![Formatter](https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/formatter.yml)
 [![Unit Test](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml)
 [![PyPI](https://github.com/yxlao/camtools/actions/workflows/pypi.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/pypi.yml)
@@ -153,11 +160,8 @@ Z \\
 \end{array}\right].
 $$
 
-We follow the standard OpenCV-style camera coordinate system as shown below.
-
-<p align="center">
-   <img src="./camtools/assets/camera_coordinates.svg" width="480" />
-</p>
+We follow the standard OpenCV-style camera coordinate system as illustrated at
+the beginning of the README.
 
 - **Camera coordinate:** right-handed, with $Z$ pointing away from the camera
   towards the view direction and $Y$ axis pointing down. Note that the OpenCV
