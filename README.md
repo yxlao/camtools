@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/174a7b528ecbb92d6d224ac1265d4502ac5c641d/camtools/assets/camtools_logo_dark_720px.png">
-    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/174a7b528ecbb92d6d224ac1265d4502ac5c641d/camtools/assets/camtools_logo_light_720px.png" width="360">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camtools_logo_dark_720px.png">
+    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camtools_logo_light_720px.png" width="360">
   </picture>
 </p>
 <h1 align="center">CamTools: Camera Tools for Computer Vision</h1>
@@ -13,8 +13,8 @@ clear and easy-to-use APIs.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./camtools/assets/camera_coordinates_dark.png">
-    <img alt="CamTools Logo" src="./camtools/assets/camera_coordinates_light.png" width="360">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/173e29cd5c833be89e66ae79772d4f2c2415a2a4/camtools/assets/camera_coordinates_dark.png">
+    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/173e29cd5c833be89e66ae79772d4f2c2415a2a4/camtools/assets/camera_coordinates_light.png" width="360">
   </picture>
 </p>
 
@@ -37,7 +37,7 @@ clear and easy-to-use APIs.
    ```
 
    <p align="center">
-      <img src="./camtools/assets/camera_frames.png" width="360" />
+      <img src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camera_frames.png" width="360" />
    </p>
 
 2. Convert camera parameters.
