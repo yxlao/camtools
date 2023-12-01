@@ -4,7 +4,14 @@
     <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camtools_logo_light_720px.png" width="360">
   </picture>
 </p>
-<h1 align="center">CamTools: Camera Tools for Computer Vision</h1>
+<h1 align="center">Camera Tools for Computer Vision</h1>
+
+[![Formatter](https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/formatter.yml)
+[![Unit Test](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml)
+[![PyPI](https://github.com/yxlao/camtools/actions/workflows/pypi.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/pypi.yml)
+[![GitHub](https://img.shields.io/badge/GitHub-323940.svg?style=flat&logo=github&logoColor=959DA5)](https://github.com/yxlao/camtools)
+[![Gitee](https://img.shields.io/badge/Gitee-323940.svg?style=flat&logo=gitee&logoColor=959DA5)](https://gitee.com/yxlao/camtools)
+[![PyPI](https://img.shields.io/pypi/v/camtools?style=flat&label=PyPI&logo=PyPI&logoColor=959DA5&labelColor=323940&color=808080)](https://pypi.org/project/camtools)
 
 CamTools is a collection of tools for handling cameras in computer vision. It
 can be used for plotting, converting, projecting, ray casting, and doing more
@@ -14,16 +21,9 @@ clear and easy-to-use APIs.
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/173e29cd5c833be89e66ae79772d4f2c2415a2a4/camtools/assets/camera_coordinates_dark.png">
-    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/173e29cd5c833be89e66ae79772d4f2c2415a2a4/camtools/assets/camera_coordinates_light.png" width="360">
+    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/173e29cd5c833be89e66ae79772d4f2c2415a2a4/camtools/assets/camera_coordinates_light.png" width="480">
   </picture>
 </p>
-
-[![Formatter](https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/formatter.yml)
-[![Unit Test](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml)
-[![PyPI](https://github.com/yxlao/camtools/actions/workflows/pypi.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/pypi.yml)
-[![GitHub](https://img.shields.io/badge/GitHub-323940.svg?style=flat&logo=github&logoColor=959DA5)](https://github.com/yxlao/camtools)
-[![Gitee](https://img.shields.io/badge/Gitee-323940.svg?style=flat&logo=gitee&logoColor=959DA5)](https://gitee.com/yxlao/camtools)
-[![PyPI](https://img.shields.io/pypi/v/camtools?style=flat&label=PyPI&logo=PyPI&logoColor=959DA5&labelColor=323940&color=808080)](https://pypi.org/project/camtools)
 
 ## What can you do with CamTools?
 
