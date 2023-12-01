@@ -1,15 +1,10 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/174a7b528ecbb92d6d224ac1265d4502ac5c641d/camtools/assets/camtools_logo_dark_720px.png">
-    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/174a7b528ecbb92d6d224ac1265d4502ac5c641d/camtools/assets/camtools_logo_light_720px.png" width="360">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camtools_logo_dark_720px.png">
+    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camtools_logo_light_720px.png" width="360">
   </picture>
 </p>
 <h1 align="center">CamTools: Camera Tools for Computer Vision</h1>
-
-CamTools is a collection of tools for handling cameras in computer vision. It
-can be used for plotting, converting, projecting, ray casting, and doing more
-with camera parameters. It follows the standard camera coordinate system with
-clear and easy-to-use APIs.
 
 [![Formatter](https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/formatter.yml)
 [![Unit Test](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml)
@@ -17,6 +12,18 @@ clear and easy-to-use APIs.
 [![GitHub](https://img.shields.io/badge/GitHub-323940.svg?style=flat&logo=github&logoColor=959DA5)](https://github.com/yxlao/camtools)
 [![Gitee](https://img.shields.io/badge/Gitee-323940.svg?style=flat&logo=gitee&logoColor=959DA5)](https://gitee.com/yxlao/camtools)
 [![PyPI](https://img.shields.io/pypi/v/camtools?style=flat&label=PyPI&logo=PyPI&logoColor=959DA5&labelColor=323940&color=808080)](https://pypi.org/project/camtools)
+
+CamTools is a collection of tools for handling cameras in computer vision. It
+can be used for plotting, converting, projecting, ray casting, and doing more
+with camera parameters. It follows the standard camera coordinate system with
+clear and easy-to-use APIs.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camera_coordinates_dark.png">
+    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camera_coordinates_light.png" width="520">
+  </picture>
+</p>
 
 ## What can you do with CamTools?
 
@@ -30,7 +37,7 @@ clear and easy-to-use APIs.
    ```
 
    <p align="center">
-      <img src="./camtools/assets/camera_frames.png" width="360" />
+      <img src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camera_frames.png" width="360" />
    </p>
 
 2. Convert camera parameters.
@@ -153,11 +160,8 @@ Z \\
 \end{array}\right].
 $$
 
-We follow the standard OpenCV-style camera coordinate system as shown below.
-
-<p align="center">
-   <img src="./camtools/assets/camera_coordinates.svg" width="480" />
-</p>
+We follow the standard OpenCV-style camera coordinate system as illustrated at
+the beginning of the README.
 
 - **Camera coordinate:** right-handed, with $Z$ pointing away from the camera
   towards the view direction and $Y$ axis pointing down. Note that the OpenCV
