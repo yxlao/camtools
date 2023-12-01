@@ -1,16 +1,10 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/04448a6db30ee8b41e6d69078f7f3633d1437bfc/camtools/assets/camtools_logo_dark_720px.png">
-    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/04448a6db30ee8b41e6d69078f7f3633d1437bfc/camtools/assets/camtools_logo_light_720px.png" width="360">
-  </picture>
-</p>
-<!-- <p align="center">
-  <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camtools_logo_dark_720px.png">
     <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camtools_logo_light_720px.png" width="360">
   </picture>
-</p> -->
-<h1 align="center">Camera Tools for Computer Vision</h1>
+</p>
+<h1 align="center">CamTools: Camera Tools for Computer Vision</h1>
 
 [![Formatter](https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/formatter.yml)
 [![Unit Test](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml)
@@ -26,8 +20,8 @@ clear and easy-to-use APIs.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/173e29cd5c833be89e66ae79772d4f2c2415a2a4/camtools/assets/camera_coordinates_dark.png">
-    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/173e29cd5c833be89e66ae79772d4f2c2415a2a4/camtools/assets/camera_coordinates_light.png" width="520">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camera_coordinates_dark.png">
+    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camera_coordinates_light.png" width="520">
   </picture>
 </p>
 
