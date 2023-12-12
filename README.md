@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camtools_logo_dark_720px.png">
-    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camtools_logo_light_720px.png" width="360">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camtools_logo_dark.png">
+    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camtools_logo_light.png" width="360">
   </picture>
 </p>
 <h1 align="center">CamTools: Camera Tools for Computer Vision</h1>
@@ -240,8 +240,12 @@ the beginning of the README.
   [part 2](https://ksimek.github.io/2012/08/22/extrinsic/),
   and [part 3](https://ksimek.github.io/2013/08/13/intrinsic/).
 
-## Future works
+## Build with CamTools
 
-- Refined APIs.
-- Full PyTorch/Numpy compatibility.
-- Unit tests.
+If you use CamTools in your project, consider adding one of the following
+badges to your project.
+
+<p>
+<a href="https://github.com/yxlao/camtools"><img alt="Built with CamTools" src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/built_with_camtools_logo_dark.svg" width=240></a>
+<a href="https://github.com/yxlao/camtools"><img alt="Built with CamTools" src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/built_with_camtools_logo_light.svg" width=240></a>
+</p>
