@@ -105,7 +105,7 @@ def entry_point(parser, args):
         ]
 
     # Read.
-    src_ims = [ct.io.imread(src_path) for src_path in src_paths]
+    src_ims = [ct.io.imread(src_path, alpha_mode="white") for src_path in src_paths]
     for src_im in src_ims:
         if not src_im.dtype == np.float32:
             raise ValueError(f"Input image {src_path} must be of dtype float32.")
