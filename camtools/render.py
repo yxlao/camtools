@@ -13,6 +13,7 @@ def render_geometries(
     height: int = 720,
     width: int = 1280,
     visible: bool = False,
+    point_size: float = 1.0,
 ):
     """
     Render a mesh using Open3D legacy visualizer. This requires a display.
@@ -26,6 +27,7 @@ def render_geometries(
         height: int image height.
         width: int image width.
         visible: bool whether to show the window.
+        point_size: float point size for point cloud objects.
 
     Returns:
         image: (H, W, 3) float32 np.ndarray image.
@@ -52,7 +54,10 @@ def render_geometries(
         height=height,
         visible=visible,
     )
+
     for geometry in geometries:
+        if isinstance(geometry, o3d.geometry.PointCloud):
+            vis.get_render_option().point_size = point_size
         vis.add_geometry(geometry)
 
     if is_camera_provided:
