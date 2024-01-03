@@ -9,6 +9,7 @@ from . import metric
 from . import normalize
 from . import project
 from . import raycast
+from . import render
 from . import sanity
 from . import solver
 from . import transform
