@@ -39,8 +39,6 @@ def render_geometries(
     """
     if not isinstance(geometries, list):
         raise TypeError("geometries must be a list of Open3D geometries.")
-
-    # Check camera.
     if K is None and T is not None:
         raise ValueError("K must be provided if T is provided.")
     elif K is not None and T is None:
@@ -126,8 +124,6 @@ def get_render_view_status_str(
     """
     if not isinstance(geometries, list):
         raise TypeError("geometries must be a list of Open3D geometries.")
-
-    # Check camera.
     if K is None and T is not None:
         raise ValueError("K must be provided if T is provided.")
     elif K is not None and T is None:
