@@ -1,4 +1,3 @@
-import copy
 from typing import List
 
 import numpy as np
@@ -18,7 +17,7 @@ def render_geometries(
     point_size: float = 1.0,
 ):
     """
-    Render a mesh using Open3D legacy visualizer. This function may require a display.
+    Render Open3D geometries to an image. This function may require a display.
 
     Args:
         mesh: Open3d TriangleMesh.
@@ -106,7 +105,7 @@ def get_render_view_status_str(
     width: int = 1280,
 ) -> str:
     """
-    Get a view status string for rendering using Open3D legacy visualizer. This is
+    Get a view status string for rendering with Open3D visualizer. This is
     useful for rendering multiple geometries with the same rendering camera.
     This function may require a display.
 
