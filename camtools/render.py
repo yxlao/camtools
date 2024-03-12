@@ -15,6 +15,7 @@ def render_geometries(
     width: int = 1280,
     visible: bool = False,
     point_size: float = 1.0,
+    line_radius: float = None,
 ) -> None:
     """
     Render Open3D geometries to an image. This function may require a display.
@@ -33,10 +34,15 @@ def render_geometries(
         width: int image width.
         visible: bool whether to show the window.
         point_size: float point size for point cloud objects.
+        line_radius: float line radius for line set objects, when set, the line
+            sets will be converted to cylinder meshes with the given radius.
+            The radius is in world metric space, not relative pixel space like
+            the point size.
 
     Returns:
         image: (H, W, 3) float32 np.ndarray image.
     """
+
     if not isinstance(geometries, list):
         raise TypeError("geometries must be a list of Open3D geometries.")
     if K is None and T is not None:
@@ -56,6 +62,11 @@ def render_geometries(
         height=height,
         visible=visible,
     )
+
+    if line_radius is not None:
+        geometries = _preprocess_geometries_lineset_to_meshes(
+            geometries=geometries, line_radius=line_radius
+        )
 
     for geometry in geometries:
         if isinstance(geometry, o3d.geometry.PointCloud):
@@ -220,3 +231,90 @@ def get_render_K_T(
     vis.destroy_window()
 
     return K, T
+
+
+def _preprocess_geometries_lineset_to_meshes(
+    geometries: List[o3d.geometry.Geometry3D],
+    line_radius: float,
+) -> List[o3d.geometry.Geometry3D]:
+    """
+    Preprocess geometries by converting LineSet objects to TriangleMeshes.
+    All other geometries are left unchanged.
+    """
+    new_geometries = []
+    for geometry in geometries:
+        if isinstance(geometry, o3d.geometry.LineSet):
+            new_geometries.extend(_lineset_to_meshes(geometry, line_radius))
+        else:
+            new_geometries.append(geometry)
+    return new_geometries
+
+
+def _lineset_to_meshes(
+    line_set: o3d.geometry.LineSet,
+    radius: float,
+) -> List[o3d.geometry.TriangleMesh]:
+    """
+    Converts an Open3D LineSet object to a list of mesh objects, preserving
+    the line color and allowing the setting of line width.
+
+    Args:
+        line_set (o3d.geometry.LineSet): The line set to convert.
+        radius (float): The radius (thickness) of the lines in the mesh. The
+            unit is in actual metric space, not pixel space.
+
+    Returns:
+        List[o3d.geometry.TriangleMesh]: A list of TriangleMesh objects
+        representing the lines.
+
+    Reference:
+        https://github.com/isl-org/Open3D/pull/738#issuecomment-564785941
+        License: MIT
+    """
+
+    def align_vector_to_another(
+        a: np.ndarray, b: np.ndarray
+    ) -> Tuple[np.ndarray, float]:
+        if np.allclose(a, b):
+            return np.array([0, 0, 1]), 0.0
+        axis = np.cross(a, b)
+        axis /= np.linalg.norm(axis)
+        angle = np.arccos(
+            np.clip(np.dot(a / np.linalg.norm(a), b / np.linalg.norm(b)), -1.0, 1.0)
+        )
+        return axis, angle
+
+    def normalized(a: np.ndarray) -> Tuple[np.ndarray, float]:
+        norm = np.linalg.norm(a)
+        return (a / norm, norm) if norm != 0 else (a, 0.0)
+
+    points = np.asarray(line_set.points)
+    lines = np.asarray(line_set.lines)
+
+    # Handle colors: default to black if no colors are provided
+    if line_set.has_colors():
+        colors = np.asarray(line_set.colors)
+        if len(colors) != len(lines):
+            raise ValueError("Number of colors must match number of lines.")
+    else:
+        colors = np.array([[0, 0, 0] for _ in range(len(lines))])
+
+    cylinders = []
+    for line, color in zip(lines, colors):
+        start_point, end_point = points[line[0]], points[line[1]]
+        line_segment = end_point - start_point
+        line_segment_unit, line_length = normalized(line_segment)
+        axis, angle = align_vector_to_another(np.array([0, 0, 1]), line_segment_unit)
+        translation = start_point + line_segment * 0.5
+        cylinder = o3d.geometry.TriangleMesh.create_cylinder(radius, line_length)
+        cylinder.translate(translation, relative=False)
+        if not np.isclose(angle, 0):
+            axis_angle = axis * angle
+            cylinder.rotate(
+                o3d.geometry.get_rotation_matrix_from_axis_angle(axis_angle),
+                center=cylinder.get_center(),
+            )
+        cylinder.paint_uniform_color(color)
+        cylinders.append(cylinder)
+
+    return cylinders
