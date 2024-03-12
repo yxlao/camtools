@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import open3d as o3d
@@ -15,7 +15,7 @@ def render_geometries(
     width: int = 1280,
     visible: bool = False,
     point_size: float = 1.0,
-):
+) -> None:
     """
     Render Open3D geometries to an image. This function may require a display.
 
@@ -170,3 +170,53 @@ def get_render_view_status_str(
     vis.destroy_window()
 
     return view_status_str
+
+
+def get_render_K_T(
+    geometries: List[o3d.geometry.Geometry3D],
+    view_status_str: str = None,
+    height: int = 720,
+    width: int = 1280,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Get the rendering camera intrinsic (K) and extrinsic (T) matrices set by Open3D.
+
+    Args:
+        geometries: List of Open3D geometries.
+        view_status_str: Optional. The json string returned by
+            o3d.visualization.Visualizer.get_view_status(), containing
+            the viewing camera parameters.
+        height: int, image height.
+        width: int, image width.
+
+    Returns:
+        K: (3, 3) np.ndarray camera intrinsic matrix.
+        T: (4, 4) np.ndarray camera extrinsic matrix.
+    """
+    if not isinstance(geometries, list):
+        raise TypeError("geometries must be a list of Open3D geometries.")
+
+    vis = o3d.visualization.Visualizer()
+    vis.create_window(
+        width=width,
+        height=height,
+        visible=False,
+    )
+
+    for geometry in geometries:
+        vis.add_geometry(geometry)
+
+    if view_status_str is not None:
+        vis.set_view_status(view_status_str)
+
+    vis.poll_events()
+    vis.update_renderer()
+    ctr = vis.get_view_control()
+    cam_params = ctr.convert_to_pinhole_camera_parameters()
+
+    K = np.copy(np.array(cam_params.intrinsic.intrinsic_matrix))
+    T = np.copy(np.array(cam_params.extrinsic))
+
+    vis.destroy_window()
+
+    return K, T
