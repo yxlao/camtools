@@ -16,6 +16,7 @@ dependencies = [
   "scikit-image>=0.16.2",
   "torch>=1.8.0",
   "lpips>=0.1.4",
+  "tqdm>=4.60.0",
 ]
 description = "CamTools: Camera Tools for Computer Vision."
 license = {text = "MIT"}

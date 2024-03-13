@@ -12,6 +12,7 @@ from pathlib import Path
 import argparse
 import numpy as np
 import camtools as ct
+from tqdm import tqdm
 
 
 def instantiate_parser(parser):
@@ -105,7 +106,10 @@ def entry_point(parser, args):
         ]
 
     # Read.
-    src_ims = [ct.io.imread(src_path, alpha_mode="white") for src_path in src_paths]
+    src_ims = [
+        ct.io.imread(src_path, alpha_mode="white")
+        for src_path in tqdm(src_paths, desc="Reading images")
+    ]
     for src_im in src_ims:
         if not src_im.dtype == np.float32:
             raise ValueError(f"Input image {src_path} must be of dtype float32.")
@@ -122,20 +126,25 @@ def entry_point(parser, args):
                 "All images must be of the same shape when --same_crop is " "specified."
             )
 
-        # Stack images.
-        src_ims_stacked = np.concatenate(src_ims, axis=2)
+        individual_croppings = [
+            ct.image.compute_cropping(im)
+            for im in tqdm(src_ims, desc="Computing croppings")
+        ]
+        min_crop_u, min_crop_d, min_crop_l, min_crop_r = individual_croppings[0]
+        for crop_u, crop_d, crop_l, crop_r in individual_croppings[1:]:
+            min_crop_u = min(min_crop_u, crop_u)
+            min_crop_d = min(min_crop_d, crop_d)
+            min_crop_l = min(min_crop_l, crop_l)
+            min_crop_r = min(min_crop_r, crop_r)
+        croppings = [(min_crop_u, min_crop_d, min_crop_l, min_crop_r)] * len(src_ims)
 
-        # Compute cropping boarders.
-        crop_u, crop_d, crop_l, crop_r = ct.image.compute_cropping(src_ims_stacked)
-        croppings = [(crop_u, crop_d, crop_l, crop_r)] * num_ims
-
-        # Compute padding.
+        # Compute padding (remains unchanged)
         if args.pad_pixel != 0:
             padding = args.pad_pixel
         else:
-            h, w, _ = src_ims_stacked.shape
+            h, w, _ = src_ims[0].shape
             padding = int(max(h, w) * args.pad_ratio)
-        paddings = [(padding, padding, padding, padding)] * num_ims
+        paddings = [(padding, padding, padding, padding)] * len(src_ims)
     else:
         # Compute cropping boarders.
         croppings = [ct.image.compute_cropping(src_im) for src_im in src_ims]
@@ -186,6 +195,9 @@ def entry_point(parser, args):
     )
 
     # Save.
+    assert num_ims == len(src_paths) == len(dst_paths)
+    assert num_ims == len(src_ims) == len(dst_ims)
+    assert num_ims == len(croppings) == len(paddings)
     for (
         src_path,
         dst_path,
@@ -193,13 +205,18 @@ def entry_point(parser, args):
         dst_im,
         cropping,
         padding,
-    ) in zip(
-        src_paths,
-        dst_paths,
-        src_ims,
-        dst_ims,
-        croppings,
-        paddings,
+    ) in tqdm(
+        zip(
+            src_paths,
+            dst_paths,
+            src_ims,
+            dst_ims,
+            croppings,
+            paddings,
+        ),
+        desc="Saving images",
+        total=num_ims,
+        enable=False,
     ):
         out_dir = dst_path.parent
         if not out_dir.exists():
