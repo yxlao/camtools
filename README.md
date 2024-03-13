@@ -240,6 +240,14 @@ the beginning of the README.
   [part 2](https://ksimek.github.io/2012/08/22/extrinsic/),
   and [part 3](https://ksimek.github.io/2013/08/13/intrinsic/).
 
+## Contributing
+
+- Follow [Angular's commit message convention](https://github.com/angular/angular/blob/main/CONTRIBUTING.md#-commit-message-format) for PRs.
+  - This applies to PR's title and ultimately the commit messages in `master`.
+  - The prefix shall be one of `build`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `test`.
+  - Use lowercase.
+- Format your code with [black](https://github.com/psf/black). This will be enforced by the CI.
+
 ## Build with CamTools
 
 If you use CamTools in your project, consider adding one of the following
