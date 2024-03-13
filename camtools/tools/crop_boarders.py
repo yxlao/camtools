@@ -216,7 +216,7 @@ def entry_point(parser, args):
         ),
         desc="Saving images",
         total=num_ims,
-        enable=False,
+        disable=True,
     ):
         out_dir = dst_path.parent
         if not out_dir.exists():
