@@ -354,7 +354,7 @@ class _TextRenderer:
                 f"Font type '{font_type}' is not implemented yet."
             )
 
-        self.font_path = artifact.ArtifactManager().get_artifact_path(artifact_key)
+        self.font_path = artifact.get_artifact_path(artifact_key)
 
     def _get_text_size(
         self, text: str, font: ImageFont.FreeTypeFont, alignment: str
@@ -498,24 +498,20 @@ def render_texts(
     same_height: bool = False,
     same_width: bool = False,
 ) -> List[np.ndarray]:
-    # Assume render_text() is a function that correctly renders each text
-    # to an image based on the given parameters and returns a numpy array
     rendered_images = [
         render_text(
             text,
             font_size=font_size,
             font_type=font_type,
             font_color=font_color,
-            tight_layout=False,  # Since tight_layout is not an argument here
+            tight_layout=False,
             multiline_alignment=multiline_alignment,
         )
         for text in texts
     ]
 
     if same_height:
-        # Find the maximum height among all images
         max_height = max(im.shape[0] for im in rendered_images)
-        # Pad images to have the same height
         rendered_images = [
             np.pad(
                 im,
@@ -527,9 +523,7 @@ def render_texts(
         ]
 
     if same_width:
-        # Find the maximum width among all images
         max_width = max(im.shape[1] for im in rendered_images)
-        # Pad images to have the same width, padding added to both sides equally
         rendered_images = [
             np.pad(
                 im,
