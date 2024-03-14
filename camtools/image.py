@@ -20,7 +20,7 @@ def crop_white_boarders(im: np.array, padding: Tuple[int] = (0, 0, 0, 0)) -> np.
     return im_dst
 
 
-def compute_cropping(im: np.array) -> Tuple[int]:
+def compute_cropping_v1(im: np.array) -> Tuple[int]:
     """
     Compute top, bottom, left, right white boarder in pixels.
 
@@ -76,6 +76,61 @@ def compute_cropping(im: np.array) -> Tuple[int]:
     return crop_t, crop_b, crop_l, crop_r
 
 
+def compute_cropping(
+    im: np.ndarray,
+    check_with_v1=False,
+) -> Tuple[int, int, int, int]:
+    """
+    Compute top, bottom, left, right white borders in pixels for a 3-channel
+    image.
+
+    This function is designed for (H, W, 3) images, where each pixel's value
+    ranges from 0.0 to 1.0, and white pixels are represented by (1.0, 1.0, 1.0).
+
+    Args:
+        im (np.ndarray): Input image as a NumPy array of shape (H, W, 3) and
+            dtype float32.
+
+    Returns:
+        Tuple[int, int, int, int]: A tuple containing the number of white pixels
+            to crop from the top, bottom, left, and right edges, respectively.
+    """
+    if not im.dtype == np.float32:
+        raise ValueError(f"Expected im.dtype to be np.float32, but got {im.dtype}")
+    if im.ndim != 3 or im.shape[2] != 3:
+        raise ValueError(f"Expected im to be of shape (H, W, 3), but got {im.shape}")
+
+    # Create a mask where white pixels are marked as True
+    white_mask = np.all(im == 1.0, axis=-1)
+
+    # Find the indices of rows and columns where there's at least one non-white pixel
+    rows_with_color = np.where(~white_mask.all(axis=1))[0]
+    cols_with_color = np.where(~white_mask.all(axis=0))[0]
+
+    # Determine the crop values based on the positions of non-white pixels
+    crop_t = rows_with_color[0] if len(rows_with_color) else 0
+    crop_b = im.shape[0] - rows_with_color[-1] - 1 if len(rows_with_color) else 0
+    crop_l = cols_with_color[0] if len(cols_with_color) else 0
+    crop_r = im.shape[1] - cols_with_color[-1] - 1 if len(cols_with_color) else 0
+
+    # Check the results against compute_cropping_v1 if requested
+    if check_with_v1:
+        crop_t_v1, crop_b_v1, crop_l_v1, crop_r_v1 = compute_cropping_v1(im)
+        if (
+            crop_t != crop_t_v1
+            or crop_b != crop_b_v1
+            or crop_l != crop_l_v1
+            or crop_r != crop_r_v1
+        ):
+            raise ValueError(
+                f"compute_cropping_v1 failed to compute the correct cropping: "
+                f"({crop_t}, {crop_b}, {crop_l}, {crop_r}) != "
+                f"({crop_t_v1}, {crop_b_v1}, {crop_l_v1}, {crop_r_v1})"
+            )
+
+    return crop_t, crop_b, crop_l, crop_r
+
+
 def apply_cropping_padding(
     im_src: np.ndarray,
     cropping: Tuple[int],
@@ -114,12 +169,12 @@ def apply_cropping_padding(
     return im_dst
 
 
-def apply_croppings_paddings(im_srcs, croppings, paddings):
+def apply_croppings_paddings(src_ims, croppings, paddings):
     """
     Apply cropping and padding to a list of images.
 
     Args:
-        im_srcs: list of (H, W, 3) images, float32.
+        src_ims: list of (H, W, 3) images, float32.
         croppings: list of 4-tuples
             [
                 (crop_t, crop_b, crop_l, crop_r),
@@ -133,7 +188,7 @@ def apply_croppings_paddings(im_srcs, croppings, paddings):
                 ...
             ]
     """
-    num_ims = len(im_srcs)
+    num_ims = len(src_ims)
     if not len(croppings) == num_ims:
         raise ValueError(f"len(croppings) == {len(croppings)} != {num_ims}")
     if not len(paddings) == num_ims:
@@ -143,7 +198,7 @@ def apply_croppings_paddings(im_srcs, croppings, paddings):
             raise ValueError(f"len(cropping) == {len(cropping)} != 4")
 
     dst_ims = []
-    for im_src, cropping, padding in zip(im_srcs, croppings, paddings):
+    for im_src, cropping, padding in zip(src_ims, croppings, paddings):
         im_dst = apply_cropping_padding(im_src, cropping, padding)
         dst_ims.append(im_dst)
 

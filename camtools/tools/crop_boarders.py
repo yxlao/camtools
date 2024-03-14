@@ -8,11 +8,13 @@ ct crop-boarders *.png --pad_pixel 10 --skip_cropped --same_crop
 ```
 """
 
-from pathlib import Path
 import argparse
+from pathlib import Path
+
 import numpy as np
-import camtools as ct
 from tqdm import tqdm
+
+import camtools as ct
 
 
 def instantiate_parser(parser):
@@ -106,10 +108,8 @@ def entry_point(parser, args):
         ]
 
     # Read.
-    src_ims = [
-        ct.io.imread(src_path, alpha_mode="white")
-        for src_path in tqdm(src_paths, desc="Reading images")
-    ]
+    src_ims = ct.utility.mt_loop(ct.io.imread, src_paths, alpha_mode="white")
+
     for src_im in src_ims:
         if not src_im.dtype == np.float32:
             raise ValueError(f"Input image {src_path} must be of dtype float32.")
@@ -126,10 +126,9 @@ def entry_point(parser, args):
                 "All images must be of the same shape when --same_crop is " "specified."
             )
 
-        individual_croppings = [
-            ct.image.compute_cropping(im)
-            for im in tqdm(src_ims, desc="Computing croppings")
-        ]
+        individual_croppings = ct.utility.mt_loop(ct.image.compute_cropping, src_ims)
+
+        # Compute the minimum cropping boarders.
         min_crop_u, min_crop_d, min_crop_l, min_crop_r = individual_croppings[0]
         for crop_u, crop_d, crop_l, crop_r in individual_croppings[1:]:
             min_crop_u = min(min_crop_u, crop_u)
@@ -147,7 +146,7 @@ def entry_point(parser, args):
         paddings = [(padding, padding, padding, padding)] * len(src_ims)
     else:
         # Compute cropping boarders.
-        croppings = [ct.image.compute_cropping(src_im) for src_im in src_ims]
+        croppings = ct.utility.mt_loop(ct.image.compute_cropping, src_ims)
 
         # Compute paddings.
         if args.pad_pixel != 0:

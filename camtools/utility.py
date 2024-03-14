@@ -1,3 +1,71 @@
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from typing import Any, Callable, Iterable
+
+from tqdm import tqdm
+
+
+def mt_loop(
+    func: Callable[[Any], Any],
+    inputs: Iterable[Any],
+    **kwargs,
+) -> list:
+    """
+    Applies a function to each item in the given list in parallel using multi-threading.
+
+    Args:
+        func (Callable[[Any], Any]): The function to apply. Must accept a single
+            argument.
+        inputs (Iterable[Any]): An iterable of inputs to process with the
+            function.
+        **kwargs: Additional keyword arguments to pass to `func`.
+
+    Returns:
+        list: A list of results from applying `func` to each item in `list_input`.
+    """
+    desc = f"[mt] {func.__name__}"
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(func, item, **kwargs) for item in inputs]
+        progress = tqdm(
+            as_completed(futures),
+            total=len(inputs),
+            desc=desc,
+        )
+        results = [future.result() for future in progress]
+    return results
+
+
+def mp_loop(
+    func: Callable[[Any], Any],
+    inputs: Iterable[Any],
+    **kwargs,
+) -> list:
+    """
+    Applies a function to each item in the given list in parallel using multi-processing.
+
+    Args:
+        func (Callable[[Any], Any]): The function to apply. Must accept a single
+            argument.
+        inputs (Iterable[Any]): An iterable of inputs to process with the
+            function.
+        **kwargs: Additional keyword arguments to pass to `func`.
+
+    Returns:
+        list: A list of results from applying `func` to each item in `inputs`.
+    """
+    desc = f"[mp] {func.__name__}"
+    with ProcessPoolExecutor() as executor:
+        future_to_item = {
+            executor.submit(func, item, **kwargs): item for item in inputs
+        }
+        progress = tqdm(
+            as_completed(future_to_item),
+            total=len(inputs),
+            desc=desc,
+        )
+        results = [future.result() for future in progress]
+    return results
+
+
 def query_yes_no(question, default=None):
     """Ask a yes/no question via raw_input() and return their answer.
 
