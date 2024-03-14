@@ -24,13 +24,12 @@ def mt_loop(
     """
     desc = f"[mt] {func.__name__}"
     with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(func, item, **kwargs) for item in inputs]
-        progress = tqdm(
-            as_completed(futures),
-            total=len(inputs),
-            desc=desc,
-        )
-        results = [future.result() for future in progress]
+        future_to_index = {
+            executor.submit(func, item, **kwargs): i for i, item in enumerate(inputs)
+        }
+        results = [None] * len(inputs)
+        for future in tqdm(as_completed(future_to_index), total=len(inputs), desc=desc):
+            results[future_to_index[future]] = future.result()
     return results
 
 
@@ -54,15 +53,12 @@ def mp_loop(
     """
     desc = f"[mp] {func.__name__}"
     with ProcessPoolExecutor() as executor:
-        future_to_item = {
-            executor.submit(func, item, **kwargs): item for item in inputs
+        future_to_index = {
+            executor.submit(func, item, **kwargs): i for i, item in enumerate(inputs)
         }
-        progress = tqdm(
-            as_completed(future_to_item),
-            total=len(inputs),
-            desc=desc,
-        )
-        results = [future.result() for future in progress]
+        results = [None] * len(inputs)
+        for future in tqdm(as_completed(future_to_index), total=len(inputs), desc=desc):
+            results[future_to_index[future]] = future.result()
     return results
 
 
