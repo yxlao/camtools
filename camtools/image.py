@@ -20,7 +20,7 @@ def crop_white_boarders(im: np.array, padding: Tuple[int] = (0, 0, 0, 0)) -> np.
     return im_dst
 
 
-def compute_cropping(im: np.array) -> Tuple[int]:
+def compute_cropping_v1(im: np.array) -> Tuple[int]:
     """
     Compute top, bottom, left, right white boarder in pixels.
 
@@ -73,24 +73,13 @@ def compute_cropping(im: np.array) -> Tuple[int]:
         else:
             break
 
-    # call compute_cropping_v2 can compare results.
-    crop_t_v2, crop_b_v2, crop_l_v2, crop_r_v2 = compute_cropping_v2(im)
-    if (
-        crop_t != crop_t_v2
-        or crop_b != crop_b_v2
-        or crop_l != crop_l_v2
-        or crop_r != crop_r_v2
-    ):
-        raise ValueError(
-            f"compute_cropping_v2 failed to compute the correct cropping: "
-            f"({crop_t}, {crop_b}, {crop_l}, {crop_r}) != "
-            f"({crop_t_v2}, {crop_b_v2}, {crop_l_v2}, {crop_r_v2})"
-        )
-
     return crop_t, crop_b, crop_l, crop_r
 
 
-def compute_cropping_v2(im: np.ndarray) -> Tuple[int, int, int, int]:
+def compute_cropping(
+    im: np.ndarray,
+    check_with_v1=False,
+) -> Tuple[int, int, int, int]:
     """
     Compute top, bottom, left, right white borders in pixels for a 3-channel
     image.
@@ -123,6 +112,21 @@ def compute_cropping_v2(im: np.ndarray) -> Tuple[int, int, int, int]:
     crop_b = im.shape[0] - rows_with_color[-1] - 1 if len(rows_with_color) else 0
     crop_l = cols_with_color[0] if len(cols_with_color) else 0
     crop_r = im.shape[1] - cols_with_color[-1] - 1 if len(cols_with_color) else 0
+
+    # Check the results against compute_cropping_v1 if requested
+    if check_with_v1:
+        crop_t_v1, crop_b_v1, crop_l_v1, crop_r_v1 = compute_cropping_v1(im)
+        if (
+            crop_t != crop_t_v1
+            or crop_b != crop_b_v1
+            or crop_l != crop_l_v1
+            or crop_r != crop_r_v1
+        ):
+            raise ValueError(
+                f"compute_cropping_v1 failed to compute the correct cropping: "
+                f"({crop_t}, {crop_b}, {crop_l}, {crop_r}) != "
+                f"({crop_t_v1}, {crop_b_v1}, {crop_l_v1}, {crop_r_v1})"
+            )
 
     return crop_t, crop_b, crop_l, crop_r
 
