@@ -2,7 +2,7 @@ import requests
 from pathlib import Path
 
 
-class ArtifactManager:
+class _ArtifactManager:
     BASE_URL = "https://github.com/yxlao/camtools-artifacts/releases/download"
 
     def __init__(self):
@@ -44,5 +44,5 @@ def get_artifact_path(artifact_key: str):
     """
     Checks if the artifact is locally available, and if not, attempts to download it.
     """
-    artifact_manager = ArtifactManager()
+    artifact_manager = _ArtifactManager()
     return artifact_manager.get_path(artifact_key)
