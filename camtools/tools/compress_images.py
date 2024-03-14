@@ -153,7 +153,7 @@ def entry_point(parser, args):
         print(f"  - inplace   : {inplace_str}")
 
     # Compress images.
-    if not ct.utility.query_yes_no("Proceed?", default=False):
+    if not ct.util.query_yes_no("Proceed?", default=False):
         print("Aborted.")
         return 0
     stats = compress_images(
@@ -213,7 +213,7 @@ def do_update_texts_in_dir(src_paths, dst_paths, root_dir):
         print(f"  - {text_path}")
 
     prompt = "Continue?"
-    if ct.utility.query_yes_no(prompt, default=False):
+    if ct.util.query_yes_no(prompt, default=False):
         pass
     else:
         print("Aborted.")
