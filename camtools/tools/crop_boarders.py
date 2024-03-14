@@ -161,7 +161,7 @@ def entry_point(parser, args):
                 paddings.append((padding, padding, padding, padding))
 
         # If same_shape is specified, pad all images to the same shape.
-        # Distribute the padding evenly among top/down, left/right.
+        # Distribute the padding evenly among top/bottom, left/right.
         if args.same_shape:
             dst_shapes = ct.image.get_post_croppings_paddings_shapes(
                 src_shapes=[im.shape for im in src_ims],

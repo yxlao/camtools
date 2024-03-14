@@ -15,14 +15,14 @@ def crop_white_boarders(im: np.array, padding: Tuple[int] = (0, 0, 0, 0)) -> np.
     Return:
         im_dst: (H', W', 3) image, float32.
     """
-    udlr = compute_cropping(im)
-    im_dst = apply_cropping_padding(im, udlr, padding)
+    tblr = compute_cropping(im)
+    im_dst = apply_cropping_padding(im, tblr, padding)
     return im_dst
 
 
 def compute_cropping(im: np.array) -> Tuple[int]:
     """
-    Compute top, down, left, right white boarder in pixels.
+    Compute top, bottom, left, right white boarder in pixels.
 
     This function can handle (H, W, N) images, e.g.,
     - 3-channel image: (H, W, 3)
@@ -32,8 +32,8 @@ def compute_cropping(im: np.array) -> Tuple[int]:
         im: (H, W, N) image, float32.
 
     Return: tuple of 4 elements
-        crop_u: int, number of white pixels on the top edge.
-        crop_d: int, number of white pixels on the down edge.
+        crop_t: int, number of white pixels on the top edge.
+        crop_b: int, number of white pixels on the bottom edge.
         crop_l: int, number of white pixels on the left edge.
         crop_r: int, number of white pixels on the right edge.
     """
@@ -47,19 +47,19 @@ def compute_cropping(im: np.array) -> Tuple[int]:
     h, w, _ = im.shape
 
     # Find the number of white pixels on each edge.
-    crop_u = 0
-    crop_d = 0
+    crop_t = 0
+    crop_b = 0
     crop_l = 0
     crop_r = 0
 
-    for u in range(h):
-        if np.allclose(im[u, :, :], 1.0):
-            crop_u += 1
+    for t in range(h):
+        if np.allclose(im[t, :, :], 1.0):
+            crop_t += 1
         else:
             break
-    for d in range(h):
-        if np.allclose(im[h - d - 1, :, :], 1.0):
-            crop_d += 1
+    for b in range(h):
+        if np.allclose(im[h - b - 1, :, :], 1.0):
+            crop_b += 1
         else:
             break
     for l in range(w):
@@ -73,11 +73,11 @@ def compute_cropping(im: np.array) -> Tuple[int]:
         else:
             break
 
-    return crop_u, crop_d, crop_l, crop_r
+    return crop_t, crop_b, crop_l, crop_r
 
 
 def apply_cropping_padding(
-    src_im: np.ndarray,
+    im_src: np.ndarray,
     cropping: Tuple[int],
     padding: Tuple[int],
 ) -> np.ndarray:
@@ -85,67 +85,67 @@ def apply_cropping_padding(
     Apply cropping and padding to an image.
 
     Args:
-        src_im: (H, W, 3) image, float32.
-        cropping: 4-tuple (crop_u, crop_d, crop_l, crop_r)
-        padding: 4-tuple (pad_u, pad_d, pad_l, pad_r)
+        im_src: (H, W, 3) image, float32.
+        cropping: 4-tuple (crop_t, crop_b, crop_l, crop_r)
+        padding: 4-tuple (pad_t, pad_b, pad_l, pad_r)
 
     Return:
-        dst_im: (H, W, 3) image, float32.
+        im_dst: (H, W, 3) image, float32.
     """
-    if not src_im.dtype == np.float32:
-        raise ValueError(f"src_im.dtype == {src_im.dtype} != np.float32")
-    if not src_im.ndim == 3:
-        raise ValueError(f"src_im must be (H, W, 3), but got {src_im.shape}")
+    if not im_src.dtype == np.float32:
+        raise ValueError(f"im_src.dtype == {im_src.dtype} != np.float32")
+    if not im_src.ndim == 3:
+        raise ValueError(f"im_src must be (H, W, 3), but got {im_src.shape}")
 
     (
         h,
         w,
         _,
-    ) = src_im.shape
-    crop_u, crop_d, crop_l, crop_r = cropping
-    dst_im = src_im[crop_u : h - crop_d, crop_l : w - crop_r, :]
-    pad_u, pad_d, pad_l, pad_r = padding
-    dst_im = np.pad(
-        dst_im,
-        ((pad_u, pad_d), (pad_l, pad_r), (0, 0)),
+    ) = im_src.shape
+    crop_t, crop_b, crop_l, crop_r = cropping
+    im_dst = im_src[crop_t : h - crop_b, crop_l : w - crop_r, :]
+    pad_t, pad_b, pad_l, pad_r = padding
+    im_dst = np.pad(
+        im_dst,
+        ((pad_t, pad_b), (pad_l, pad_r), (0, 0)),
         mode="constant",
         constant_values=1.0,
     )
-    return dst_im
+    return im_dst
 
 
-def apply_croppings_paddings(src_ims, croppings, paddings):
+def apply_croppings_paddings(im_srcs, croppings, paddings):
     """
     Apply cropping and padding to a list of images.
 
     Args:
-        src_ims: list of (H, W, 3) images, float32.
+        im_srcs: list of (H, W, 3) images, float32.
         croppings: list of 4-tuples
             [
-                (crop_u, crop_d, crop_l, crop_r),
-                (crop_u, crop_d, crop_l, crop_r),
+                (crop_t, crop_b, crop_l, crop_r),
+                (crop_t, crop_b, crop_l, crop_r),
                 ...
             ]
         paddings: list of 4-tuples
             [
-                (pad_u, pad_d, pad_l, pad_r),
-                (pad_u, pad_d, pad_l, pad_r),
+                (pad_t, pad_b, pad_l, pad_r),
+                (pad_t, pad_b, pad_l, pad_r),
                 ...
             ]
     """
-    num_images = len(src_ims)
-    if not len(croppings) == num_images:
-        raise ValueError(f"len(croppings) == {len(croppings)} != {num_images}")
-    if not len(paddings) == num_images:
-        raise ValueError(f"len(paddings) == {len(paddings)} != {num_images}")
+    num_ims = len(im_srcs)
+    if not len(croppings) == num_ims:
+        raise ValueError(f"len(croppings) == {len(croppings)} != {num_ims}")
+    if not len(paddings) == num_ims:
+        raise ValueError(f"len(paddings) == {len(paddings)} != {num_ims}")
     for cropping in croppings:
         if not len(cropping) == 4:
             raise ValueError(f"len(cropping) == {len(cropping)} != 4")
 
     dst_ims = []
-    for src_im, cropping, padding in zip(src_ims, croppings, paddings):
-        dst_im = apply_cropping_padding(src_im, cropping, padding)
-        dst_ims.append(dst_im)
+    for im_src, cropping, padding in zip(im_srcs, croppings, paddings):
+        im_dst = apply_cropping_padding(im_src, cropping, padding)
+        dst_ims.append(im_dst)
 
     return dst_ims
 
@@ -158,23 +158,23 @@ def get_post_croppings_paddings_shapes(src_shapes, croppings, paddings):
         src_shapes: list of source image shapes.
         croppings: list of 4-tuples
             [
-                (crop_u, crop_d, crop_l, crop_r),
-                (crop_u, crop_d, crop_l, crop_r),
+                (crop_t, crop_b, crop_l, crop_r),
+                (crop_t, crop_b, crop_l, crop_r),
                 ...
             ]
         paddings: list of 4-tuples
             [
-                (pad_u, pad_d, pad_l, pad_r),
-                (pad_u, pad_d, pad_l, pad_r),
+                (pad_t, pad_b, pad_l, pad_r),
+                (pad_t, pad_b, pad_l, pad_r),
                 ...
             ]
     """
     dst_shapes = []
     for src_shape, cropping, padding in zip(src_shapes, croppings, paddings):
-        crop_u, crop_d, crop_l, crop_r = cropping
-        pad_u, pad_d, pad_l, pad_r = padding
+        crop_t, crop_b, crop_l, crop_r = cropping
+        pad_t, pad_b, pad_l, pad_r = padding
         dst_shape = (
-            src_shape[0] - crop_u - crop_d + pad_u + pad_d,
+            src_shape[0] - crop_t - crop_b + pad_t + pad_b,
             src_shape[1] - crop_l - crop_r + pad_l + pad_r,
             src_shape[2],
         )
