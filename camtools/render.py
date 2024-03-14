@@ -2,15 +2,9 @@ from typing import List, Tuple
 
 import numpy as np
 import open3d as o3d
-
-from typing import Tuple
 from PIL import Image, ImageDraw, ImageFont
-import numpy as np
 
-
-from . import sanity
-from . import artifact
-from . import image
+from . import artifact, image, sanity
 
 
 def render_geometries(
@@ -412,7 +406,7 @@ class _TextRenderer:
             The rendered text as a NumPy array (float32).
         """
         # Sanity checks
-        if not all(0 <= c <= 1 for c in font_color):
+        if len(font_color) != 3 or not all(0 <= c <= 1 for c in font_color):
             raise ValueError(
                 f"font_color must be 3 floats in the range [0, 1], "
                 f"but got {font_color}."
@@ -462,6 +456,7 @@ def render_text(
     font_color: Tuple[float, float, float] = (0, 0, 0),
     tight_layout: bool = False,
     multiline_alignment: str = "left",
+    padding_tblr: Tuple[int, int, int, int] = (0, 0, 0, 0),
 ) -> np.ndarray:
     """
     Global function to render text using specified font settings.
@@ -476,17 +471,43 @@ def render_text(
             may include padding on top for top alignment in images.
         alignment: The alignment of the text. Can be "left", "center",
             or "right", this is useful for multi-line text.
+        padding_tblr: The padding to add to the top, bottom, left, and right
+            of the rendered text, in pixels.
 
     Returns:
         The rendered text as a NumPy array (float32).
     """
-    return _TextRenderer(font_type=font_type).render(
+    if (
+        len(padding_tblr) != 4
+        or not all(p >= 0 for p in padding_tblr)
+        or not all(isinstance(p, int) for p in padding_tblr)
+    ):
+        raise ValueError(
+            f"padding_tblr must be a tuple of 4 non-negative integers, "
+            f"but got {padding_tblr}."
+        )
+
+    im_render = _TextRenderer(font_type=font_type).render(
         text=text,
         font_size=font_size,
         font_color=font_color,
         tight_layout=tight_layout,
         multiline_alignment=multiline_alignment,
     )
+
+    if padding_tblr != (0, 0, 0, 0):
+        im_render = np.pad(
+            im_render,
+            (
+                (padding_tblr[0], padding_tblr[1]),
+                (padding_tblr[2], padding_tblr[3]),
+                (0, 0),
+            ),
+            mode="constant",
+            constant_values=1.0,
+        )
+
+    return im_render
 
 
 def render_texts(
@@ -497,8 +518,19 @@ def render_texts(
     multiline_alignment: str = "center",
     same_height: bool = False,
     same_width: bool = False,
+    padding_tblr: Tuple[int, int, int, int] = (0, 0, 0, 0),
 ) -> List[np.ndarray]:
-    rendered_images = [
+    if (
+        len(padding_tblr) != 4
+        or not all(p >= 0 for p in padding_tblr)
+        or not all(isinstance(p, int) for p in padding_tblr)
+    ):
+        raise ValueError(
+            f"padding_tblr must be a tuple of 4 non-negative integers, "
+            f"but got {padding_tblr}."
+        )
+
+    im_renders = [
         render_text(
             text,
             font_size=font_size,
@@ -511,20 +543,20 @@ def render_texts(
     ]
 
     if same_height:
-        max_height = max(im.shape[0] for im in rendered_images)
-        rendered_images = [
+        max_height = max(im.shape[0] for im in im_renders)
+        im_renders = [
             np.pad(
                 im,
                 ((0, max_height - im.shape[0]), (0, 0), (0, 0)),
                 mode="constant",
                 constant_values=1.0,
             )
-            for im in rendered_images
+            for im in im_renders
         ]
 
     if same_width:
-        max_width = max(im.shape[1] for im in rendered_images)
-        rendered_images = [
+        max_width = max(im.shape[1] for im in im_renders)
+        im_renders = [
             np.pad(
                 im,
                 (
@@ -538,7 +570,22 @@ def render_texts(
                 mode="constant",
                 constant_values=1.0,
             )
-            for im in rendered_images
+            for im in im_renders
         ]
 
-    return rendered_images
+    if padding_tblr != (0, 0, 0, 0):
+        im_renders = [
+            np.pad(
+                im,
+                (
+                    (padding_tblr[0], padding_tblr[1]),
+                    (padding_tblr[2], padding_tblr[3]),
+                    (0, 0),
+                ),
+                mode="constant",
+                constant_values=1.0,
+            )
+            for im in im_renders
+        ]
+
+    return im_renders
