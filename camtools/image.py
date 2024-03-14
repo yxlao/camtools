@@ -731,3 +731,63 @@ def make_corres_image(
     assert im_corres.min() >= 0.0 and im_corres.max() <= 1.0
 
     return im_corres
+
+
+def vstack_images(
+    ims: List[np.ndarray],
+    alignment: str = "left",
+    background_color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
+) -> np.ndarray:
+    """
+    Vertically stacks images, aligning them to "left", "center", or "right",
+    with a specified background color.
+
+    Args:
+        ims (List[np.ndarray]): List of float32/float64 images with shape
+            (H, W, 3) and pixel values in [0.0, 1.0].
+        alignment (str): How to align images ("left", "center", "right").
+            Defaults to "left".
+        background_color (Tuple[float, float, float]): The background color of
+            the stacked image, specified as a tuple of three floats (R, G, B)
+            in the range [0.0, 1.0]. Defaults to white (1.0, 1.0, 1.0).
+
+    Returns:
+        np.ndarray: Stacked image as float32.
+    """
+    for im in ims:
+        if im.ndim != 3 or im.shape[2] != 3:
+            raise ValueError("Each image must be 3D with 3 channels.")
+        if im.dtype not in [np.float32, np.float64]:
+            raise ValueError("Image dtype must be float32/float64.")
+        if im.min() < 0.0 or im.max() > 1.0:
+            raise ValueError("Pixels must be in [0.0, 1.0].")
+    if not all(0 <= c <= 1 for c in background_color):
+        raise ValueError(
+            f"background_color must be 3 floats in the range [0, 1], "
+            f"but got {background_color}."
+        )
+    valid_alignments = ["left", "center", "right"]
+    if alignment not in valid_alignments:
+        raise ValueError(
+            f"Invalid alignment: '{alignment}', must be one of {valid_alignments}."
+        )
+
+    max_width = max(im.shape[1] for im in ims)
+    total_height = sum(im.shape[0] for im in ims)
+
+    im_stacked = np.ones((total_height, max_width, 3), dtype=np.float32)
+    im_stacked = im_stacked * np.array(background_color).reshape(1, 1, 3)
+
+    curr_row = 0
+    for im in ims:
+        offset = (
+            (max_width - im.shape[1]) // 2
+            if alignment == "center"
+            else max_width - im.shape[1] if alignment == "right" else 0
+        )
+        im_stacked[curr_row : curr_row + im.shape[0], offset : offset + im.shape[1]] = (
+            im
+        )
+        curr_row += im.shape[0]
+
+    return im_stacked

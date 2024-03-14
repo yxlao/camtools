@@ -2,8 +2,9 @@ from typing import List, Tuple
 
 import numpy as np
 import open3d as o3d
+from PIL import Image, ImageDraw, ImageFont
 
-from . import sanity
+from . import artifact, image, sanity
 
 
 def render_geometries(
@@ -318,3 +319,273 @@ def _lineset_to_meshes(
         cylinders.append(cylinder)
 
     return cylinders
+
+
+class _TextRenderer:
+    """
+    Renders text into an image using specified font settings.
+    """
+
+    FONT_MAP = {
+        "tex": "a1/texgyrepagella-regular.otf",
+        "serif": None,
+        "sans": None,
+        "mono": None,
+    }
+
+    def __init__(self, font_type: str = "tex"):
+        """
+        Initializes the renderer with a specific font type.
+        """
+        if font_type not in self.FONT_MAP:
+            raise ValueError(
+                f"Invalid font_type: {font_type}. "
+                f"Available options: {list(self.FONT_MAP.keys())}."
+            )
+        artifact_key = self.FONT_MAP[font_type]
+        if artifact_key is None:
+            raise NotImplementedError(
+                f"Font type '{font_type}' is not implemented yet."
+            )
+
+        self.font_path = artifact.get_artifact_path(artifact_key)
+
+    def _get_text_size(
+        self, text: str, font: ImageFont.FreeTypeFont, alignment: str
+    ) -> Tuple[int, int, int, int]:
+        """
+        Estimates the full and tight sizes of the given text.
+
+        Args:
+            text: The text to measure.
+            font: The font used for the text.
+
+        Returns:
+            A tuple containing the full width and height of the text box,
+            as well as the tight width and height of the content within the
+            text box.
+        """
+        im = Image.new(mode="RGB", size=(1, 1))
+        draw = ImageDraw.Draw(im)
+        bbox = draw.textbbox((0, 0), text=text, font=font, align=alignment)
+
+        full_w, full_h = bbox[2], bbox[3]
+        tight_w, tight_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+
+        # Well, they shall be integers, but can be something like 32.0
+        full_w = int(round(full_w))
+        full_h = int(round(full_h))
+        tight_w = int(round(tight_w))
+        tight_h = int(round(tight_h))
+
+        return full_w, full_h, tight_w, tight_h
+
+    def render(
+        self,
+        text: str,
+        font_size: int,
+        font_color: Tuple[float, float, float],
+        tight_layout: bool,
+        multiline_alignment: str,
+    ) -> np.ndarray:
+        """
+        Renders the given text with specified settings.
+
+        Args:
+            text: The text to render.
+            font_size: The font size to use.
+            font_color: The color of the font, as an RGB tuple in the
+                range [0, 1].
+            tight_layout: If True, renders the text without any padding
+                around it. If False, may include some padding on top, aligning
+                letters by the top for consistent alignment across images.
+            alignment: The alignment of the text. Can be "left", "center",
+                or "right", this is useful for multi-line text.
+
+        Returns:
+            The rendered text as a NumPy array (float32).
+        """
+        # Sanity checks
+        if len(font_color) != 3 or not all(0 <= c <= 1 for c in font_color):
+            raise ValueError(
+                f"font_color must be 3 floats in the range [0, 1], "
+                f"but got {font_color}."
+            )
+        if multiline_alignment not in ["left", "center", "right"]:
+            raise ValueError(
+                f"Invalid alignment: {multiline_alignment}, must be left, center, or right."
+            )
+
+        # Init font
+        font = ImageFont.truetype(str(self.font_path), size=font_size)
+
+        # Compute dimensions
+        sizes = self._get_text_size(text, font, multiline_alignment)
+        full_w, full_h, tight_w, tight_h = sizes
+        w_gap = full_w - tight_w
+        h_gap = full_h - tight_h
+        if tight_layout:
+            im_w = tight_w
+            im_h = tight_h
+            pos = (-w_gap, -h_gap)
+        else:
+            im_w = full_w
+            im_h = full_h
+            pos = (0, 0)
+
+        # Render
+        im_render = Image.new("RGB", (im_w, im_h), "white")
+        draw = ImageDraw.Draw(im_render)
+        color_uint8 = tuple(int(c * 255) for c in font_color)
+        draw.multiline_text(
+            pos,
+            text,
+            fill=color_uint8,
+            font=font,
+            align=multiline_alignment,
+        )
+        im_render = np.asarray(im_render).astype(np.float32) / 255.0
+
+        return im_render
+
+
+def render_text(
+    text: str,
+    font_size: int = 72,
+    font_type: str = "tex",
+    font_color: Tuple[float, float, float] = (0, 0, 0),
+    tight_layout: bool = False,
+    multiline_alignment: str = "left",
+    padding_tblr: Tuple[int, int, int, int] = (0, 0, 0, 0),
+) -> np.ndarray:
+    """
+    Global function to render text using specified font settings.
+
+    Args:
+        text: The text to render.
+        font_size: The font size to use.
+        font_type: The type of font.
+        font_color: The color of the font, as an RGB tuple in the
+            range [0, 1].
+        tight_layout: If True, renders the text without padding. If False,
+            may include padding on top for top alignment in images.
+        alignment: The alignment of the text. Can be "left", "center",
+            or "right", this is useful for multi-line text.
+        padding_tblr: The padding to add to the top, bottom, left, and right
+            of the rendered text, in pixels.
+
+    Returns:
+        The rendered text as a NumPy array (float32).
+    """
+    if (
+        len(padding_tblr) != 4
+        or not all(p >= 0 for p in padding_tblr)
+        or not all(isinstance(p, int) for p in padding_tblr)
+    ):
+        raise ValueError(
+            f"padding_tblr must be a tuple of 4 non-negative integers, "
+            f"but got {padding_tblr}."
+        )
+
+    im_render = _TextRenderer(font_type=font_type).render(
+        text=text,
+        font_size=font_size,
+        font_color=font_color,
+        tight_layout=tight_layout,
+        multiline_alignment=multiline_alignment,
+    )
+
+    if padding_tblr != (0, 0, 0, 0):
+        im_render = np.pad(
+            im_render,
+            (
+                (padding_tblr[0], padding_tblr[1]),
+                (padding_tblr[2], padding_tblr[3]),
+                (0, 0),
+            ),
+            mode="constant",
+            constant_values=1.0,
+        )
+
+    return im_render
+
+
+def render_texts(
+    texts: List[str],
+    font_size: int = 72,
+    font_type: str = "tex",
+    font_color: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+    multiline_alignment: str = "center",
+    same_height: bool = False,
+    same_width: bool = False,
+    padding_tblr: Tuple[int, int, int, int] = (0, 0, 0, 0),
+) -> List[np.ndarray]:
+    if (
+        len(padding_tblr) != 4
+        or not all(p >= 0 for p in padding_tblr)
+        or not all(isinstance(p, int) for p in padding_tblr)
+    ):
+        raise ValueError(
+            f"padding_tblr must be a tuple of 4 non-negative integers, "
+            f"but got {padding_tblr}."
+        )
+
+    im_renders = [
+        render_text(
+            text,
+            font_size=font_size,
+            font_type=font_type,
+            font_color=font_color,
+            tight_layout=False,
+            multiline_alignment=multiline_alignment,
+        )
+        for text in texts
+    ]
+
+    if same_height:
+        max_height = max(im.shape[0] for im in im_renders)
+        im_renders = [
+            np.pad(
+                im,
+                ((0, max_height - im.shape[0]), (0, 0), (0, 0)),
+                mode="constant",
+                constant_values=1.0,
+            )
+            for im in im_renders
+        ]
+
+    if same_width:
+        max_width = max(im.shape[1] for im in im_renders)
+        im_renders = [
+            np.pad(
+                im,
+                (
+                    (0, 0),
+                    (
+                        (max_width - im.shape[1]) // 2,
+                        max_width - im.shape[1] - (max_width - im.shape[1]) // 2,
+                    ),
+                    (0, 0),
+                ),
+                mode="constant",
+                constant_values=1.0,
+            )
+            for im in im_renders
+        ]
+
+    if padding_tblr != (0, 0, 0, 0):
+        im_renders = [
+            np.pad(
+                im,
+                (
+                    (padding_tblr[0], padding_tblr[1]),
+                    (padding_tblr[2], padding_tblr[3]),
+                    (0, 0),
+                ),
+                mode="constant",
+                constant_values=1.0,
+            )
+            for im in im_renders
+        ]
+
+    return im_renders
