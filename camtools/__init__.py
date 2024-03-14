@@ -14,7 +14,7 @@ from . import render
 from . import sanity
 from . import solver
 from . import transform
-from . import utility
+from . import util
 
 import pkg_resources
 
