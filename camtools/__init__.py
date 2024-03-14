@@ -1,3 +1,4 @@
+from . import artifact
 from . import camera
 from . import colmap
 from . import colormap
