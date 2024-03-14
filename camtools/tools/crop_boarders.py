@@ -8,11 +8,13 @@ ct crop-boarders *.png --pad_pixel 10 --skip_cropped --same_crop
 ```
 """
 
-from pathlib import Path
 import argparse
+from pathlib import Path
+
 import numpy as np
-import camtools as ct
 from tqdm import tqdm
+
+import camtools as ct
 
 
 def instantiate_parser(parser):
@@ -106,10 +108,8 @@ def entry_point(parser, args):
         ]
 
     # Read.
-    src_ims = [
-        ct.io.imread(src_path, alpha_mode="white")
-        for src_path in tqdm(src_paths, desc="Reading images")
-    ]
+    src_ims = ct.utility.mt_loop(ct.io.imread, src_paths, alpha_mode="white")
+
     for src_im in src_ims:
         if not src_im.dtype == np.float32:
             raise ValueError(f"Input image {src_path} must be of dtype float32.")
