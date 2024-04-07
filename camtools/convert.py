@@ -187,12 +187,10 @@ def T_opengl_to_opencv(T):
     # pose = T_to_pose(T)
     # pose = pose_opengl_to_opencv(pose)
     # T = pose_to_T(pose)
-
     T = np.copy(T)
     T[1:3, 0:4] *= -1
     T = T[:, [1, 0, 2, 3]]
     T[:, 2] *= -1
-
     return T
 
 
@@ -217,12 +215,10 @@ def T_opencv_to_opengl(T):
     # pose = T_to_pose(T)
     # pose = pose_opencv_to_opengl(pose)
     # T = pose_to_T(pose)
-
     T = np.copy(T)
     T[:, 2] *= -1
     T = T[:, [1, 0, 2, 3]]
     T[1:3, 0:4] *= -1
-
     return T
 
 
