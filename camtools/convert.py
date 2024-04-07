@@ -166,7 +166,7 @@ def pose_to_T(pose):
     return np.linalg.inv(pose)
 
 
-def T_opengl_to_opencv(T_opengl):
+def T_opengl_to_opencv(T):
     """
     Convert T from OpenGL convention to OpenCV convention.
 
@@ -183,15 +183,10 @@ def T_opengl_to_opencv(T_opengl):
         - Used in: OpenGL, Blender, Nerfstudio
           https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
     """
-    sanity.assert_T(T_opengl)
-
-    R_b2p = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
-
-    R_opengl, t_opengl = T_to_R_t(T_opengl)
-    R = R_b2p @ R_opengl
-    t = t_opengl @ R_b2p
-    T = R_t_to_T(R, t)
-
+    sanity.assert_T(T)
+    pose = T_to_pose(T)
+    pose = pose_opengl_to_opencv(pose)
+    T = pose_to_T(pose)
     return T
 
 
@@ -213,16 +208,10 @@ def T_opencv_to_opengl(T):
           https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
     """
     sanity.assert_T(T)
-
-    R_b2p = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
-    R_p2b = R_b2p.T
-
-    R, t = T_to_R_t(T)
-    R_opengl = R_p2b @ R
-    t_opengl = t @ R_p2b
-    T_opengl = R_t_to_T(R_opengl, t_opengl)
-
-    return T_opengl
+    pose = T_to_pose(T)
+    pose = pose_opencv_to_opengl(pose)
+    T = pose_to_T(pose)
+    return T
 
 
 def pose_opengl_to_opencv(pose):
