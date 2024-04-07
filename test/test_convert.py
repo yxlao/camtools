@@ -113,6 +113,7 @@ def test_convert_opencv_opengl():
     )
     pose = ct.convert.T_to_pose(T)
 
+    # Test convert pose bidirectionally
     pose_cv = pose
     pose_gl = ct.convert.pose_opencv_to_opengl(pose_cv)
     pose_cv_recovered = ct.convert.pose_opengl_to_opencv(pose_gl)
@@ -120,6 +121,7 @@ def test_convert_opencv_opengl():
     np.testing.assert_allclose(pose_cv, pose_cv_recovered, rtol=1e-5, atol=1e-5)
     np.testing.assert_allclose(pose_gl, pose_gl_recovered, rtol=1e-5, atol=1e-5)
 
+    # Test convert T bidirectionally
     T_cv = T
     T_gl = ct.convert.T_opencv_to_opengl(T_cv)
     T_cv_recovered = ct.convert.T_opengl_to_opencv(T_gl)
@@ -127,6 +129,7 @@ def test_convert_opencv_opengl():
     np.testing.assert_allclose(T_cv, T_cv_recovered, rtol=1e-5, atol=1e-5)
     np.testing.assert_allclose(T_gl, T_gl_recovered, rtol=1e-5, atol=1e-5)
 
+    # Test T and pose are consistent across conversions
     np.testing.assert_allclose(
         T_cv, ct.convert.pose_to_T(pose_cv), rtol=1e-5, atol=1e-5
     )
