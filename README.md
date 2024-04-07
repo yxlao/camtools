@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camtools_logo_dark.png">
-    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camtools_logo_light.png" width="360">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camtools_logo_dark.png">
+    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camtools_logo_light.png" width="360">
   </picture>
 </p>
 <h1 align="center">CamTools: Camera Tools for Computer Vision</h1>
@@ -20,8 +20,8 @@ clear and easy-to-use APIs.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camera_coordinates_dark.png">
-    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camera_coordinates_light.png" width="520">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_dark.png">
+    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_light.png" width="520">
   </picture>
 </p>
 
@@ -37,7 +37,7 @@ clear and easy-to-use APIs.
    ```
 
    <p align="center">
-      <img src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/camera_frames.png" width="360" />
+      <img src="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_frames.png" width="360" />
    </p>
 
 2. Convert camera parameters.
@@ -247,7 +247,7 @@ the beginning of the README.
 ## Contributing
 
 - Follow [Angular's commit message convention](https://github.com/angular/angular/blob/main/CONTRIBUTING.md#-commit-message-format) for PRs.
-  - This applies to PR's title and ultimately the commit messages in `master`.
+  - This applies to PR's title and ultimately the commit messages in `main`.
   - The prefix shall be one of `build`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `test`.
   - Use lowercase.
 - Format your code with [black](https://github.com/psf/black). This will be enforced by the CI.
@@ -258,6 +258,6 @@ If you use CamTools in your project, consider adding one of the following
 badges to your project.
 
 <p>
-<a href="https://github.com/yxlao/camtools"><img alt="Built with CamTools" src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/built_with_camtools_dark.svg" width=240></a>
-<a href="https://github.com/yxlao/camtools"><img alt="Built with CamTools" src="https://raw.githubusercontent.com/yxlao/camtools/master/camtools/assets/built_with_camtools_light.svg" width=240></a>
+<a href="https://github.com/yxlao/camtools"><img alt="Built with CamTools" src="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/built_with_camtools_dark.svg" width=240></a>
+<a href="https://github.com/yxlao/camtools"><img alt="Built with CamTools" src="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/built_with_camtools_light.svg" width=240></a>
 </p>
