@@ -16,6 +16,14 @@ from . import solver
 from . import transform
 from . import util
 
-import pkg_resources
 
-__version__ = pkg_resources.get_distribution("camtools").version
+try:
+    # Python >= 3.8
+    from importlib.metadata import version
+
+    __version__ = version("camtools")
+except ImportError:
+    # Python < 3.8
+    import pkg_resources
+
+    __version__ = pkg_resources.get_distribution("camtools").version
