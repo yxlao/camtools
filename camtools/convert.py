@@ -181,6 +181,7 @@ def T_opengl_to_opencv(T_opengl):
         - +Z: The negative view direction, pointing back and away from the camera
         - -Z: The view direction
         - Used in: OpenGL, Blender, Nerfstudio
+          https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
     """
     sanity.assert_T(T_opengl)
 
@@ -209,6 +210,7 @@ def T_opencv_to_opengl(T):
         - +Z: The negative view direction, pointing back and away from the camera
         - -Z: The view direction
         - Used in: OpenGL, Blender, Nerfstudio
+          https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
     """
     sanity.assert_T(T)
 
@@ -223,7 +225,7 @@ def T_opencv_to_opengl(T):
     return T_opengl
 
 
-def pose_opengl_to_opencv(pose_opengl):
+def pose_opengl_to_opencv(pose):
     """
     Convert pose from OpenGL convention to OpenCV convention.
 
@@ -238,9 +240,12 @@ def pose_opengl_to_opencv(pose_opengl):
         - +Z: The negative view direction, pointing back and away from the camera
         - -Z: The view direction
         - Used in: OpenGL, Blender, Nerfstudio
+          https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
     """
-    sanity.assert_pose(pose_opengl)
-    pose = np.copy(pose_opengl)
+    sanity.assert_pose(pose)
+    pose = np.copy(pose)
+    pose[2, :] *= -1
+    pose = pose[[1, 0, 2, 3], :]
     pose[0:3, 1:3] *= -1
     return pose
 
@@ -260,11 +265,14 @@ def pose_opencv_to_opengl(pose):
         - +Z: The negative view direction, pointing back and away from the camera
         - -Z: The view direction
         - Used in: OpenGL, Blender, Nerfstudio
+          https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
     """
     sanity.assert_pose(pose)
-    pose_opengl = np.copy(pose)
-    pose_opengl[0:3, 1:3] *= -1
-    return pose_opengl
+    pose = np.copy(pose)
+    pose[0:3, 1:3] *= -1
+    pose = pose[[1, 0, 2, 3], :]
+    pose[2, :] *= -1
+    return pose
 
 
 def R_t_to_C(R, t):

@@ -103,3 +103,21 @@ def test_P_to_K_R_t():
     # print(f"> Rotation {R.shape}:\n{R}")
     # print(f"> Translation {t.shape}:\n{t}")
     # print(f"> Projection {P.shape}:\n{P}")
+
+
+def test_convert_opencv_opengl():
+    T = ct.convert.spherical_to_T_towards_origin(
+        radius=2,
+        theta=np.pi / 4,
+        phi=np.pi / 6,
+    )
+    pose = ct.convert.T_to_pose(T)
+
+    pose_cv = pose
+    pose_gl = ct.convert.pose_opencv_to_opengl(pose_cv)
+    pose_cv_recovered = ct.convert.pose_opengl_to_opencv(pose_gl)
+    pose_gl_recovered = ct.convert.pose_opencv_to_opengl(pose_cv_recovered)
+    np.testing.assert_allclose(pose_cv, pose_cv_recovered, rtol=1e-5, atol=1e-5)
+    np.testing.assert_allclose(pose_gl, pose_gl_recovered, rtol=1e-5, atol=1e-5)
+
+    pass
