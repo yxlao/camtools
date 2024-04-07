@@ -106,24 +106,36 @@ def test_P_to_K_R_t():
 
 
 def test_convert_opencv_opengl():
+    # Init T and pose
     T = ct.convert.spherical_to_T_towards_origin(
         radius=2,
         theta=np.pi / 4,
         phi=np.pi / 6,
     )
     pose = ct.convert.T_to_pose(T)
+    pose[:3, 3] = [1, 2, 3]
+    T = ct.convert.pose_to_T(pose)
 
     # Test convert pose bidirectionally
-    pose_cv = pose
+    pose_cv = np.copy(pose)
     pose_gl = ct.convert.pose_opencv_to_opengl(pose_cv)
+    print(f"> pose_cv:\n{pose_cv}")
+    print(f"> pose_gl:\n{pose_gl}")
     pose_cv_recovered = ct.convert.pose_opengl_to_opencv(pose_gl)
     pose_gl_recovered = ct.convert.pose_opencv_to_opengl(pose_cv_recovered)
     np.testing.assert_allclose(pose_cv, pose_cv_recovered, rtol=1e-5, atol=1e-5)
     np.testing.assert_allclose(pose_gl, pose_gl_recovered, rtol=1e-5, atol=1e-5)
 
     # Test convert T bidirectionally
-    T_cv = T
+    T_cv = np.copy(T)
     T_gl = ct.convert.T_opencv_to_opengl(T_cv)
+    print(f"> T_cv:\n{T_cv}")
+    print(f"> T_gl:\n{T_gl}")
+    # import ipdb
+
+    # ipdb.set_trace()
+    # pass
+
     T_cv_recovered = ct.convert.T_opengl_to_opencv(T_gl)
     T_gl_recovered = ct.convert.T_opencv_to_opengl(T_cv_recovered)
     np.testing.assert_allclose(T_cv, T_cv_recovered, rtol=1e-5, atol=1e-5)
