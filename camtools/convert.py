@@ -166,7 +166,7 @@ def pose_to_T(pose):
     return np.linalg.inv(pose)
 
 
-def T_opengl_to_opencv(T_opengl):
+def T_opengl_to_opencv(T):
     """
     Convert T from OpenGL convention to OpenCV convention.
 
@@ -181,16 +181,16 @@ def T_opengl_to_opencv(T_opengl):
         - +Z: The negative view direction, pointing back and away from the camera
         - -Z: The view direction
         - Used in: OpenGL, Blender, Nerfstudio
+          https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
     """
-    sanity.assert_T(T_opengl)
-
-    R_b2p = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
-
-    R_opengl, t_opengl = T_to_R_t(T_opengl)
-    R = R_b2p @ R_opengl
-    t = t_opengl @ R_b2p
-    T = R_t_to_T(R, t)
-
+    sanity.assert_T(T)
+    # pose = T_to_pose(T)
+    # pose = pose_opengl_to_opencv(pose)
+    # T = pose_to_T(pose)
+    T = np.copy(T)
+    T[1:3, 0:4] *= -1
+    T = T[:, [1, 0, 2, 3]]
+    T[:, 2] *= -1
     return T
 
 
@@ -209,21 +209,20 @@ def T_opencv_to_opengl(T):
         - +Z: The negative view direction, pointing back and away from the camera
         - -Z: The view direction
         - Used in: OpenGL, Blender, Nerfstudio
+          https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
     """
     sanity.assert_T(T)
-
-    R_b2p = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
-    R_p2b = R_b2p.T
-
-    R, t = T_to_R_t(T)
-    R_opengl = R_p2b @ R
-    t_opengl = t @ R_p2b
-    T_opengl = R_t_to_T(R_opengl, t_opengl)
-
-    return T_opengl
+    # pose = T_to_pose(T)
+    # pose = pose_opencv_to_opengl(pose)
+    # T = pose_to_T(pose)
+    T = np.copy(T)
+    T[:, 2] *= -1
+    T = T[:, [1, 0, 2, 3]]
+    T[1:3, 0:4] *= -1
+    return T
 
 
-def pose_opengl_to_opencv(pose_opengl):
+def pose_opengl_to_opencv(pose):
     """
     Convert pose from OpenGL convention to OpenCV convention.
 
@@ -238,9 +237,12 @@ def pose_opengl_to_opencv(pose_opengl):
         - +Z: The negative view direction, pointing back and away from the camera
         - -Z: The view direction
         - Used in: OpenGL, Blender, Nerfstudio
+          https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
     """
-    sanity.assert_pose(pose_opengl)
-    pose = np.copy(pose_opengl)
+    sanity.assert_pose(pose)
+    pose = np.copy(pose)
+    pose[2, :] *= -1
+    pose = pose[[1, 0, 2, 3], :]
     pose[0:3, 1:3] *= -1
     return pose
 
@@ -260,11 +262,14 @@ def pose_opencv_to_opengl(pose):
         - +Z: The negative view direction, pointing back and away from the camera
         - -Z: The view direction
         - Used in: OpenGL, Blender, Nerfstudio
+          https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
     """
     sanity.assert_pose(pose)
-    pose_opengl = np.copy(pose)
-    pose_opengl[0:3, 1:3] *= -1
-    return pose_opengl
+    pose = np.copy(pose)
+    pose[0:3, 1:3] *= -1
+    pose = pose[[1, 0, 2, 3], :]
+    pose[2, :] *= -1
+    return pose
 
 
 def R_t_to_C(R, t):

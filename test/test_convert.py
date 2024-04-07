@@ -103,3 +103,134 @@ def test_P_to_K_R_t():
     # print(f"> Rotation {R.shape}:\n{R}")
     # print(f"> Translation {t.shape}:\n{t}")
     # print(f"> Projection {P.shape}:\n{P}")
+
+
+def test_convert_pose_opencv_opengl():
+
+    def gen_random_pose():
+        axis = np.random.normal(size=3)
+        axis = axis / np.linalg.norm(axis)
+        angle = np.random.uniform(0, 2 * np.pi)
+        # Skew-symmetric matrix
+        ss = np.array(
+            [
+                [0, -axis[2], axis[1]],
+                [axis[2], 0, -axis[0]],
+                [-axis[1], axis[0], 0],
+            ]
+        )
+        RT = np.eye(3) + np.sin(angle) * ss + (1 - np.cos(angle)) * np.dot(ss, ss)
+        c = np.random.uniform(-10, 10, size=(3,))
+        pose = np.eye(4)
+        pose[:3, :3] = RT
+        pose[:3, 3] = c
+
+        return pose
+
+    for _ in range(10):
+        pose = gen_random_pose()
+        T = ct.convert.pose_to_T(pose)
+
+        # Test convert pose bidirectionally
+        pose_cv = np.copy(pose)
+        pose_gl = ct.convert.pose_opencv_to_opengl(pose_cv)
+        pose_cv_recovered = ct.convert.pose_opengl_to_opencv(pose_gl)
+        pose_gl_recovered = ct.convert.pose_opencv_to_opengl(pose_cv_recovered)
+        np.testing.assert_allclose(pose_cv, pose_cv_recovered, rtol=1e-5, atol=1e-5)
+        np.testing.assert_allclose(pose_gl, pose_gl_recovered, rtol=1e-5, atol=1e-5)
+
+        # Test convert T bidirectionally
+        T_cv = np.copy(T)
+        T_gl = ct.convert.T_opencv_to_opengl(T_cv)
+        T_cv_recovered = ct.convert.T_opengl_to_opencv(T_gl)
+        T_gl_recovered = ct.convert.T_opencv_to_opengl(T_cv_recovered)
+        np.testing.assert_allclose(T_cv, T_cv_recovered, rtol=1e-5, atol=1e-5)
+        np.testing.assert_allclose(T_gl, T_gl_recovered, rtol=1e-5, atol=1e-5)
+
+        # Test T and pose are consistent across conversions
+        np.testing.assert_allclose(
+            pose_cv,
+            ct.convert.T_to_pose(T_cv),
+            rtol=1e-5,
+            atol=1e-5,
+        )
+        np.testing.assert_allclose(
+            pose_gl,
+            ct.convert.T_to_pose(T_gl),
+            rtol=1e-5,
+            atol=1e-5,
+        )
+        np.testing.assert_allclose(
+            pose_cv_recovered,
+            ct.convert.T_to_pose(T_cv_recovered),
+            rtol=1e-5,
+            atol=1e-5,
+        )
+        np.testing.assert_allclose(
+            pose_gl_recovered,
+            ct.convert.T_to_pose(T_gl_recovered),
+            rtol=1e-5,
+            atol=1e-5,
+        )
+
+
+def test_convert_T_opencv_to_opengl():
+
+    def gen_random_T():
+        R = ct.convert.roll_pitch_yaw_to_R(
+            np.random.uniform(-np.pi, np.pi),
+            np.random.uniform(-np.pi, np.pi),
+            np.random.uniform(-np.pi, np.pi),
+        )
+        t = np.random.uniform(-10, 10, size=(3,))
+        T = np.eye(4)
+        T[:3, :3] = R
+        T[:3, 3] = t
+
+        return T
+
+    for _ in range(10):
+        T = gen_random_T()
+        pose = ct.convert.T_to_pose(T)
+
+        # Test convert T bidirectionally
+        T_cv = np.copy(T)
+        T_gl = ct.convert.T_opencv_to_opengl(T_cv)
+        T_cv_recovered = ct.convert.T_opengl_to_opencv(T_gl)
+        T_gl_recovered = ct.convert.T_opencv_to_opengl(T_cv_recovered)
+        np.testing.assert_allclose(T_cv, T_cv_recovered, rtol=1e-5, atol=1e-5)
+        np.testing.assert_allclose(T_gl, T_gl_recovered, rtol=1e-5, atol=1e-5)
+
+        # Test convert pose bidirectionally
+        pose_cv = np.copy(pose)
+        pose_gl = ct.convert.pose_opencv_to_opengl(pose_cv)
+        pose_cv_recovered = ct.convert.pose_opengl_to_opencv(pose_gl)
+        pose_gl_recovered = ct.convert.pose_opencv_to_opengl(pose_cv_recovered)
+        np.testing.assert_allclose(pose_cv, pose_cv_recovered, rtol=1e-5, atol=1e-5)
+        np.testing.assert_allclose(pose_gl, pose_gl_recovered, rtol=1e-5, atol=1e-5)
+
+        # Test T and pose are consistent across conversions
+        np.testing.assert_allclose(
+            T_cv,
+            ct.convert.pose_to_T(pose_cv),
+            rtol=1e-5,
+            atol=1e-5,
+        )
+        np.testing.assert_allclose(
+            T_gl,
+            ct.convert.pose_to_T(pose_gl),
+            rtol=1e-5,
+            atol=1e-5,
+        )
+        np.testing.assert_allclose(
+            T_cv_recovered,
+            ct.convert.pose_to_T(pose_cv_recovered),
+            rtol=1e-5,
+            atol=1e-5,
+        )
+        np.testing.assert_allclose(
+            T_gl_recovered,
+            ct.convert.pose_to_T(pose_gl_recovered),
+            rtol=1e-5,
+            atol=1e-5,
+        )
