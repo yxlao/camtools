@@ -52,7 +52,7 @@ def pad_0001(array):
 
 def rm_pad_0001(array, check_vals=False):
     """
-    Remove the homogeneous bottom row [0, 0, 0, 1].
+    Remove the bottom row of [0, 0, 0, 1].
 
     Args:
         array: (4, 4) or (N, 4, 4).
@@ -115,6 +115,44 @@ def rm_pad_0001(array, check_vals=False):
                 raise ValueError("Should not reach here.")
 
     return array[..., :3, :]
+
+
+def to_homo(array):
+    """
+    Convert a 2D array to homogeneous coordinates by appending a column of ones.
+
+    Args:
+        array: A 2D numpy array of shape (N, M).
+
+    Returns:
+        A numpy array of shape (N, M+1) with a column of ones appended.
+    """
+    if not isinstance(array, np.ndarray) or array.ndim != 2:
+        raise ValueError("Input must be a 2D numpy array")
+
+    ones = np.ones((array.shape[0], 1), dtype=array.dtype)
+    return np.hstack((array, ones))
+
+
+def from_homo(array):
+    """
+    Convert an array from homogeneous to Cartesian coordinates by dividing by the
+    last column and removing it.
+
+    Args:
+        array: A 2D numpy array of shape (N, M) in homogeneous coordinates.
+
+    Returns:
+        A numpy array of shape (N, M-1) in Cartesian coordinates.
+    """
+    if not isinstance(array, np.ndarray) or array.ndim != 2:
+        raise ValueError("Input must be a 2D numpy array")
+    if array.shape[1] < 2:
+        raise ValueError(
+            "Input array must have at least two columns for removing homogeneous coordinate"
+        )
+
+    return array[:, :-1] / array[:, -1, np.newaxis]
 
 
 def R_to_quat(R):

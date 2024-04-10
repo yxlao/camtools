@@ -65,131 +65,107 @@ def points_to_pixel(points, K, T):
     return points_out
 
 
-def im_depth_to_points(im_depth, K, T):
+def depth_to_point_cloud(
+    im_depth: np.ndarray,
+    K: np.ndarray,
+    T: np.ndarray,
+    im_color: np.ndarray = None,
+    return_as_image: bool = False,
+    ignore_invalid: bool = True,
+):
     """
-    Convert depth image to point cloud. Assumes valid depths > 0 and < inf.
-    Invalid depths are ignored. The depth image should already be in world
-    scale. That is, each pixel value represents the distance between the camera
-    center and the point in meters.
+    Convert a depth image to a point cloud, optionally including color information.
+    Can return either a sparse (N, 3) point cloud or a dense one with the image
+    shape (H, W, 3).
 
     Args:
-        im_depth: depth image (H, W), float32, already in world scale.
-        K: intrinsics (3, 3)
-        T: extrinsics (4, 4)
+        im_depth: Depth image (H, W), float32, in world scale.
+        K: Intrinsics matrix (3, 3).
+        T: Extrinsics matrix (4, 4).
+        im_color: Color image (H, W, 3), float32/float64, range [0, 1].
+        as_image: If True, returns a dense point cloud with the same shape as the
+            input depth image (H, W, 3), while ignore_invalid is ignored as the
+            invalid depths are not removed. If False, returns a sparse point cloud
+            of shape (N, 3) while respecting ignore_invalid flag.
+        ignore_invalid: If True, ignores invalid depths (<= 0 or >= inf).
 
     Returns:
-        points: (N, 3) points in world coordinates.
+        - im_color == None, as_image == False:
+            - return: points (N, 3)
+        - im_color == None, as_image == True:
+            - return: im_points (H, W, 3)
+        - im_color != None, as_image == False:
+            - return: (points (N, 3), colors (N, 3))
+        - im_color != None, as_image == True:
+            - return: (im_points (H, W, 3), im_colors (H, W, 3))
     """
+    # Sanity checks
     sanity.assert_K(K)
     sanity.assert_T(T)
+    if not isinstance(im_depth, np.ndarray):
+        raise TypeError("im_depth must be a numpy array")
+    if im_depth.dtype != np.float32:
+        raise TypeError("im_depth must be of type float32")
+    if im_depth.ndim != 2:
+        raise ValueError("im_depth must be a 2D array")
+    if im_color is not None:
+        if not isinstance(im_color, np.ndarray):
+            raise TypeError("im_color must be a numpy array")
+        if im_color.shape[:2] != im_depth.shape or im_color.ndim != 3:
+            raise ValueError(
+                f"im_color must be (H, W, 3), and have the same "
+                f"shape as im_depth, but got {im_color.shape}."
+            )
+        if im_color.dtype not in [np.float32, np.float64]:
+            raise TypeError("im_color must be of type float32 or float64")
+        if im_color.max() > 1.0 or im_color.min() < 0.0:
+            raise ValueError("im_color values must be in the range [0, 1]")
+    if return_as_image and ignore_invalid:
+        print("Warning: ignore_invalid is ignored when return_as_image is True.")
+        ignore_invalid = False
 
     height, width = im_depth.shape
-    im_valid_mask = (im_depth.flatten() > 0) & (im_depth.flatten() < np.inf)
-    pose = np.linalg.inv(T)
+    pose = convert.T_to_pose(T)
 
     # pixels.shape == (height, width, 2)
-    # pixels[r, c] == [c, r]  # Since x-axis goes from top-left to top-right.
-    pixels = np.transpose(np.indices((width, height)), (2, 1, 0))
-    # (height * width, 2)
-    pixels = pixels.reshape((-1, 2))
-    # (num_points, 2)
-    pixels = pixels[im_valid_mask]
-    # (num_points, 3)
-    pixels = np.hstack((pixels, np.ones((pixels.shape[0], 1))))
-    # (num_points, )
-    depths = im_depth.flatten()[im_valid_mask]
-    # C(num_points, 3)
-    points = depths.reshape((-1, 1)) * (np.linalg.inv(K) @ pixels.T).T
-    # (num_points, 4)
-    points = np.hstack((points, np.ones((points.shape[0], 1))))
-    # (num_points, 4)
-    points = (pose @ points.T).T
-    # (num_points, 3)
-    points = points[:, :3]
-
-    return points
-
-
-def im_depth_to_im_points(im_depth, K, T):
-    """
-    Convert depth image to point cloud. Each pixel will be converted to exactly
-    one points. Invalid depths are still returned, the returned shape is
-    (H, W, 3), which is different from im_depth_to_points.
-
-    Args:
-        im_depth: depth image (H, W), float32, already in world scale.
-        K: intrinsics (3, 3)
-        T: extrinsics (4, 4)
-
-    Returns:
-        points: (H, W, 3) points in world coordinates.
-    """
-    sanity.assert_K(K)
-    sanity.assert_T(T)
-
-    height, width = im_depth.shape
-    pose = np.linalg.inv(T)
-
-    # pixels.shape == (height, width, 2)
-    # pixels[r, c] == [c, r]  # Since x-axis goes from top-left to top-right.
+    # pixels[r, c] == [c, r], since x-axis goes from top-left to top-right.
     pixels = np.transpose(np.indices((width, height)), (2, 1, 0))
     # (height * width, 2)
     pixels = pixels.reshape((-1, 2))
     # (height * width, 3)
-    pixels = np.hstack((pixels, np.ones((pixels.shape[0], 1))))
+    pixels_homo = convert.to_homo(pixels)
     # (height * width, )
     depths = im_depth.flatten()
-    # C(height * width, 3)
-    points = depths.reshape((-1, 1)) * (np.linalg.inv(K) @ pixels.T).T
-    # (height * width, 4)
-    points = np.hstack((points, np.ones((points.shape[0], 1))))
-    # (height * width, 4)
-    points = (pose @ points.T).T
-    # (height * width, 3)
-    points = points[:, :3]
-    # (height, width, 3)
-    points = points.reshape((height, width, 3))
 
-    return points
+    if ignore_invalid:
+        valid_mask = (depths > 0) & (depths < np.inf)
+        depths = depths[valid_mask]
+        pixels_homo = pixels_homo[valid_mask]
+        if im_color is not None:
+            colors = im_color.reshape((-1, 3))[valid_mask]
 
+    # Transform pixel coordinates to world coordinates.
+    # (height * width, 1)
+    depths = depths.reshape((-1, 1))
 
-def im_depth_im_color_to_points_colors(im_depth, im_color, K, T):
-    """
-    Convert depth and color image to a colored point cloud. Assumes valid depths
-    > 0 and < inf. Invalid depths are ignored. The depth image should already be
-    in world scale. That is, each pixel value represents the distance between
-    the camera center and the point in meters.
+    # (N, 3)
+    points_camera = depths * (np.linalg.inv(K) @ pixels_homo.T).T
+    # (N, 4)
+    points_world = (pose @ (convert.to_homo(points_camera).T)).T
+    # (N, 3)
+    points_world = convert.from_homo(points_world)
 
-    Args:
-        im_depth: depth image (H, W), float32, already in world scale.
-        im_color: color image (H, W, 3), float32/float64, in [0, 1].
-        K: intrinsics (3, 3)
-        T: extrinsics (4, 4)
-
-    Returns:
-        points: (N, 3) points in world coordinates.
-        colors: (N, 3) colors in [0, 1], float32/float64.
-    """
-    sanity.assert_K(K)
-    sanity.assert_T(T)
-    sanity.assert_shape(im_color, (None, None, 3), name="im_color")
-    sanity.assert_shape(im_depth, (None, None), name="im_depth")
-    assert len(im_color) == len(im_depth)
-    assert im_color.shape[0] == im_depth.shape[0]
-    assert im_color.shape[1] == im_depth.shape[1]
-    assert im_color.dtype == np.float32 or im_color.dtype == np.float64
-    assert im_depth.dtype == np.float32 or im_depth.dtype == np.float64
-    assert im_color.max() <= 1.0
-    assert im_color.min() >= 0.0
-
-    im_valid_mask = (im_depth.flatten() > 0) & (im_depth.flatten() < np.inf)
-    num_valid = np.sum(im_valid_mask)
-
-    points = im_depth_to_points(im_depth, K, T)
-    if len(points) != num_valid:
-        raise ValueError(
-            f"# of points ({len(points)}) does not match num_valid ({num_valid})"
-        )
-    colors = im_color.reshape((-1, 3))[im_valid_mask]
-
-    return points, colors
+    if return_as_image:
+        assert (
+            ignore_invalid == False
+        ), "ignore_invalid is ignored when return_as_image is True."
+        points_world = points_world.reshape((height, width, 3))
+        if im_color is None:
+            return points_world
+        else:
+            return points_world, im_color
+    else:
+        if im_color is None:
+            return points_world
+        else:
+            return points_world, colors
