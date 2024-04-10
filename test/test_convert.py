@@ -1,5 +1,6 @@
 import numpy as np
 import camtools as ct
+import pytest
 
 np.set_printoptions(formatter={"float": "{: 0.2f}".format})
 
@@ -234,3 +235,53 @@ def test_convert_T_opencv_to_opengl():
             rtol=1e-5,
             atol=1e-5,
         )
+
+
+def test_to_homo():
+    # Regular case
+    src = np.array(
+        [
+            [1, 2],
+            [3, 4],
+        ]
+    )
+    dst_gt = np.array(
+        [
+            [1, 2, 1],
+            [3, 4, 1],
+        ]
+    )
+    dst = ct.convert.to_homo(src)
+    np.testing.assert_array_equal(dst, dst_gt)
+
+    # Exception case
+    with pytest.raises(ValueError) as _:
+        src = np.array([1, 2, 3])
+        ct.convert.to_homo(src)
+
+
+def test_from_homo():
+    src = np.array(
+        [
+            [2, 4, 2],
+            [6, 8, 1],
+        ]
+    )
+    dst_gt = np.array(
+        [
+            [1, 2],
+            [6, 8],
+        ]
+    )
+    dst = ct.convert.from_homo(src)
+    np.testing.assert_array_equal(dst, dst_gt)
+
+    # Exception case for non-2D input
+    with pytest.raises(ValueError) as _:
+        src = np.array([1, 2, 3])
+        ct.convert.from_homo(src)
+
+    # Exception case for insufficient columns
+    with pytest.raises(ValueError) as _:
+        src = np.array([[1]])
+        ct.convert.from_homo(src)
