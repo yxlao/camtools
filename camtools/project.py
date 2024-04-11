@@ -3,17 +3,16 @@ Functions for projecting 2D->3D or 3D->2D.
 """
 
 import numpy as np
-import torch
 from . import sanity
 from . import convert
 
 
-def points_to_pixel(points, K, T):
+def point_cloud_to_pixel(points, K, T):
     """
     Project points in world coordinates to pixel coordinates.
 
     Example usage:
-        pixels = ct.project.points_to_pixel(points, K, T)
+        pixels = ct.project.point_cloud_to_pixel(points, K, T)
 
         cols = pixels[:, 0]  # cols, width, x, top-left to top-right
         rows = pixels[:, 1]  # rows, height, y, top-left to bottom-left
@@ -40,29 +39,16 @@ def points_to_pixel(points, K, T):
 
     W2P = convert.K_T_to_W2P(K, T)
 
-    # points_homo: (N, 4)
-    N = len(points)
-    if torch.is_tensor(points):
-        ones = torch.ones((N, 1), dtype=points.dtype, device=points.device)
-        points_homo = torch.hstack((points, ones))
-    else:
-        ones = np.ones((N, 1))
-        points_homo = np.hstack((points, ones))
+    # (N, 3) -> (N, 4)
+    points = convert.to_homo(points)
+    # (N, 4)
+    pixels = (W2P @ points.T).T
+    # (N, 4) -> (N, 3), discard the last column
+    pixels = pixels[:, :3]
+    # (N, 3) -> (N, 2)
+    pixels = convert.from_homo(pixels)
 
-    # points_out: (N, 4)
-    # points_out = (W2P @ points_homo.T).T
-    #              = points_homo @ W2P.T
-    points_out = points_homo @ W2P.T
-
-    # points_out: (N, 3)
-    # points_out discard the last column
-    points_out = points_out[:, :3]
-
-    # points_out: (N, 2)
-    # points_out convert homo to regular
-    points_out = points_out[:, :2] / points_out[:, 2:]
-
-    return points_out
+    return pixels
 
 
 def depth_to_point_cloud(

@@ -3,6 +3,7 @@ import numpy as np
 import torch
 
 from . import sanity
+from . import convert
 
 
 def pad_0001(array):
@@ -423,17 +424,14 @@ def K_T_to_W2P(K, T):
 
 def P_to_W2P(P):
     sanity.assert_shape_3x4(P, name="P")
-    if torch.is_tensor(P):
-        bottom_row = torch.tensor([0, 0, 0, 1], device=P.device, dtype=P.dtype)
-        W2P = torch.vstack((P, bottom_row))
-    else:
-        bottom_row = np.array([[0, 0, 0, 1]])
-        W2P = np.vstack((P, bottom_row))
+    W2P = convert.pad_0001(P)
     return W2P
 
 
 def W2P_to_P(W2P):
-    P = W2P[:3, :4]
+    if W2P.shape != (4, 4):
+        raise ValueError(f"Expected W2P of shape (4, 4), but got {W2P.shape}.")
+    P = convert.rm_pad_0001(W2P, check_vals=True)
     return P
 
 
