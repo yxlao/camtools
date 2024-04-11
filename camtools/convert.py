@@ -129,7 +129,7 @@ def to_homo(array):
         A numpy array of shape (N, M+1) with a column of ones appended.
     """
     if not isinstance(array, np.ndarray) or array.ndim != 2:
-        raise ValueError("Input must be a 2D numpy array")
+        raise ValueError(f"Input must be a 2D numpy array, but got {array.shape}.")
 
     ones = np.ones((array.shape[0], 1), dtype=array.dtype)
     return np.hstack((array, ones))
@@ -147,10 +147,11 @@ def from_homo(array):
         A numpy array of shape (N, M-1) in Cartesian coordinates.
     """
     if not isinstance(array, np.ndarray) or array.ndim != 2:
-        raise ValueError("Input must be a 2D numpy array")
+        raise ValueError(f"Input must be a 2D numpy array, but got {array.shape}.")
     if array.shape[1] < 2:
         raise ValueError(
-            "Input array must have at least two columns for removing homogeneous coordinate"
+            f"Input array must have at least two columns for removing "
+            f"homogeneous coordinate, but got shape {array.shape}."
         )
 
     return array[:, :-1] / array[:, -1, np.newaxis]
