@@ -3,6 +3,7 @@ import numpy as np
 import torch
 
 from . import sanity
+from . import convert
 
 
 def pad_0001(array):
@@ -52,7 +53,7 @@ def pad_0001(array):
 
 def rm_pad_0001(array, check_vals=False):
     """
-    Remove the homogeneous bottom row [0, 0, 0, 1].
+    Remove the bottom row of [0, 0, 0, 1].
 
     Args:
         array: (4, 4) or (N, 4, 4).
@@ -115,6 +116,45 @@ def rm_pad_0001(array, check_vals=False):
                 raise ValueError("Should not reach here.")
 
     return array[..., :3, :]
+
+
+def to_homo(array):
+    """
+    Convert a 2D array to homogeneous coordinates by appending a column of ones.
+
+    Args:
+        array: A 2D numpy array of shape (N, M).
+
+    Returns:
+        A numpy array of shape (N, M+1) with a column of ones appended.
+    """
+    if not isinstance(array, np.ndarray) or array.ndim != 2:
+        raise ValueError(f"Input must be a 2D numpy array, but got {array.shape}.")
+
+    ones = np.ones((array.shape[0], 1), dtype=array.dtype)
+    return np.hstack((array, ones))
+
+
+def from_homo(array):
+    """
+    Convert an array from homogeneous to Cartesian coordinates by dividing by the
+    last column and removing it.
+
+    Args:
+        array: A 2D numpy array of shape (N, M) in homogeneous coordinates.
+
+    Returns:
+        A numpy array of shape (N, M-1) in Cartesian coordinates.
+    """
+    if not isinstance(array, np.ndarray) or array.ndim != 2:
+        raise ValueError(f"Input must be a 2D numpy array, but got {array.shape}.")
+    if array.shape[1] < 2:
+        raise ValueError(
+            f"Input array must have at least two columns for removing "
+            f"homogeneous coordinate, but got shape {array.shape}."
+        )
+
+    return array[:, :-1] / array[:, -1, np.newaxis]
 
 
 def R_to_quat(R):
@@ -385,17 +425,14 @@ def K_T_to_W2P(K, T):
 
 def P_to_W2P(P):
     sanity.assert_shape_3x4(P, name="P")
-    if torch.is_tensor(P):
-        bottom_row = torch.tensor([0, 0, 0, 1], device=P.device, dtype=P.dtype)
-        W2P = torch.vstack((P, bottom_row))
-    else:
-        bottom_row = np.array([[0, 0, 0, 1]])
-        W2P = np.vstack((P, bottom_row))
+    W2P = convert.pad_0001(P)
     return W2P
 
 
 def W2P_to_P(W2P):
-    P = W2P[:3, :4]
+    if W2P.shape != (4, 4):
+        raise ValueError(f"Expected W2P of shape (4, 4), but got {W2P.shape}.")
+    P = convert.rm_pad_0001(W2P, check_vals=True)
     return P
 
 
