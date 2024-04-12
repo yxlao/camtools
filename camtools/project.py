@@ -2,9 +2,10 @@
 Functions for projecting 2D->3D or 3D->2D.
 """
 
+import cv2
 import numpy as np
-from . import sanity
-from . import convert
+
+from . import convert, image, sanity
 
 
 def point_cloud_to_pixel(points, K, T):
@@ -58,6 +59,7 @@ def depth_to_point_cloud(
     im_color: np.ndarray = None,
     return_as_image: bool = False,
     ignore_invalid: bool = True,
+    scale_factor: float = 1.0,
 ):
     """
     Convert a depth image to a point cloud, optionally including color information.
@@ -74,6 +76,9 @@ def depth_to_point_cloud(
             invalid depths are not removed. If False, returns a sparse point cloud
             of shape (N, 3) while respecting ignore_invalid flag.
         ignore_invalid: If True, ignores invalid depths (<= 0 or >= inf).
+        scale_factor: scale the im_depth (and optionally im_color) images before
+            projecting to 3D points. When scale_factor == 0.5, the image size
+            is reduced to half.
 
     Returns:
         - im_color == None, as_image == False:
@@ -109,6 +114,34 @@ def depth_to_point_cloud(
     if return_as_image and ignore_invalid:
         print("Warning: ignore_invalid is ignored when return_as_image is True.")
         ignore_invalid = False
+
+    # Make copies as K may be modified inplace
+    K = np.copy(K)
+    T = np.copy(T)
+
+    if scale_factor != 1.0:
+        # Calculate new dimensions
+        new_width = int(im_depth.shape[1] * scale_factor)
+        new_height = int(im_depth.shape[0] * scale_factor)
+
+        # Resize images
+        im_depth = image.resize(
+            im_depth,
+            shape_wh=(new_width, new_height),
+            interpolation=cv2.INTER_NEAREST,
+        )
+        if im_color is not None:
+            im_color = image.resize(
+                im_color,
+                shape_wh=(new_width, new_height),
+                interpolation=cv2.INTER_LINEAR,
+            )
+
+        # Adjust the intrinsic matrix K for the new image dimensions
+        K[0, 0] *= scale_factor
+        K[1, 1] *= scale_factor
+        K[0, 2] *= scale_factor
+        K[1, 2] *= scale_factor
 
     height, width = im_depth.shape
     pose = convert.T_to_pose(T)

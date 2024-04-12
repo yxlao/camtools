@@ -412,7 +412,7 @@ def recover_rotated_pixels(dst_pixels, src_wh, ccw_degrees):
     return src_pixels
 
 
-def resize(im, shape_wh, aspect_ratio_fill=None):
+def resize(im, shape_wh, aspect_ratio_fill=None, interpolation=cv2.INTER_LINEAR):
     """
     Resize image to shape_wh = (width, height).
     In numpy, the resulting shape is (height, width) or (height, width, 3).
@@ -426,6 +426,7 @@ def resize(im, shape_wh, aspect_ratio_fill=None):
             - If not None, the number of elements must match the channel size,
               1 or 3. The dtype and range must also match the input image.
               These value(s) will be filled to maintain the aspect ratio.
+        interpolation: OpenCV interpolation method, e.g., cv2.INTER_LINEAR.
 
     Returns:
         im_resized: image of shape (height, width) or (height, width, 3).
@@ -484,7 +485,7 @@ def resize(im, shape_wh, aspect_ratio_fill=None):
         assert tmp_w <= dst_w and tmp_h <= dst_h
 
     # Resize.
-    im_tmp = cv2.resize(im, (tmp_w, tmp_h))
+    im_tmp = cv2.resize(im, dsize=(tmp_w, tmp_h), interpolation=interpolation)
 
     # Pad if necessary.
     if tmp_w == dst_w and tmp_h == dst_h:
