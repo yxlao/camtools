@@ -59,7 +59,7 @@ def depth_to_point_cloud(
     im_color: np.ndarray = None,
     return_as_image: bool = False,
     ignore_invalid: bool = True,
-    scale_ratio: float = 1.0,
+    scale_factor: float = 1.0,
 ):
     """
     Convert a depth image to a point cloud, optionally including color information.
@@ -76,8 +76,8 @@ def depth_to_point_cloud(
             invalid depths are not removed. If False, returns a sparse point cloud
             of shape (N, 3) while respecting ignore_invalid flag.
         ignore_invalid: If True, ignores invalid depths (<= 0 or >= inf).
-        scale_ratio: scale the im_depth (and optionally im_color) images before
-            projecting to 3D points. When scale_ratio == 0.5, the image size
+        scale_factor: scale the im_depth (and optionally im_color) images before
+            projecting to 3D points. When scale_factor == 0.5, the image size
             is reduced to half.
 
     Returns:
@@ -119,10 +119,10 @@ def depth_to_point_cloud(
     K = np.copy(K)
     T = np.copy(T)
 
-    if scale_ratio != 1.0:
+    if scale_factor != 1.0:
         # Calculate new dimensions
-        new_width = int(im_depth.shape[1] * scale_ratio)
-        new_height = int(im_depth.shape[0] * scale_ratio)
+        new_width = int(im_depth.shape[1] * scale_factor)
+        new_height = int(im_depth.shape[0] * scale_factor)
 
         # Resize images
         im_depth = image.resize(
@@ -138,10 +138,10 @@ def depth_to_point_cloud(
             )
 
         # Adjust the intrinsic matrix K for the new image dimensions
-        K[0, 0] *= scale_ratio
-        K[1, 1] *= scale_ratio
-        K[0, 2] *= scale_ratio
-        K[1, 2] *= scale_ratio
+        K[0, 0] *= scale_factor
+        K[1, 1] *= scale_factor
+        K[0, 2] *= scale_factor
+        K[1, 2] *= scale_factor
 
     height, width = im_depth.shape
     pose = convert.T_to_pose(T)
