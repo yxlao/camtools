@@ -115,6 +115,10 @@ def depth_to_point_cloud(
         print("Warning: ignore_invalid is ignored when return_as_image is True.")
         ignore_invalid = False
 
+    # Make copies as K may be modified inplace
+    K = np.copy(K)
+    T = np.copy(T)
+
     if scale_ratio != 1.0:
         # Calculate new dimensions
         new_width = int(im_depth.shape[1] * scale_ratio)
