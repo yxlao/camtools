@@ -3,46 +3,43 @@ import numpy as np
 from . import convert
 from . import sanity
 from . import solver
+from typing import List, Tuple, Optional, Dict, Union
 
 
 def create_camera_frustums(
-    Ks,
-    Ts,
-    image_whs=None,
-    size=0.1,
-    color=(0, 0, 1),
-    highlight_color_map=None,
-    center_line=True,
-    center_line_color=(1, 0, 0),
-    up_triangle=True,
-    center_ray=False,
-):
+    Ks: Optional[List[np.ndarray]],
+    Ts: List[np.ndarray],
+    image_whs: Optional[List[Tuple[int, int]]] = None,
+    size: float = 0.1,
+    color: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+    highlight_color_map: Optional[Dict[int, Tuple[float, float, float]]] = None,
+    center_line: bool = True,
+    center_line_color: Tuple[float, float, float] = (1.0, 0.0, 0.0),
+    up_triangle: bool = True,
+    center_ray: bool = False,
+) -> o3d.geometry.LineSet:
     """
-    Create camera frustums in lineset.
+    Create camera frustums represented as line sets in Open3D.
 
     Args:
-        Ks: List of 3x3 camera intrinsics matrices. You can set Ks to None if
-            the intrinsics are not available. In this case, a dummy intrinsics
-            matrix will be used.
+        Ks: List of 3x3 camera intrinsics matrices or None for dummy intrinsics.
         Ts: List of 4x4 camera extrinsics matrices.
-        image_whs: List of image width and height. If None, the image width and
-            height are determined from the camera intrinsics by assuming that
-            the camera offset is exactly at the center of the image.
-        size: Distance from the camera center to image plane in world coordinates.
-        color: Color of the camera frustums.
+        image_whs: List of tuples (width, height) for image dimensions. If None,
+            dimensions are derived from intrinsics.
+        size: Scale factor for the frustum size in world coordinates.
+        color: Default color for the frustums as RGB floats.
         highlight_color_map: A map of camera_index to color, specifying the
             colors of the highlighted cameras. Index wrapping is supported.
             For example, to highlight the start and stop cameras, use:
             highlight_color_map = {0: [0, 1, 0], -1: [1, 0, 0]}. If None, no
             camera is highlighted.
-        center_line: If True, the camera center line will be drawn.
-        center_line_color: Color of the camera center line.
-        up_triangle: If True, the up triangle will be drawn.
-        center_ray: If True, the ray from camera center to the center pixel in
-            the image plane will be drawn.
+        center_line: If True, draw a line through the camera centers.
+        center_line_color: Color for the center line as RGB floats.
+        up_triangle: If True, draw an upward-pointing triangle on top of frustum.
+        center_ray: If True, draw a ray from camera center to the center pixel.
 
-    Return:
-        An Open3D lineset containing all the camera frustums.
+    Returns:
+        An Open3D LineSet object containing all the camera frustums.
     """
     if Ks is None:
         cx = 320
@@ -116,18 +113,27 @@ def create_camera_frustums(
 
 
 def create_camera_frustum_with_Ts(
-    Ts,
-    image_whs=None,
-    size=0.1,
-    color=(0, 0, 1),
-    highlight_color_map=None,
-    center_line=True,
-    center_line_color=(1, 0, 0),
-    up_triangle=True,
-    center_ray=False,
-):
+    Ts: List[np.ndarray],
+    image_whs: Optional[List[Tuple[int, int]]] = None,
+    size: float = 0.1,
+    color: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+    highlight_color_map: Optional[Dict[int, Tuple[float, float, float]]] = None,
+    center_line: bool = True,
+    center_line_color: Tuple[float, float, float] = (1.0, 0.0, 0.0),
+    up_triangle: bool = True,
+    center_ray: bool = False,
+) -> o3d.geometry.LineSet:
     """
-    Returns ct.camera.create_camera_frustums(Ks=None, Ts, ...).
+    Convenience function to create camera frustums without providing intrinsics.
+
+    Uses create_camera_frustums() with Ks set to None.
+
+    Args:
+        Ts: List of 4x4 camera extrinsics matrices.
+        Other parameters are identical to create_camera_frustums.
+
+    Returns:
+        An Open3D LineSet object containing all the camera frustums.
     """
     return create_camera_frustums(
         Ks=None,
@@ -143,9 +149,23 @@ def create_camera_frustum_with_Ts(
     )
 
 
-def create_camera_center_line(Ts, color=np.array([1, 0, 0])):
+def create_camera_center_line(
+    Ts: List[np.ndarray],
+    color: Tuple[float, float, float] = (1.0, 0.0, 0.0),
+) -> o3d.geometry.LineSet:
+    """
+    Create a line set representing the center line through camera positions.
+
+    Args:
+        Ts: List of 4x4 camera transformation matrices.
+        color: RGB float values for the line color.
+
+    Returns:
+        An Open3D LineSet object representing the camera center line.
+    """
     num_nodes = len(Ts)
     camera_centers = [convert.T_to_C(T) for T in Ts]
+    color = np.array(color)
 
     ls = o3d.geometry.LineSet()
     lines = [[x, x + 1] for x in range(num_nodes - 1)]
@@ -158,21 +178,28 @@ def create_camera_center_line(Ts, color=np.array([1, 0, 0])):
 
 
 def _create_camera_frustum(
-    K,
-    T,
-    image_wh,
-    size,
-    color,
-    up_triangle,
-    center_ray,
-):
+    K: np.ndarray,
+    T: np.ndarray,
+    image_wh: Tuple[int, int],
+    size: float,
+    color: Tuple[float, float, float],
+    up_triangle: bool,
+    center_ray: bool,
+) -> o3d.geometry.LineSet:
     """
-    K: (3, 3)
-    T: (4, 4)
-    image:_wh: (2,)
-    size: float
-    up_triangle: bool
-    center_ray: bool
+    Create a single camera frustum as an Open3D line set.
+
+    Args:
+        K: 3x3 camera intrinsic matrix.
+        T: 4x4 camera extrinsic matrix.
+        image_wh: Tuple of image width and height.
+        size: Scale of the frustum in world coordinates.
+        color: RGB floats for frustum color.
+        up_triangle: If True, adds an upward triangle at the top of the frustum.
+        center_ray: If True, adds a ray from the center to the middle of the image.
+
+    Returns:
+        An Open3D LineSet object representing a single camera frustum.
     """
     T, K, color = np.asarray(T), np.asarray(K), np.asarray(color)
     sanity.assert_T(T)
@@ -281,6 +308,17 @@ def _create_camera_frustum(
 
 
 def _wrap_dim(dim: int, max_dim: int, inclusive: bool = False) -> int:
+    """
+    Adjust an index value to fit within the range of available dimensions.
+
+    Args:
+        dim: The index value to adjust.
+        max_dim: Maximum dimension, used to adjust negative indices.
+        inclusive: Whether the index should include the maximum dimension itself.
+
+    Returns:
+        Adjusted index value within the correct range.
+    """
     if max_dim <= 0:
         raise ValueError(f"max_dim {max_dim} must be > 0.")
     min = -max_dim

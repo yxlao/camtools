@@ -8,7 +8,7 @@ class _ArtifactManager:
     def __init__(self):
         self.cache_dir = Path.home() / ".camtools"
 
-    def get_path(self, artifact_key: str, verbose: bool = False):
+    def get_path(self, artifact_key: str, verbose: bool = False) -> Path:
         """
         Checks if the artifact is locally available, and if not, attempts to download it.
         """
