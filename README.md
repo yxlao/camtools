@@ -134,6 +134,9 @@ pip install -e .[dev]
 # Help VSCode resolve imports when installed with editable mode.
 # https://stackoverflow.com/a/76897706/1255535
 pip install -e .[dev] --config-settings editable_mode=strict
+
+# If you'd like to enable torch-related features (e.g. computing image metrics)
+pip install -e .[torch]
 ```
 
 ## Camera coordinate system

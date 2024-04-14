@@ -15,7 +15,6 @@ dependencies = [
   "opencv-python>=4.5.1.48",
   "matplotlib>=3.3.4",
   "scikit-image>=0.16.2",
-  "lpips>=0.1.4",
   "tqdm>=4.60.0",
 ]
 description = "CamTools: Camera Tools for Computer Vision."
@@ -36,6 +35,10 @@ dev = [
   "black>=22.1.0",
   "pytest>=6.2.2",
   "ipdb",
+]
+torch = [
+  "torch>=1.8.0",
+  "lpips>=0.1.4",
 ]
 
 [tool.setuptools]

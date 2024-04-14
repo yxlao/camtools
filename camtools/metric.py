@@ -3,8 +3,6 @@ import numpy as np
 
 from skimage.metrics import peak_signal_noise_ratio
 from skimage.metrics import structural_similarity
-import torch
-import lpips
 from pathlib import Path
 from typing import Tuple
 
@@ -96,6 +94,9 @@ def image_lpips(
     Returns:
         LPIPS value in float.
     """
+    import torch
+    import lpips
+
     if im_mask is None:
         h, w = im_pd.shape[:2]
         im_mask = np.ones((h, w), dtype=np.float32)
