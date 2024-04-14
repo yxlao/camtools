@@ -1,17 +1,10 @@
 import numpy as np
-import torch
 
 
 def assert_numpy(x, name=None):
     if not isinstance(x, np.ndarray):
         maybe_name = f" {name}" if name is not None else ""
         raise ValueError(f"Expected{maybe_name} to be numpy array, but got {type(x)}.")
-
-
-def assert_torch(x, name=None):
-    if not torch.is_tensor(x):
-        maybe_name = f" {name}" if name is not None else ""
-        raise ValueError(f"Expected{maybe_name} to be torch tensor, but got {type(x)}.")
 
 
 def assert_K(K):
@@ -22,12 +15,7 @@ def assert_K(K):
 def assert_T(T):
     if T.shape != (4, 4):
         raise ValueError(f"T must has shape (4, 4), but got {T} of shape {T.shape}.")
-    if torch.is_tensor(T):
-        is_valid = torch.allclose(
-            T[3, :], torch.tensor([0, 0, 0, 1], dtype=T.dtype, device=T.device)
-        )
-    else:
-        is_valid = np.allclose(T[3, :], np.array([0, 0, 0, 1]))
+    is_valid = np.allclose(T[3, :], np.array([0, 0, 0, 1]))
     if not is_valid:
         raise ValueError(f"T must has [0, 0, 0, 1] the bottom row, but got {T}.")
 
@@ -37,12 +25,7 @@ def assert_pose(pose):
         raise ValueError(
             f"pose must has shape (4, 4), but got {pose} of shape {pose.shape}."
         )
-    if torch.is_tensor(pose):
-        is_valid = torch.allclose(
-            pose[3, :], torch.tensor([0, 0, 0, 1], dtype=pose.dtype, device=pose.device)
-        )
-    else:
-        is_valid = np.allclose(pose[3, :], np.array([0, 0, 0, 1]))
+    is_valid = np.allclose(pose[3, :], np.array([0, 0, 0, 1]))
     if not is_valid:
         raise ValueError(f"pose must has [0, 0, 0, 1] the bottom row, but got {pose}.")
 
@@ -101,32 +84,3 @@ def assert_shape_3x3(x, name=None):
 
 def assert_shape_3(x, name=None):
     assert_shape(x, (3,), name=name)
-
-
-def assert_same_device(*tensors):
-    """
-    Args:
-        tensors: list of tensors
-    """
-    if not isinstance(tensors, tuple):
-        raise ValueError(f"Unknown input type: {type(tensors)}.")
-    if len(tensors) == 0:
-        return
-    if len(tensors) == 1:
-        if torch.is_tensor(tensors[0]) or isinstance(tensors[0], np.ndarray):
-            return
-        else:
-            raise ValueError(f"Unknown input type: {type(tensors)}.")
-
-    all_are_torch = all(torch.is_tensor(t) for t in tensors)
-    all_are_numpy = all(isinstance(t, np.ndarray) for t in tensors)
-
-    if not all_are_torch and not all_are_numpy:
-        raise ValueError(f"All tensors must be torch tensors or numpy arrays.")
-
-    if all_are_torch:
-        devices = [t.device for t in tensors]
-        if not all(devices[0] == d for d in devices):
-            raise ValueError(
-                f"All tensors must be on the same device, bui got {devices}."
-            )

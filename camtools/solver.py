@@ -1,5 +1,4 @@
 import numpy as np
-import torch
 
 from camtools import sanity
 
@@ -115,15 +114,9 @@ def closest_points_of_line_pairs(src_os, src_ds, dst_os, dst_ds):
     sanity.assert_shape_nx3(dst_os, "dst_os")
     sanity.assert_shape_nx3(dst_ds, "dst_ds")
 
-    is_torch = torch.is_tensor(src_ds) and torch.is_tensor(dst_ds)
-    cross = torch.cross if is_torch else np.cross
-    norm = torch.linalg.norm if is_torch else np.linalg.norm
-    solve = torch.linalg.solve if is_torch else np.linalg.solve
-    stack = torch.stack if is_torch else np.stack
-
     # Normalize direction vectors.
-    src_ds = src_ds / norm(src_ds, axis=1, keepdims=True)
-    dst_ds = dst_ds / norm(dst_ds, axis=1, keepdims=True)
+    src_ds = src_ds / np.linalg.norm(src_ds, axis=1, keepdims=True)
+    dst_ds = dst_ds / np.linalg.norm(dst_ds, axis=1, keepdims=True)
 
     # Find the closest points of the two lines.
     # - src_p = src_o + src_t * src_d is the closest point in src line.
@@ -139,12 +132,12 @@ def closest_points_of_line_pairs(src_os, src_ds, dst_os, dst_ds):
     #   │src_d -dst_d mid_d│ │ dst_t │ = │ dst_o │ - │ src_o │
     #   │  │     │     │   │ │ mid_t │   │   │   │   │   │   │
     #   └                  ┘ └       ┘   └       ┘   └       ┘
-    mid_ds = cross(src_ds, dst_ds)
-    mid_ds = mid_ds / norm(mid_ds, axis=1, keepdims=True)
+    mid_ds = np.cross(src_ds, dst_ds)
+    mid_ds = mid_ds / np.linalg.norm(mid_ds, axis=1, keepdims=True)
 
-    lhs = stack((src_ds, -dst_ds, mid_ds), axis=-1)
+    lhs = np.stack((src_ds, -dst_ds, mid_ds), axis=-1)
     rhs = dst_os - src_os
-    results = solve(lhs, rhs)
+    results = np.linalg.solve(lhs, rhs)
     src_ts, dst_ts, mid_ts = results[:, 0], results[:, 1], results[:, 2]
     src_ps = src_os + src_ts.reshape((-1, 1)) * src_ds
     dst_ps = dst_os + dst_ts.reshape((-1, 1)) * dst_ds

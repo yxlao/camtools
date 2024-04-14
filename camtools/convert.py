@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import torch
 
 from . import sanity
 from . import convert
@@ -29,26 +28,15 @@ def pad_0001(array):
             f"Expected array of shape (3, 4) or (N, 3, 4), but got {array.shape}."
         )
 
-    if torch.is_tensor(array):
-        if array.ndim == 2:
-            bottom = torch.tensor([0, 0, 0, 1], dtype=array.dtype, device=array.device)
-            return torch.cat([array, bottom[None, :]], dim=0)
-        elif array.ndim == 3:
-            bottom_single = torch.tensor(
-                [0, 0, 0, 1], dtype=array.dtype, device=array.device
-            )
-            bottom = bottom_single[None, None, :].expand(array.shape[0], 1, 4)
-            return torch.cat([array, bottom], dim=-2)
+    if array.ndim == 2:
+        bottom = np.array([0, 0, 0, 1], dtype=array.dtype)
+        return np.concatenate([array, bottom[None, :]], axis=0)
+    elif array.ndim == 3:
+        bottom_single = np.array([0, 0, 0, 1], dtype=array.dtype)
+        bottom = np.broadcast_to(bottom_single, (array.shape[0], 1, 4))
+        return np.concatenate([array, bottom], axis=-2)
     else:
-        if array.ndim == 2:
-            bottom = np.array([0, 0, 0, 1], dtype=array.dtype)
-            return np.concatenate([array, bottom[None, :]], axis=0)
-        elif array.ndim == 3:
-            bottom_single = np.array([0, 0, 0, 1], dtype=array.dtype)
-            bottom = np.broadcast_to(bottom_single, (array.shape[0], 1, 4))
-            return np.concatenate([array, bottom], axis=-2)
-        else:
-            raise ValueError("Should not reach here.")
+        raise ValueError("Should not reach here.")
 
 
 def rm_pad_0001(array, check_vals=False):
@@ -78,42 +66,21 @@ def rm_pad_0001(array, check_vals=False):
 
     # Check vals.
     if check_vals:
-        if torch.is_tensor(array):
-            if array.ndim == 2:
-                bottom = array[3, :]
-                if not torch.allclose(
-                    bottom, torch.tensor([0, 0, 0, 1], dtype=array.dtype)
-                ):
-                    raise ValueError(
-                        f"Expected bottom row to be [0, 0, 0, 1], but got {bottom}."
-                    )
-            elif array.ndim == 3:
-                bottom = array[:, 3:4, :]
-                expected_bottom = torch.tensor([0, 0, 0, 1], dtype=array.dtype).expand(
-                    array.shape[0], 1, 4
+        if array.ndim == 2:
+            bottom = array[3, :]
+            if not np.allclose(bottom, [0, 0, 0, 1]):
+                raise ValueError(
+                    f"Expected bottom row to be [0, 0, 0, 1], but got {bottom}."
                 )
-                if not torch.allclose(bottom, expected_bottom):
-                    raise ValueError(
-                        f"Expected bottom row to be {expected_bottom}, but got {bottom}."
-                    )
-            else:
-                raise ValueError("Should not reach here.")
+        elif array.ndim == 3:
+            bottom = array[:, 3:4, :]
+            expected_bottom = np.broadcast_to([0, 0, 0, 1], (array.shape[0], 1, 4))
+            if not np.allclose(bottom, expected_bottom):
+                raise ValueError(
+                    f"Expected bottom row to be {expected_bottom}, but got {bottom}."
+                )
         else:
-            if array.ndim == 2:
-                bottom = array[3, :]
-                if not np.allclose(bottom, [0, 0, 0, 1]):
-                    raise ValueError(
-                        f"Expected bottom row to be [0, 0, 0, 1], but got {bottom}."
-                    )
-            elif array.ndim == 3:
-                bottom = array[:, 3:4, :]
-                expected_bottom = np.broadcast_to([0, 0, 0, 1], (array.shape[0], 1, 4))
-                if not np.allclose(bottom, expected_bottom):
-                    raise ValueError(
-                        f"Expected bottom row to be {expected_bottom}, but got {bottom}."
-                    )
-            else:
-                raise ValueError("Should not reach here.")
+            raise ValueError("Should not reach here.")
 
     return array[..., :3, :]
 
@@ -363,10 +330,7 @@ def roll_pitch_yaw_to_R(roll, pitch, yaw):
 
 def R_t_to_T(R, t):
     sanity.assert_same_device(R, t)
-    if torch.is_tensor(R):
-        T = torch.eye(4, device=R.device, dtype=R.dtype)
-    else:
-        T = np.eye(4)
+    T = np.eye(4)
     T[:3, :3] = R
     T[:3, 3] = t
     return T
