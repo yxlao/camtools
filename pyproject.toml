@@ -10,6 +10,7 @@ classifiers = [
   "Programming Language :: Python :: 3",
 ]
 dependencies = [
+  "numpy>=1.15.0",
   "open3d>=0.16.0",
   "opencv-python>=4.5.1.48",
   "matplotlib>=3.3.4",
