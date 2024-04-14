@@ -3,16 +3,17 @@ import numpy as np
 from . import io
 
 
-def query(points, colormap="viridis"):
+def query(points: np.ndarray, colormap: str = "viridis") -> np.ndarray:
     """
-    Query matplotlib's color map.
+    Query matplotlib's color map to obtain corresponding colors for given points.
 
     Args:
-        points: Numpy array in float32 or float64. Valid range is [0, 1].
-        colormap: Name of matplotlib color map.
+        points: Numpy array of type float32 or float64, expected in the range [0, 1].
+        colormap: Name of matplotlib color map to use.
 
     Returns:
-        Numpy array of shape (**points.shape, 3) with dtype float32.
+        Numpy array of shape (**points.shape, 3) with RGB colors, dtype float32.
+        Removes the alpha channel from the colormap output.
     """
     assert isinstance(points, np.ndarray)
 
@@ -29,18 +30,23 @@ def query(points, colormap="viridis"):
     return colors.astype(np.float32)
 
 
-def normalize(array, vmin=0.0, vmax=1.0, clip=False):
+def normalize(
+    array: np.ndarray,
+    vmin: float = 0.0,
+    vmax: float = 1.0,
+    clip: bool = False,
+) -> np.ndarray:
     """
-    Normalize array to [vmin, vmax].
+    Normalize array to a specified range [vmin, vmax].
 
     Args:
-        array: Numpy array.
-        vmin: Minimum value.
-        vmax: Maximum value.
-        clip: If True, clip array to [vmin, vmax].
+        array: Numpy array to be normalized.
+        vmin: Minimum value of the target range.
+        vmax: Maximum value of the target range.
+        clip: If True, values outside [vmin, vmax] are clipped to the range endpoints.
 
     Returns:
-        Normalized array of the same shape as the input array.
+        Normalized array of the same shape as input, scaled to [vmin, vmax].
     """
     if clip:
         array = np.clip(array, vmin, vmax)
