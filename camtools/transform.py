@@ -21,7 +21,6 @@ def transform_points(points, transform_mat):
     """
     sanity.assert_shape_nx3(points, name="points")
     sanity.assert_shape_4x4(transform_mat, name="mat")
-    sanity.assert_same_device(points, transform_mat)
 
     points = convert.to_homo(points)
     points_transformed = points @ transform_mat.T  # (mat @ points.T).T

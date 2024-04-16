@@ -329,7 +329,6 @@ def roll_pitch_yaw_to_R(roll, pitch, yaw):
 
 
 def R_t_to_T(R, t):
-    sanity.assert_same_device(R, t)
     T = np.eye(4)
     T[:3, :3] = R
     T[:3, 3] = t
