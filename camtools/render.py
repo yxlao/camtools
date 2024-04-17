@@ -14,9 +14,10 @@ def render_geometries(
     view_status_str: str = None,
     height: int = 720,
     width: int = 1280,
-    visible: bool = False,
     point_size: float = 1.0,
     line_radius: float = None,
+    to_depth=False,
+    visible: bool = False,
 ) -> None:
     """
     Render Open3D geometries to an image. This function may require a display.
@@ -33,15 +34,17 @@ def render_geometries(
             size and the point size.
         height: int image height.
         width: int image width.
-        visible: bool whether to show the window.
         point_size: float point size for point cloud objects.
         line_radius: float line radius for line set objects, when set, the line
             sets will be converted to cylinder meshes with the given radius.
             The radius is in world metric space, not relative pixel space like
             the point size.
+        to_depth: bool whether to render a depth image instead of RGB image.
+        visible: bool whether to show the window.
 
     Returns:
-        image: (H, W, 3) float32 np.ndarray image.
+        (H, W, 3) float32 np.ndarray RGB image by default; (H, W) float32
+        depth image if to_depth is True.
     """
 
     if not isinstance(geometries, list):
@@ -100,9 +103,12 @@ def render_geometries(
 
     vis.poll_events()
     vis.update_renderer()
-    buffer = vis.capture_screen_float_buffer()
+    if to_depth:
+        buffer = vis.capture_depth_float_buffer()
+    else:
+        buffer = vis.capture_screen_float_buffer()
     vis.destroy_window()
-    im_buffer = np.asarray(buffer)
+    im_buffer = np.asarray(buffer).astype(np.float32)
 
     return im_buffer
 
