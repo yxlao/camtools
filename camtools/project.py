@@ -57,7 +57,7 @@ def depth_to_point_cloud(
     K: np.ndarray,
     T: np.ndarray,
     im_color: np.ndarray = None,
-    return_as_image: bool = False,
+    to_image: bool = False,
     ignore_invalid: bool = True,
     scale_factor: float = 1.0,
 ):
@@ -71,7 +71,7 @@ def depth_to_point_cloud(
         K: Intrinsics matrix (3, 3).
         T: Extrinsics matrix (4, 4).
         im_color: Color image (H, W, 3), float32/float64, range [0, 1].
-        as_image: If True, returns a dense point cloud with the same shape as the
+        to_image: If True, returns a dense point cloud with the same shape as the
             input depth image (H, W, 3), while ignore_invalid is ignored as the
             invalid depths are not removed. If False, returns a sparse point cloud
             of shape (N, 3) while respecting ignore_invalid flag.
@@ -81,13 +81,13 @@ def depth_to_point_cloud(
             is reduced to half.
 
     Returns:
-        - im_color == None, as_image == False:
+        - im_color == None, to_image == False:
             - return: points (N, 3)
-        - im_color == None, as_image == True:
+        - im_color == None, to_image == True:
             - return: im_points (H, W, 3)
-        - im_color != None, as_image == False:
+        - im_color != None, to_image == False:
             - return: (points (N, 3), colors (N, 3))
-        - im_color != None, as_image == True:
+        - im_color != None, to_image == True:
             - return: (im_points (H, W, 3), im_colors (H, W, 3))
     """
     # Sanity checks
@@ -111,8 +111,8 @@ def depth_to_point_cloud(
             raise TypeError("im_color must be of type float32 or float64")
         if im_color.max() > 1.0 or im_color.min() < 0.0:
             raise ValueError("im_color values must be in the range [0, 1]")
-    if return_as_image and ignore_invalid:
-        print("Warning: ignore_invalid is ignored when return_as_image is True.")
+    if to_image and ignore_invalid:
+        print("Warning: ignore_invalid is ignored when to_image is True.")
         ignore_invalid = False
 
     # Make copies as K may be modified inplace
@@ -174,10 +174,10 @@ def depth_to_point_cloud(
     # (N, 3)
     points_world = convert.from_homo(points_world)
 
-    if return_as_image:
+    if to_image:
         assert (
             ignore_invalid == False
-        ), "ignore_invalid is ignored when return_as_image is True."
+        ), "ignore_invalid is ignored when to_image is True."
         points_world = points_world.reshape((height, width, 3))
         if im_color is None:
             return points_world
