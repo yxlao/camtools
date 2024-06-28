@@ -23,6 +23,34 @@ def test_R_t_to_C():
     )
 
 
+def R_t_to_C(R, t):
+    """
+    Convert R, t to camera center
+    """
+    t = t.reshape(-1, 3, 1)
+    R = R.reshape(-1, 3, 3)
+    C = -R.transpose(0, 2, 1) @ t
+    return C.squeeze()
+
+
+def test_R_t_to_C_v2():
+    T = np.array(
+        [
+            [0.132521, 0.00567408, 0.991163, 0.0228366],
+            [-0.709094, -0.698155, 0.0988047, 0.535268],
+            [0.692546, -0.715923, -0.0884969, 16.0856],
+            [0, 0, 0, 1],
+        ]
+    )
+    R = T[:3, :3]
+    t = T[:3, 3]
+    expected_camera_center = [-10.7635, 11.8896, 1.348]
+    camera_center = R_t_to_C(R, t)
+    np.testing.assert_allclose(
+        expected_camera_center, camera_center, rtol=1e-5, atol=1e-5
+    )
+
+
 def test_P_to_K_R_t():
     def P_to_K_R_t_manual(P):
         """
