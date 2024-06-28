@@ -5,7 +5,7 @@ import pytest
 np.set_printoptions(formatter={"float": "{: 0.2f}".format})
 
 
-def test_R_t_to_cameracenter():
+def test_R_t_to_C():
     T = np.array(
         [
             [0.132521, 0.00567408, 0.991163, 0.0228366],
