@@ -20,7 +20,7 @@ def get_backend() -> str:
     return _default_backend
 
 
-def with_backend(func):
+def with_native_backend(func):
     """
     Decorator to run a function with: 1) default camtools backend, 2) with
     native backend array (setting array mode to False).

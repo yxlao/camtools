@@ -9,7 +9,7 @@ import einops
 import camtools as ct
 
 
-@ct.backend.with_backend
+@ct.backend.with_native_backend
 def creation():
     zeros = ivy.zeros([2, 3])
     return zeros
