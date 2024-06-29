@@ -1,6 +1,7 @@
 from typing import Literal
 from functools import wraps
 import ivy
+import warnings
 
 _default_backend = "numpy"
 
@@ -32,8 +33,16 @@ def with_native_backend(func):
         ct_backend = get_backend()
         ivy.set_backend(ct_backend)
         try:
-            with ivy.ArrayMode(False):
-                result = func(*args, **kwargs)
+            with warnings.catch_warnings():
+                """
+                Possible warning:
+                UserWarning: In the case of Compositional function, operators
+                might cause inconsistent behavior when array_mode is set to
+                False.
+                """
+                warnings.simplefilter("ignore", category=UserWarning)
+                with ivy.ArrayMode(False):
+                    result = func(*args, **kwargs)
         finally:
             ivy.set_backend(og_backend)
         return result
