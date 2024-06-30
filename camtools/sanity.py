@@ -7,22 +7,25 @@ from functools import wraps
 from jaxtyping import _array_types
 from typing import Tuple, Union
 
+from typing import Union, Tuple, get_args
+
+
+def get_shape(
+    dims: Tuple[Union[_array_types._FixedDim, _array_types._NamedDim], ...]
+) -> Tuple[Union[int, None], ...]:
+    shape = []
+    for dim in dims:
+        if isinstance(dim, _array_types._FixedDim):
+            shape.append(dim.size)
+        elif isinstance(dim, _array_types._NamedDim):
+            shape.append(None)
+    return tuple(shape)
+
 
 def check_shape_and_dtype(func):
     """
     A decorator to enforce type and shape specifications as per type hints.
     """
-
-    def get_shape(
-        dims: Tuple[Union[_array_types._FixedDim, _array_types._NamedDim], ...]
-    ) -> Tuple[Union[int, None], ...]:
-        shape = []
-        for dim in dims:
-            if isinstance(dim, _array_types._FixedDim):
-                shape.append(dim.size)
-            elif isinstance(dim, _array_types._NamedDim):
-                shape.append(None)
-        return tuple(shape)
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -49,6 +52,64 @@ def check_shape_and_dtype(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+# def get_shape(
+#     dims: Tuple[Union[_array_types._FixedDim, _array_types._NamedDim], ...]
+# ) -> Tuple[Union[int, None], ...]:
+#     shape = []
+#     for dim in dims:
+#         if isinstance(dim, _array_types._FixedDim):
+#             shape.append(dim.size)
+#         elif isinstance(dim, _array_types._NamedDim):
+#             shape.append(None)
+#     return tuple(shape)
+
+
+# def check_shape_and_dtype(func):
+#     @wraps(func)
+#     def wrapper(*args, **kwargs):
+#         hints = typing.get_type_hints(func)
+#         for arg_name, arg in zip(
+#             func.__code__.co_varnames[: func.__code__.co_argcount], args
+#         ):
+#             if arg_name in hints:
+#                 hint = hints[arg_name]
+#                 if getattr(hint, "__origin__", None) is Union:
+#                     possible_types = get_args(hint)
+#                 else:
+#                     possible_types = (hint,)
+
+#                 valid = False
+#                 for possible_type in possible_types:
+
+#                     # We assume that jaxtyping types wrap around actual types
+#                     if hasattr(possible_type, "__args__") and possible_type.__args__:
+#                         actual_type = (
+#                             possible_type.__args__[0]
+#                             if possible_type.__args__[0] in {np.ndarray, torch.Tensor}
+#                             else None
+#                         )
+#                         if actual_type and isinstance(arg, actual_type):
+#                             gt_shape = (
+#                                 get_shape(possible_type.__args__[1].dims)
+#                                 if len(possible_type.__args__) > 1
+#                                 else None
+#                             )
+#                             if gt_shape is None or all(
+#                                 arg_dim == gt_dim or gt_dim is None
+#                                 for arg_dim, gt_dim in zip(arg.shape, gt_shape)
+#                             ):
+#                                 valid = True
+#                                 break
+
+#                 if not valid:
+#                     raise TypeError(
+#                         f"{arg_name} must match one of the specified types and shapes."
+#                     )
+#         return func(*args, **kwargs)
+
+#     return wrapper
 
 
 def assert_numpy(x, name=None):

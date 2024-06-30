@@ -15,6 +15,8 @@ from numpy.typing import NDArray
 from functools import wraps
 from jaxtyping import Float, _array_types
 
+from typing import Union
+
 
 def test_creation():
     """
@@ -111,6 +113,9 @@ def check_shape_and_dtype(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+# Tensor = Union[np.ndarray, torch.Tensor]
 
 
 def test_type_hint_arguments():
