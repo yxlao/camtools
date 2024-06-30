@@ -12,6 +12,7 @@ import typing
 import pytest
 from numpy.typing import NDArray
 
+from functools import wraps
 from jaxtyping import Float, _array_types
 
 
@@ -75,52 +76,60 @@ def get_shape_from_hint(type_hint):
     return None
 
 
+def check_shape_and_dtype(func):
+    """
+    A decorator to enforce type and shape specifications as per type hints.
+    """
+
+    def get_shape(dims):
+        shape = []
+        for dim in dims:
+            if isinstance(dim, _array_types._FixedDim):
+                shape.append(dim.size)
+            elif isinstance(dim, _array_types._NamedDim):
+                shape.append(None)
+        return tuple(shape)
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        hints = typing.get_type_hints(func)
+        arg_names = func.__code__.co_varnames[: func.__code__.co_argcount]
+
+        for arg_name, arg_value in zip(arg_names, args):
+            if arg_name in hints:
+                hint = hints[arg_name]
+                expected_shape = get_shape(hint.dims)
+
+                if not (isinstance(arg_value, (np.ndarray, torch.Tensor))):
+                    raise TypeError(f"{arg_name} must be a tensor")
+
+                if not all(
+                    actual_dim == expected_dim or expected_dim is None
+                    for actual_dim, expected_dim in zip(arg_value.shape, expected_shape)
+                ):
+                    raise TypeError(
+                        f"{arg_name} must be a tensor of shape {expected_shape}"
+                    )
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
 def test_type_hint_arguments():
     """
     Test type hinting arguments.
     """
 
     @ct.backend.with_native_backend
+    @check_shape_and_dtype
     def add(
         x: Float[np.ndarray, "2 3"],
         y: Float[np.ndarray, "1 3"],
     ) -> Float[np.ndarray, "2 3"]:
-        hints = typing.get_type_hints(add)
-        x_hint = hints["x"]
-        y_hint = hints["y"]
-
-        def get_shape(dims):
-            shape = []
-            for dim in dims:
-                if isinstance(dim, _array_types._FixedDim):
-                    shape.append(dim.size)
-                elif isinstance(dim, _array_types._NamedDim):
-                    shape.append(None)
-            return tuple(shape)
-
-        # Obtain shapes from the type hints' dims attribute
-        x_shape = get_shape(x_hint.dims)
-        y_shape = get_shape(y_hint.dims)
-
-        # Verify the input types and shapes
-        if not (isinstance(x, (np.ndarray, torch.Tensor))):
-            raise TypeError(f"x must be a tensor")
-        if not all(
-            x_dim == shape_dim or shape_dim is None
-            for x_dim, shape_dim in zip(x.shape, x_shape)
-        ):
-            raise TypeError(f"x must be a tensor of shape {x_shape}")
-        if not (isinstance(y, (np.ndarray, torch.Tensor))):
-            raise TypeError(f"y must be a tensor")
-        if not all(
-            y_dim == shape_dim or shape_dim is None
-            for y_dim, shape_dim in zip(y.shape, y_shape)
-        ):
-            raise TypeError(f"y must be a tensor of shape {y_shape}")
-
         return x + y
 
-    # Test with correct types and shapes using np.array directly marked as float32
+    # Default backend is numpy
     x = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
     y = np.array([[1, 1, 1]], dtype=np.float32)
     result = add(x, y)
