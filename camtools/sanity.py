@@ -10,7 +10,7 @@ from typing import Tuple, Union
 from typing import Union, Tuple, get_args
 
 
-def dtype_to_str(dtype):
+def _dtype_to_str(dtype):
     """
     Convert numpy or torch dtype to string
 
@@ -41,7 +41,7 @@ def dtype_to_str(dtype):
         raise ValueError(f"Unknown dtype {dtype}.")
 
 
-def get_shape(
+def _shape_from_dims_str(
     dims: Tuple[Union[_array_types._FixedDim, _array_types._NamedDim], ...]
 ) -> Tuple[Union[int, None], ...]:
     shape = []
@@ -53,7 +53,7 @@ def get_shape(
     return tuple(shape)
 
 
-def assert_tensor_hint(hint, arg, arg_name):
+def _assert_tensor_hint(hint, arg, arg_name):
 
     if getattr(hint, "__origin__", None) is Union:
         unpacked_hints = get_args(hint)
@@ -71,12 +71,12 @@ def assert_tensor_hint(hint, arg, arg_name):
         )
 
     # Check shapes.
-    gt_shape = get_shape(unpacked_hints[0].dims)
+    gt_shape = _shape_from_dims_str(unpacked_hints[0].dims)
     for unpacked_hint in unpacked_hints:
-        if get_shape(unpacked_hint.dims) != gt_shape:
+        if _shape_from_dims_str(unpacked_hint.dims) != gt_shape:
             raise TypeError(
                 f"Internal error: all shapes in the Union must be the same, "
-                f"but got {gt_shape} and {get_shape(unpacked_hint.dims)}."
+                f"but got {gt_shape} and {_shape_from_dims_str(unpacked_hint.dims)}."
             )
     if not all(
         arg_dim == gt_dim or gt_dim is None
@@ -95,10 +95,10 @@ def assert_tensor_hint(hint, arg, arg_name):
                 f"Internal error: all dtypes in the Union must be the same, "
                 f"but got {gt_dtypes} and {unpacked_hint.dtypes}."
             )
-    if dtype_to_str(arg.dtype) not in gt_dtypes:
+    if _dtype_to_str(arg.dtype) not in gt_dtypes:
         raise TypeError(
             f"{arg_name} must be a tensor of dtype {gt_dtypes}, "
-            f"but got dtype {dtype_to_str(arg.dtype)}."
+            f"but got dtype {_dtype_to_str(arg.dtype)}."
         )
 
 
@@ -115,7 +115,7 @@ def check_shape_and_dtype(func):
         for arg_name, arg in zip(arg_names, args):
             if arg_name in hints:
                 hint = hints[arg_name]
-                assert_tensor_hint(hint, arg, arg_name)
+                _assert_tensor_hint(hint, arg, arg_name)
 
         return func(*args, **kwargs)
 
