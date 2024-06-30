@@ -116,9 +116,12 @@ def check_shape_and_dtype(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         hints = typing.get_type_hints(func)
-        arg_names = func.__code__.co_varnames[: func.__code__.co_argcount]
+        all_args = {
+            **dict(zip(func.__code__.co_varnames[: func.__code__.co_argcount], args)),
+            **kwargs,
+        }
 
-        for arg_name, arg in zip(arg_names, args):
+        for arg_name, arg in all_args.items():
             if arg_name in hints:
                 hint = hints[arg_name]
                 _assert_tensor_hint(hint, arg, arg_name)
