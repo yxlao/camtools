@@ -8,6 +8,7 @@ from jaxtyping import _array_types
 from typing import Tuple, Union
 
 from typing import Union, Tuple, get_args
+import jaxtyping
 
 
 def _dtype_to_str(dtype):
@@ -54,11 +55,16 @@ def _shape_from_dims_str(
 
 
 def _assert_tensor_hint(hint, arg, arg_name):
-
+    # Unpack Union types.
     if getattr(hint, "__origin__", None) is Union:
         unpacked_hints = get_args(hint)
     else:
         unpacked_hints = (hint,)
+
+    # If there exists one non jaxtyping hint, skip the check.
+    for unpacked_hint in unpacked_hints:
+        if not issubclass(unpacked_hint, jaxtyping.AbstractArray):
+            return
 
     # Check array types (e.g. np.ndarray, torch.Tensor, ...)
     valid_array_types = tuple(
