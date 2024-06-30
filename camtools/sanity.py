@@ -29,20 +29,28 @@ def assert_tensor_hint(hint, arg, arg_name):
     else:
         unpacked_hints = (hint,)
 
-    valid = False
+    # Check array types (e.g. np.ndarray, torch.Tensor, ...)
+    valid_array_types = tuple(
+        unpacked_hint.array_type for unpacked_hint in unpacked_hints
+    )
+    if not isinstance(arg, valid_array_types):
+        raise TypeError(
+            f"{arg_name} must be a tensor of type {valid_array_types}, "
+            f"but got type {type(arg)}."
+        )
 
+    # Check shapes.
+    gt_shape = get_shape(unpacked_hints[0].dims)
     for unpacked_hint in unpacked_hints:
-        if not (isinstance(arg, (np.ndarray, torch.Tensor))):
-            raise TypeError(f"{arg_name} must be a tensor")
-        gt_shape = get_shape(unpacked_hint.dims)
-        if all(
-            arg_dim == gt_dim or gt_dim is None
-            for arg_dim, gt_dim in zip(arg.shape, gt_shape)
-        ):
-            valid = True
-            break
-
-    if not valid:
+        if get_shape(unpacked_hint.dims) != gt_shape:
+            raise TypeError(
+                f"Internal error: all shapes in the Union must be the same, "
+                f"but got {gt_shape} and {get_shape(unpacked_hint.dims)}."
+            )
+    if not all(
+        arg_dim == gt_dim or gt_dim is None
+        for arg_dim, gt_dim in zip(arg.shape, gt_shape)
+    ):
         raise TypeError(
             f"{arg_name} must be a tensor of shape {gt_shape}, "
             f"but got shape {arg.shape}."
