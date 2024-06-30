@@ -22,6 +22,22 @@ def get_shape(
     return tuple(shape)
 
 
+def assert_tensor_hint(hint, arg, arg_name):
+    gt_shape = get_shape(hint.dims)
+
+    if not (isinstance(arg, (np.ndarray, torch.Tensor))):
+        raise TypeError(f"{arg_name} must be a tensor")
+
+    if not all(
+        arg_dim == gt_dim or gt_dim is None
+        for arg_dim, gt_dim in zip(arg.shape, gt_shape)
+    ):
+        raise TypeError(
+            f"{arg_name} must be a tensor of shape {gt_shape}, "
+            f"but got shape {arg.shape}."
+        )
+
+
 def check_shape_and_dtype(func):
     """
     A decorator to enforce type and shape specifications as per type hints.
@@ -35,19 +51,7 @@ def check_shape_and_dtype(func):
         for arg_name, arg in zip(arg_names, args):
             if arg_name in hints:
                 hint = hints[arg_name]
-                gt_shape = get_shape(hint.dims)
-
-                if not (isinstance(arg, (np.ndarray, torch.Tensor))):
-                    raise TypeError(f"{arg_name} must be a tensor")
-
-                if not all(
-                    arg_dim == gt_dim or gt_dim is None
-                    for arg_dim, gt_dim in zip(arg.shape, gt_shape)
-                ):
-                    raise TypeError(
-                        f"{arg_name} must be a tensor of shape {gt_shape}, "
-                        f"but got shape {arg.shape}."
-                    )
+                assert_tensor_hint(hint, arg, arg_name)
 
         return func(*args, **kwargs)
 
