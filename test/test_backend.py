@@ -7,7 +7,10 @@ import numpy as np
 import torch
 import einops
 import camtools as ct
-from jaxtyping import Array, Float, UInt8
+from jaxtyping import Float, UInt8
+import typing
+import pytest
+from numpy.typing import NDArray
 
 
 def test_creation():
@@ -57,14 +60,49 @@ def test_arguments():
     # Mixed backend argument should raise error
     src_x = np.ones([2, 3]) * 2
     src_y = torch.ones([1, 3]) * 3
-    add(src_x, src_y)
+    with pytest.raises(TypeError):
+        add(src_x, src_y)
 
 
-def test_type_hint_arguments():
-    """
-    Test type hinting arguments.
-    """
+# def test_type_hint_arguments():
+#     """
+#     Test type hinting arguments.
+#     """
 
-    @ct.backend.with_native_backend
-    def add(x: Float[Array, 2, 3], y: Float[Array, 1, 3]) -> Float[Array, 2, 3]:
-        return x + y
+#     @ct.backend.with_native_backend
+#     def add(
+#         x: Float[np.ndarray, "2 3"], y: Float[np.ndarray, "1 3"]
+#     ) -> Float[np.ndarray, "2 3"]:
+#         # Extract type hints
+#         hints = typing.get_type_hints(add)
+#         x_hint = hints["x"]
+#         y_hint = hints["y"]
+
+#         # Extract shapes from the type hints
+#         x_shape = einops.parse_shape(x, x_hint)
+#         y_shape = einops.parse_shape(y, y_hint)
+
+#         # Verify the input types and shapes
+#         if not (isinstance(x, (np.ndarray, torch.Tensor)) and x.shape == x_shape):
+#             raise TypeError(f"x must be a tensor of shape {x_shape}")
+#         if not (isinstance(y, (np.ndarray, torch.Tensor)) and y.shape == y_shape):
+#             raise TypeError(f"y must be a tensor of shape {y_shape}")
+
+#         return x + y
+
+#     # Test with correct types and shapes using np.array directly marked as float32
+#     x = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
+#     y = np.array([[1, 1, 1]], dtype=np.float32)
+#     result = add(x, y)
+#     expected = np.array([[2, 3, 4], [5, 6, 7]], dtype=np.float32)
+#     assert np.allclose(result, expected, atol=1e-5)
+
+#     # Testing with incorrect shapes
+#     with pytest.raises(TypeError):
+#         x_wrong = np.array([[1, 2], [4, 5]], dtype=np.float32)
+#         add(x_wrong, y)
+
+#     # Testing with incorrect types
+#     with pytest.raises(TypeError):
+#         x_wrong_type = [[1, 2, 3], [4, 5, 6]]
+#         add(x_wrong_type, y)

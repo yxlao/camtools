@@ -17,7 +17,6 @@ from . import solver
 from . import transform
 from . import util
 
-
 try:
     # Python >= 3.8
     from importlib.metadata import version
