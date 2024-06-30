@@ -3,7 +3,8 @@ from functools import wraps
 from typing import Literal
 
 # Internally use "from camtools.backend import ivy" to make sure ivy is imported
-# after the warnings filter is set.
+# after the warnings filter is set. This is a temporary workaround to suppress
+# the deprecation warning from numpy 2.0.
 warnings.filterwarnings(
     "ignore",
     category=DeprecationWarning,
