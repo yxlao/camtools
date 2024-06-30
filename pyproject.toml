@@ -16,6 +16,9 @@ dependencies = [
   "matplotlib>=3.3.4",
   "scikit-image>=0.16.2",
   "tqdm>=4.60.0",
+  "ivy",
+  "jaxtyping",
+  "einops",
 ]
 description = "CamTools: Camera Tools for Computer Vision."
 license = {text = "MIT"}
