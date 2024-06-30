@@ -12,6 +12,8 @@ import typing
 import pytest
 from numpy.typing import NDArray
 
+from jaxtyping import Float, _array_types
+
 
 def test_creation():
     """
@@ -64,45 +66,75 @@ def test_arguments():
         add(src_x, src_y)
 
 
-# def test_type_hint_arguments():
-#     """
-#     Test type hinting arguments.
-#     """
+def get_shape_from_hint(type_hint):
+    # This function assumes type hints are provided as 'Float[Array, "2 3"]'
+    # and extracts the shape part as a tuple of integers.
+    if hasattr(type_hint, "__args__") and type_hint.__args__:
+        shape_str = type_hint.__args__[1]  # Access the shape string
+        return tuple(map(int, shape_str.split()))
+    return None
 
-#     @ct.backend.with_native_backend
-#     def add(
-#         x: Float[np.ndarray, "2 3"], y: Float[np.ndarray, "1 3"]
-#     ) -> Float[np.ndarray, "2 3"]:
-#         # Extract type hints
-#         hints = typing.get_type_hints(add)
-#         x_hint = hints["x"]
-#         y_hint = hints["y"]
 
-#         # Extract shapes from the type hints
-#         x_shape = einops.parse_shape(x, x_hint)
-#         y_shape = einops.parse_shape(y, y_hint)
+def test_type_hint_arguments():
+    """
+    Test type hinting arguments.
+    """
 
-#         # Verify the input types and shapes
-#         if not (isinstance(x, (np.ndarray, torch.Tensor)) and x.shape == x_shape):
-#             raise TypeError(f"x must be a tensor of shape {x_shape}")
-#         if not (isinstance(y, (np.ndarray, torch.Tensor)) and y.shape == y_shape):
-#             raise TypeError(f"y must be a tensor of shape {y_shape}")
+    def add(
+        x: Float[np.ndarray, "2 3"], y: Float[np.ndarray, "1 3"]
+    ) -> Float[np.ndarray, "2 3"]:
+        # Extract type hints
+        hints = typing.get_type_hints(add)
+        x_hint = hints["x"]
+        y_hint = hints["y"]
 
-#         return x + y
+        # Function to convert dims into shape tuples, handling named and fixed dimensions
+        def get_shape(dims):
+            shape = []
+            for dim in dims:
+                if isinstance(dim, _array_types._FixedDim):
+                    shape.append(dim.size)
+                elif isinstance(dim, _array_types._NamedDim):
+                    shape.append(
+                        None
+                    )  # Use None or another placeholder for variable dimensions
+            return tuple(shape)
 
-#     # Test with correct types and shapes using np.array directly marked as float32
-#     x = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
-#     y = np.array([[1, 1, 1]], dtype=np.float32)
-#     result = add(x, y)
-#     expected = np.array([[2, 3, 4], [5, 6, 7]], dtype=np.float32)
-#     assert np.allclose(result, expected, atol=1e-5)
+        # Obtain shapes from the type hints' dims attribute
+        x_shape = get_shape(x_hint.dims)
+        y_shape = get_shape(y_hint.dims)
 
-#     # Testing with incorrect shapes
-#     with pytest.raises(TypeError):
-#         x_wrong = np.array([[1, 2], [4, 5]], dtype=np.float32)
-#         add(x_wrong, y)
+        # Verify the input types and shapes
+        if not (isinstance(x, (np.ndarray, torch.Tensor))):
+            raise TypeError(f"x must be a tensor")
+        if not all(
+            x_dim == shape_dim or shape_dim is None
+            for x_dim, shape_dim in zip(x.shape, x_shape)
+        ):
+            raise TypeError(f"x must be a tensor of shape {x_shape}")
+        if not (isinstance(y, (np.ndarray, torch.Tensor))):
+            raise TypeError(f"y must be a tensor")
+        if not all(
+            y_dim == shape_dim or shape_dim is None
+            for y_dim, shape_dim in zip(y.shape, y_shape)
+        ):
+            raise TypeError(f"y must be a tensor of shape {y_shape}")
 
-#     # Testing with incorrect types
-#     with pytest.raises(TypeError):
-#         x_wrong_type = [[1, 2, 3], [4, 5, 6]]
-#         add(x_wrong_type, y)
+        return x + y
+
+    # Test with correct types and shapes using np.array directly marked as float32
+    x = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
+    y = np.array([[1, 1, 1]], dtype=np.float32)
+    result = add(x, y)
+    expected = np.array([[2, 3, 4], [5, 6, 7]], dtype=np.float32)
+    assert np.allclose(result, expected, atol=1e-5)
+
+    # Testing with incorrect shapes
+    with pytest.raises(TypeError):
+        x_wrong = np.array([[1, 2], [4, 5]], dtype=np.float32)
+        add(x_wrong, y)
+
+    # Testing with incorrect types
+    with pytest.raises(TypeError):
+        x_wrong_type = [[1, 2, 3], [4, 5, 6]]  # not a NumPy array
+        add(x_wrong_type, y)
