@@ -32,11 +32,9 @@ def get_backend() -> str:
 
 def with_native_backend(func):
     """
-    Decorator to run a function with:
-    1) default camtools backend
-    2) with native backend array (setting array mode to False).
-
-    Also, this converts lists to tensors.
+    1. Enable default camtools backend
+    2. Returning native backend array (setting array mode to False).
+    3. Converts lists to tensors if the type hint is a tensor.
     """
 
     @wraps(func)
