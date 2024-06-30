@@ -80,24 +80,22 @@ def test_type_hint_arguments():
     Test type hinting arguments.
     """
 
+    @ct.backend.with_native_backend
     def add(
-        x: Float[np.ndarray, "2 3"], y: Float[np.ndarray, "1 3"]
+        x: Float[np.ndarray, "2 3"],
+        y: Float[np.ndarray, "1 3"],
     ) -> Float[np.ndarray, "2 3"]:
-        # Extract type hints
         hints = typing.get_type_hints(add)
         x_hint = hints["x"]
         y_hint = hints["y"]
 
-        # Function to convert dims into shape tuples, handling named and fixed dimensions
         def get_shape(dims):
             shape = []
             for dim in dims:
                 if isinstance(dim, _array_types._FixedDim):
                     shape.append(dim.size)
                 elif isinstance(dim, _array_types._NamedDim):
-                    shape.append(
-                        None
-                    )  # Use None or another placeholder for variable dimensions
+                    shape.append(None)
             return tuple(shape)
 
         # Obtain shapes from the type hints' dims attribute
