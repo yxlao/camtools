@@ -10,6 +10,37 @@ from typing import Tuple, Union
 from typing import Union, Tuple, get_args
 
 
+def dtype_to_str(dtype):
+    """
+    Convert numpy or torch dtype to string
+
+    - "bool"
+    - "bool_"
+    - "uint4"
+    - "uint8"
+    - "uint16"
+    - "uint32"
+    - "uint64"
+    - "int4"
+    - "int8"
+    - "int16"
+    - "int32"
+    - "int64"
+    - "bfloat16"
+    - "float16"
+    - "float32"
+    - "float64"
+    - "complex64"
+    - "complex128"
+    """
+    if isinstance(dtype, np.dtype):
+        return dtype.name
+    elif isinstance(dtype, torch.dtype):
+        return str(dtype).split(".")[1]
+    else:
+        raise ValueError(f"Unknown dtype {dtype}.")
+
+
 def get_shape(
     dims: Tuple[Union[_array_types._FixedDim, _array_types._NamedDim], ...]
 ) -> Tuple[Union[int, None], ...]:
@@ -55,6 +86,15 @@ def assert_tensor_hint(hint, arg, arg_name):
             f"{arg_name} must be a tensor of shape {gt_shape}, "
             f"but got shape {arg.shape}."
         )
+
+    # Check dtype.
+    gt_dtypes = unpacked_hints[0].dtypes
+    for unpacked_hint in unpacked_hints:
+        if unpacked_hint.dtypes != gt_dtypes:
+            raise TypeError(
+                f"Internal error: all dtypes in the Union must be the same, "
+                f"but got {gt_dtypes} and {unpacked_hint.dtypes}."
+            )
 
 
 def check_shape_and_dtype(func):
