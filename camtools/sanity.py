@@ -1,4 +1,56 @@
 import numpy as np
+import numpy as np
+import torch
+import typing
+
+from functools import wraps
+from jaxtyping import _array_types
+
+
+def check_shape_and_dtype(func):
+    """
+    A decorator to enforce type and shape specifications as per type hints.
+    """
+
+    def get_shape(dims):
+        shape = []
+        for dim in dims:
+            if isinstance(dim, _array_types._FixedDim):
+                shape.append(dim.size)
+            elif isinstance(dim, _array_types._NamedDim):
+                shape.append(None)
+        return tuple(shape)
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        hints = typing.get_type_hints(func)
+        arg_names = func.__code__.co_varnames[: func.__code__.co_argcount]
+
+        for arg_name, arg_value in zip(arg_names, args):
+            if arg_name in hints:
+                hint = hints[arg_name]
+                expected_shape = get_shape(hint.dims)
+
+                if not (isinstance(arg_value, (np.ndarray, torch.Tensor))):
+                    raise TypeError(f"{arg_name} must be a tensor")
+
+                if not all(
+                    actual_dim == expected_dim or expected_dim is None
+                    for (
+                        actual_dim,
+                        expected_dim,
+                    ) in zip(
+                        arg_value.shape,
+                        expected_shape,
+                    )
+                ):
+                    raise TypeError(
+                        f"{arg_name} must be a tensor of shape {expected_shape}"
+                    )
+
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 def assert_numpy(x, name=None):

@@ -67,15 +67,6 @@ def test_arguments():
         add(src_x, src_y)
 
 
-def get_shape_from_hint(type_hint):
-    # This function assumes type hints are provided as 'Float[Array, "2 3"]'
-    # and extracts the shape part as a tuple of integers.
-    if hasattr(type_hint, "__args__") and type_hint.__args__:
-        shape_str = type_hint.__args__[1]  # Access the shape string
-        return tuple(map(int, shape_str.split()))
-    return None
-
-
 def check_shape_and_dtype(func):
     """
     A decorator to enforce type and shape specifications as per type hints.
@@ -105,7 +96,13 @@ def check_shape_and_dtype(func):
 
                 if not all(
                     actual_dim == expected_dim or expected_dim is None
-                    for actual_dim, expected_dim in zip(arg_value.shape, expected_shape)
+                    for (
+                        actual_dim,
+                        expected_dim,
+                    ) in zip(
+                        arg_value.shape,
+                        expected_shape,
+                    )
                 ):
                     raise TypeError(
                         f"{arg_name} must be a tensor of shape {expected_shape}"
@@ -122,7 +119,7 @@ def test_type_hint_arguments():
     """
 
     @ct.backend.with_native_backend
-    @check_shape_and_dtype
+    @ct.sanity.check_shape_and_dtype
     def add(
         x: Float[np.ndarray, "2 3"],
         y: Float[np.ndarray, "1 3"],
