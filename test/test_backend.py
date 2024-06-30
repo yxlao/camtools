@@ -115,7 +115,7 @@ def check_shape_and_dtype(func):
     return wrapper
 
 
-# Tensor = Union[np.ndarray, torch.Tensor]
+Tensor = Union[np.ndarray, torch.Tensor]
 
 
 def test_type_hint_arguments():
@@ -126,9 +126,9 @@ def test_type_hint_arguments():
     @ct.backend.with_native_backend
     @ct.sanity.check_shape_and_dtype
     def add(
-        x: Float[np.ndarray, "2 3"],
-        y: Float[np.ndarray, "1 3"],
-    ) -> Float[np.ndarray, "2 3"]:
+        x: Float[Tensor, "2 3"],
+        y: Float[Tensor, "1 3"],
+    ) -> Float[Tensor, "2 3"]:
         return x + y
 
     # Default backend is numpy
