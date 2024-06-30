@@ -2,20 +2,25 @@
 Test basic usage of ivy and its interaction with numpy and torch.
 """
 
+import warnings
+
+warnings.filterwarnings(
+    "ignore",
+    category=DeprecationWarning,
+    message=".*numpy.core.numeric is deprecated.*",
+)
+
+import typing
+from functools import wraps
+from typing import Union
+
 import ivy
 import numpy as np
-import torch
-import einops
-import camtools as ct
-from jaxtyping import Float, UInt8
-import typing
 import pytest
-from numpy.typing import NDArray
+import torch
+from jaxtyping import Float, UInt8, _array_types
 
-from functools import wraps
-from jaxtyping import Float, _array_types
-
-from typing import Union
+import camtools as ct
 
 
 def test_creation():
