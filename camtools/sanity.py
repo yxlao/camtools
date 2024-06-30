@@ -88,13 +88,18 @@ def assert_tensor_hint(hint, arg, arg_name):
         )
 
     # Check dtype.
-    gt_dtypes = unpacked_hints[0].dtypes
+    gt_dtypes = unpacked_hints[0].dtypes  # A tuple of dtype names (str)
     for unpacked_hint in unpacked_hints:
         if unpacked_hint.dtypes != gt_dtypes:
             raise TypeError(
                 f"Internal error: all dtypes in the Union must be the same, "
                 f"but got {gt_dtypes} and {unpacked_hint.dtypes}."
             )
+    if dtype_to_str(arg.dtype) not in gt_dtypes:
+        raise TypeError(
+            f"{arg_name} must be a tensor of dtype {gt_dtypes}, "
+            f"but got dtype {dtype_to_str(arg.dtype)}."
+        )
 
 
 def check_shape_and_dtype(func):
