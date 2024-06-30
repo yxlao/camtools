@@ -5,6 +5,7 @@ import typing
 
 from functools import wraps
 from jaxtyping import _array_types
+from typing import Tuple, Union
 
 
 def check_shape_and_dtype(func):
@@ -12,7 +13,9 @@ def check_shape_and_dtype(func):
     A decorator to enforce type and shape specifications as per type hints.
     """
 
-    def get_shape(dims):
+    def get_shape(
+        dims: Tuple[Union[_array_types._FixedDim, _array_types._NamedDim], ...]
+    ) -> Tuple[Union[int, None], ...]:
         shape = []
         for dim in dims:
             if isinstance(dim, _array_types._FixedDim):
@@ -26,26 +29,21 @@ def check_shape_and_dtype(func):
         hints = typing.get_type_hints(func)
         arg_names = func.__code__.co_varnames[: func.__code__.co_argcount]
 
-        for arg_name, arg_value in zip(arg_names, args):
+        for arg_name, arg in zip(arg_names, args):
             if arg_name in hints:
                 hint = hints[arg_name]
-                expected_shape = get_shape(hint.dims)
+                gt_shape = get_shape(hint.dims)
 
-                if not (isinstance(arg_value, (np.ndarray, torch.Tensor))):
+                if not (isinstance(arg, (np.ndarray, torch.Tensor))):
                     raise TypeError(f"{arg_name} must be a tensor")
 
                 if not all(
-                    actual_dim == expected_dim or expected_dim is None
-                    for (
-                        actual_dim,
-                        expected_dim,
-                    ) in zip(
-                        arg_value.shape,
-                        expected_shape,
-                    )
+                    arg_dim == gt_dim or gt_dim is None
+                    for arg_dim, gt_dim in zip(arg.shape, gt_shape)
                 ):
                     raise TypeError(
-                        f"{arg_name} must be a tensor of shape {expected_shape}"
+                        f"{arg_name} must be a tensor of shape {gt_shape}, "
+                        f"but got shape {arg.shape}."
                     )
 
         return func(*args, **kwargs)

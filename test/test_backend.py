@@ -135,8 +135,8 @@ def test_type_hint_arguments():
 
     # Testing with incorrect shapes
     with pytest.raises(TypeError):
-        x_wrong = np.array([[1, 2], [4, 5]], dtype=np.float32)
-        add(x_wrong, y)
+        y_wrong = np.array([[1, 1, 1, 1]], dtype=np.float32)
+        add(x, y_wrong)
 
     # Testing with incorrect types
     with pytest.raises(TypeError):
