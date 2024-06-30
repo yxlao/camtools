@@ -1,7 +1,15 @@
-from typing import Literal
-from functools import wraps
-import ivy
 import warnings
+from functools import wraps
+from typing import Literal
+
+# Internally use "from camtools.backend import ivy" to make sure ivy is imported
+# after the warnings filter is set.
+warnings.filterwarnings(
+    "ignore",
+    category=DeprecationWarning,
+    message=".*numpy.core.numeric is deprecated.*",
+)
+import ivy
 
 _default_backend = "numpy"
 
