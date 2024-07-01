@@ -123,7 +123,8 @@ def check_shape_and_dtype(func):
         for arg_name, arg in arg_name_to_arg.items():
             if arg_name in arg_name_to_hint:
                 hint = arg_name_to_hint[arg_name]
-                _assert_tensor_hint(hint, arg, arg_name)
+                if issubclass(hint, jaxtyping.AbstractArray):
+                    _assert_tensor_hint(hint, arg, arg_name)
 
         return func(*args, **kwargs)
 
