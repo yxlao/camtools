@@ -63,16 +63,9 @@ def _shape_from_dims_str(
 
 
 def _assert_tensor_hint(hint, arg, arg_name):
-    # Unpack Union types.
-    if getattr(hint, "__origin__", None) is Union:
-        unpacked_hints = get_args(hint)
-    else:
-        unpacked_hints = (hint,)
-
     # If there exists one non jaxtyping hint, skip the check.
-    for unpacked_hint in unpacked_hints:
-        if not issubclass(unpacked_hint, jaxtyping.AbstractArray):
-            return
+    if not issubclass(hint, jaxtyping.AbstractArray):
+        return
 
     # Check array types.
     if backend.is_torch_available():
@@ -86,13 +79,7 @@ def _assert_tensor_hint(hint, arg, arg_name):
         )
 
     # Check shapes.
-    gt_shape = _shape_from_dims_str(unpacked_hints[0].dims)
-    for unpacked_hint in unpacked_hints:
-        if _shape_from_dims_str(unpacked_hint.dims) != gt_shape:
-            raise TypeError(
-                f"Internal error: all shapes in the Union must be the same, "
-                f"but got {gt_shape} and {_shape_from_dims_str(unpacked_hint.dims)}."
-            )
+    gt_shape = _shape_from_dims_str(hint.dims)
     if not all(
         arg_dim == gt_dim or gt_dim is None
         for arg_dim, gt_dim in zip(arg.shape, gt_shape)
@@ -103,13 +90,7 @@ def _assert_tensor_hint(hint, arg, arg_name):
         )
 
     # Check dtype.
-    gt_dtypes = unpacked_hints[0].dtypes  # A tuple of dtype names (str)
-    for unpacked_hint in unpacked_hints:
-        if unpacked_hint.dtypes != gt_dtypes:
-            raise TypeError(
-                f"Internal error: all dtypes in the Union must be the same, "
-                f"but got {gt_dtypes} and {unpacked_hint.dtypes}."
-            )
+    gt_dtypes = hint.dtypes
     if _dtype_to_str(arg.dtype) not in gt_dtypes:
         raise TypeError(
             f"{arg_name} must be a tensor of dtype {gt_dtypes}, "

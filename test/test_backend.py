@@ -12,7 +12,8 @@ import torch
 from jaxtyping import Float, UInt8, _array_types
 
 import camtools as ct
-from camtools.backend import ivy, Tensor
+from camtools.backend import ivy
+from camtools.typing import Tensor
 
 
 def test_creation():
