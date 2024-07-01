@@ -52,8 +52,9 @@ def with_auto_backend(func):
     Automatic backend selection for camtools functions.
 
     1. (Backend selection) If the function arguments does not contain any
-       tensors, or only contains pure Python list as tensor, the default
-       ct.get_backend() is used for internal computation and return value.
+       tensors, or only contains pure Python list and type-annotated as tensor,
+       the default ct.get_backend() is used for internal computation and return
+       value.
     2. (Backend selection) If the function arguments contains at least one
        tensor, the corresponding backend is used for internal computation and
        return value. The arguments can only contain tensors from one backend,
