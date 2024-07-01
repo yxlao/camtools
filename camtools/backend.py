@@ -1,6 +1,7 @@
 import warnings
 from functools import lru_cache, wraps
 from typing import Literal
+from inspect import signature, Parameter
 
 # Internally use "from camtools.backend import ivy" to make sure ivy is imported
 # after the warnings filter is set. This is a temporary workaround to suppress
@@ -53,6 +54,8 @@ def with_native_backend(func):
         ct_backend = get_backend()
         ivy.set_backend(ct_backend)
         try:
+            # If type hint is a tensor, convert (nested) list to tensor.
+
             with warnings.catch_warnings():
                 """
                 Possible warning:
