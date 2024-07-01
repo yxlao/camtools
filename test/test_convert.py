@@ -5,7 +5,7 @@ import pytest
 np.set_printoptions(formatter={"float": "{: 0.2f}".format})
 
 
-def test_R_t_to_C():
+def test_R_t_to_cameracenter():
     T = np.array(
         [
             [0.132521, 0.00567408, 0.991163, 0.0228366],
@@ -21,16 +21,6 @@ def test_R_t_to_C():
     np.testing.assert_allclose(
         expected_camera_center, camera_center, rtol=1e-5, atol=1e-5
     )
-
-
-def R_t_to_C(R, t):
-    """
-    Convert R, t to camera center
-    """
-    t = t.reshape(-1, 3, 1)
-    R = R.reshape(-1, 3, 3)
-    C = -R.transpose(0, 2, 1) @ t
-    return C.squeeze()
 
 
 def test_P_to_K_R_t():
