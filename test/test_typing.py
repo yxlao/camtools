@@ -169,3 +169,46 @@ def test_type_hint_arguments_torch():
         add(x, y_wrong)
 
     ct.backend.set_backend("numpy")
+
+
+def test_named_dim_numpy():
+    @ct.backend.with_native_backend
+    @ct.typing.check_shape_and_dtype
+    def add(
+        x: Float[Tensor, "3"],
+        y: Float[Tensor, "n 3"],
+    ) -> Float[Tensor, "n 3"]:
+        return x + y
+
+    # Fixed x tensor
+    x = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+
+    # Valid y tensor with shape (1, 3)
+    y = np.array([[4.0, 5.0, 6.0]], dtype=np.float32)
+    result = add(x, y)
+    expected = np.array([[5.0, 7.0, 9.0]], dtype=np.float32)
+    assert isinstance(result, np.ndarray)
+    assert np.allclose(result, expected, atol=1e-5)
+
+    # Valid y tensor with shape (2, 3)
+    y = np.array([[4.0, 5.0, 6.0], [7.0, 8.0, 9.0]], dtype=np.float32)
+    result = add(x, y)
+    expected = np.array([[5.0, 7.0, 9.0], [8.0, 10.0, 12.0]], dtype=np.float32)
+    assert isinstance(result, np.ndarray)
+    assert np.allclose(result, expected, atol=1e-5)
+
+    # Test for a shape mismatch where y does not conform to "n 3"
+    with pytest.raises(TypeError, match=r".*but got shape \(3,\).*"):
+        y_wrong = np.array([4.0, 5.0, 6.0], dtype=np.float32)  # Shape (3,)
+        add(x, y_wrong)
+
+    # List inputs that should be automatically converted and work
+    y = [[4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]
+    result = add(x, y)
+    assert isinstance(result, np.ndarray)
+    assert np.allclose(result, expected, atol=1e-5)
+
+    # Incorrect dtype with lists, expect dtype error
+    with pytest.raises(TypeError, match=r".*but got dtype.*"):
+        y_wrong = [[4, 5, 6], [7, 8, 9]]  # int type elements in list
+        add(x, y_wrong)

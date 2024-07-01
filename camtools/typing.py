@@ -1,13 +1,27 @@
 import typing
+from distutils.version import LooseVersion
 from functools import wraps
 from inspect import signature
 from typing import Any, Tuple, Union
 
 import jaxtyping
 import numpy as np
-from jaxtyping import _array_types
+import pkg_resources
 
 from . import backend
+
+
+try:
+    _jaxtyping_version = pkg_resources.get_distribution("jaxtyping").version
+    if LooseVersion(_jaxtyping_version) >= LooseVersion("0.2.20"):
+        from jaxtyping._array_types import _FixedDim, _NamedDim
+    else:
+        from jaxtyping.array_types import _FixedDim, _NamedDim
+except ImportError:
+    raise ImportError(
+        f"Failed to import _FixedDim and _NamedDim. with "
+        f"jaxtyping version {_jaxtyping_version}."
+    )
 
 
 class Tensor:
@@ -54,14 +68,17 @@ def _dtype_to_str(dtype):
     return ValueError(f"Unknown dtype {dtype}.")
 
 
-def _shape_from_dims_str(
-    dims: Tuple[Union[_array_types._FixedDim, _array_types._NamedDim], ...]
+def _shape_from_dims(
+    dims: Tuple[
+        Union[_FixedDim, _NamedDim],
+        ...,
+    ]
 ) -> Tuple[Union[int, None], ...]:
     shape = []
     for dim in dims:
-        if isinstance(dim, _array_types._FixedDim):
+        if isinstance(dim, _FixedDim):
             shape.append(dim.size)
-        elif isinstance(dim, _array_types._NamedDim):
+        elif isinstance(dim, _NamedDim):
             shape.append(None)
     return tuple(shape)
 
@@ -91,7 +108,7 @@ def _assert_tensor_hint(
         )
 
     # Check shapes.
-    gt_shape = _shape_from_dims_str(hint.dims)
+    gt_shape = _shape_from_dims(hint.dims)
     if not all(
         arg_dim == gt_dim or gt_dim is None
         for arg_dim, gt_dim in zip(arg.shape, gt_shape)
