@@ -3,9 +3,9 @@ import warnings
 from functools import lru_cache, wraps
 from inspect import signature
 from typing import Literal
-import jaxtyping
 
 import ivy
+import jaxtyping
 
 # Internally use "from camtools.backend import ivy" to make sure ivy is imported
 # after the warnings filter is set. This is a temporary workaround to suppress

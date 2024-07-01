@@ -10,7 +10,6 @@ import pkg_resources
 
 from . import backend
 
-
 try:
     # Try to import _FixedDim and _NamedDim from jaxtyping. This are internal
     # classes where the APIs are not stable. There are no guarantees that these

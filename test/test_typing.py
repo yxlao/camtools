@@ -3,7 +3,7 @@ import pytest
 from jaxtyping import Float
 
 import camtools as ct
-from camtools.backend import ivy, is_torch_available
+from camtools.backend import ivy
 from camtools.typing import Tensor
 
 
