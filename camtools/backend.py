@@ -1,5 +1,5 @@
 import warnings
-from functools import wraps
+from functools import lru_cache, wraps
 from typing import Literal
 
 # Internally use "from camtools.backend import ivy" to make sure ivy is imported
@@ -13,6 +13,16 @@ warnings.filterwarnings(
 import ivy
 
 _default_backend = "numpy"
+
+
+@lru_cache(maxsize=None)
+def is_torch_available():
+    try:
+        import torch
+
+        return True
+    except ImportError:
+        return False
 
 
 def set_backend(backend: Literal["numpy", "torch"]) -> None:

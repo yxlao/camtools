@@ -12,7 +12,7 @@ import torch
 from jaxtyping import Float, UInt8, _array_types
 
 import camtools as ct
-from camtools.backend import ivy
+from camtools.backend import ivy, Tensor
 
 
 def test_creation():
@@ -66,16 +66,13 @@ def test_arguments():
         add(src_x, src_y)
 
 
-Tensor = Union[np.ndarray, torch.Tensor]
-
-
 def test_type_hint_arguments():
     """
     Test type hinting arguments.
     """
 
     @ct.backend.with_native_backend
-    @ct.sanity.check_shape_and_dtype
+    @ct.typing.check_shape_and_dtype
     def add(
         x: Float[Tensor, "2 3"],
         y: Float[Tensor, "1 3"],

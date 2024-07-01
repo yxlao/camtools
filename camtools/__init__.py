@@ -15,6 +15,7 @@ from . import render
 from . import sanity
 from . import solver
 from . import transform
+from . import typing
 from . import util
 
 try:
