@@ -87,12 +87,27 @@ def test_type_hint_arguments():
     expected = np.array([[2, 3, 4], [5, 6, 7]], dtype=np.float32)
     assert np.allclose(result, expected, atol=1e-5)
 
-    # Testing with incorrect shapes
+    # List can be converted to numpy automatically
+    x = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
+    result = add(x, y)
+    assert np.allclose(result, expected, atol=1e-5)
+
+    # Incorrect shapes
     with pytest.raises(TypeError):
         y_wrong = np.array([[1, 1, 1, 1]], dtype=np.float32)
         add(x, y_wrong)
 
-    # Testing with incorrect types
+    # Incorrect shape with lists
     with pytest.raises(TypeError):
-        x_wrong_type = [[1, 2, 3], [4, 5, 6]]  # not a NumPy array
-        add(x_wrong_type, y)
+        y_wrong = [[1.0, 1.0, 1.0, 1.0]]
+        add(x, y_wrong)
+
+    # Incorrect dtype
+    with pytest.raises(TypeError):
+        y_wrong = np.array([[1, 1, 1]], dtype=np.int64)
+        add(x, y_wrong)
+
+    # Incorrect dtype with lists
+    with pytest.raises(TypeError):
+        y_wrong = [[1, 1, 1]]
+        add(x, y_wrong)
