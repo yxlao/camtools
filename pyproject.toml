@@ -18,7 +18,7 @@ dependencies = [
   "tqdm>=4.60.0",
   "ivy>=0.0.8.0",
   "jaxtyping>=0.2.12",
-  "einops>=0.8.0",
+  "einops>=0.6.1",
 ]
 description = "CamTools: Camera Tools for Computer Vision."
 license = {text = "MIT"}
