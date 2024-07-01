@@ -21,7 +21,7 @@ def test_creation_numpy():
     assert tensor.dtype == np.float32
 
 
-@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+@pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
 def test_creation_torch():
     import torch
 
@@ -54,7 +54,7 @@ def test_arguments_numpy():
     np.testing.assert_allclose(dst, dst_expected, rtol=1e-5, atol=1e-5)
 
 
-@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+@pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
 def test_arguments_torch():
     import torch
 
@@ -121,7 +121,7 @@ def test_type_hint_arguments_numpy():
         add(x, y_wrong)
 
 
-@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+@pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
 def test_type_hint_arguments_torch():
     import torch
 
@@ -207,6 +207,52 @@ def test_named_dim_numpy():
     result = add(x, y)
     assert isinstance(result, np.ndarray)
     assert np.allclose(result, expected, atol=1e-5)
+
+    # Incorrect dtype with lists, expect dtype error
+    with pytest.raises(TypeError, match=r".*but got dtype.*"):
+        y_wrong = [[4, 5, 6], [7, 8, 9]]  # int type elements in list
+        add(x, y_wrong)
+
+
+@pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
+def test_named_dim_torch():
+    import torch
+
+    @ct.backend.with_native_backend
+    @ct.typing.check_shape_and_dtype
+    def add(
+        x: Float[Tensor, "3"],
+        y: Float[Tensor, "n 3"],
+    ) -> Float[Tensor, "n 3"]:
+        return x + y
+
+    # Fixed x tensor for Torch
+    x = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
+
+    # Valid y tensor with shape (1, 3)
+    y = torch.tensor([[4.0, 5.0, 6.0]], dtype=torch.float32)
+    result = add(x, y)
+    expected = torch.tensor([[5.0, 7.0, 9.0]], dtype=torch.float32)
+    assert isinstance(result, torch.Tensor)
+    assert torch.allclose(result, expected, atol=1e-5)
+
+    # Valid y tensor with shape (2, 3)
+    y = torch.tensor([[4.0, 5.0, 6.0], [7.0, 8.0, 9.0]], dtype=torch.float32)
+    result = add(x, y)
+    expected = torch.tensor([[5.0, 7.0, 9.0], [8.0, 10.0, 12.0]], dtype=torch.float32)
+    assert isinstance(result, torch.Tensor)
+    assert torch.allclose(result, expected, atol=1e-5)
+
+    # Test for a shape mismatch where y does not conform to "n 3"
+    with pytest.raises(TypeError, match=r".*but got shape.*"):
+        y_wrong = torch.tensor([4.0, 5.0, 6.0], dtype=torch.float32)  # Shape (3,)
+        add(x, y_wrong)
+
+    # List inputs that should be automatically converted and work
+    y = [[4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]
+    result = add(x, y)
+    assert isinstance(result, torch.Tensor)
+    assert torch.allclose(result, expected, atol=1e-5)
 
     # Incorrect dtype with lists, expect dtype error
     with pytest.raises(TypeError, match=r".*but got dtype.*"):
