@@ -1,18 +1,13 @@
 import numpy as np
 import pytest
-import torch
 from jaxtyping import Float
 
 import camtools as ct
-from camtools.backend import ivy
+from camtools.backend import ivy, is_torch_available
 from camtools.typing import Tensor
 
 
-def test_creation():
-    """
-    Test tensor creation.
-    """
-
+def test_creation_numpy():
     @ct.backend.with_native_backend
     def creation():
         zeros = ivy.zeros([2, 3])
@@ -25,6 +20,16 @@ def test_creation():
     assert tensor.shape == (2, 3)
     assert tensor.dtype == np.float32
 
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_creation_torch():
+    import torch
+
+    @ct.backend.with_native_backend
+    def creation():
+        zeros = ivy.zeros([2, 3])
+        return zeros
+
     # Switch to torch backend
     ct.backend.set_backend("torch")
     assert ct.backend.get_backend() == "torch"
@@ -35,10 +40,23 @@ def test_creation():
     ct.backend.set_backend("numpy")
 
 
-def test_arguments():
-    """
-    Test taking arguments from functions.
-    """
+def test_arguments_numpy():
+    @ct.backend.with_native_backend
+    def add(x, y):
+        return x + y
+
+    # Default backend is numpy
+    assert ct.backend.get_backend() == "numpy"
+    src_x = np.ones([2, 3]) * 2
+    src_y = np.ones([1, 3]) * 3
+    dst_expected = np.ones([2, 3]) * 5
+    dst = add(src_x, src_y)
+    np.testing.assert_allclose(dst, dst_expected, rtol=1e-5, atol=1e-5)
+
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_arguments_torch():
+    import torch
 
     @ct.backend.with_native_backend
     def add(x, y):
@@ -59,11 +77,7 @@ def test_arguments():
         add(src_x, src_y)
 
 
-def test_type_hint_arguments():
-    """
-    Test type hinting arguments.
-    """
-
+def test_type_hint_arguments_numpy():
     @ct.backend.with_native_backend
     @ct.typing.check_shape_and_dtype
     def add(
@@ -105,6 +119,19 @@ def test_type_hint_arguments():
     with pytest.raises(TypeError, match=r".*but got dtype.*"):
         y_wrong = [[1, 1, 1]]
         add(x, y_wrong)
+
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_type_hint_arguments_torch():
+    import torch
+
+    @ct.backend.with_native_backend
+    @ct.typing.check_shape_and_dtype
+    def add(
+        x: Float[Tensor, "2 3"],
+        y: Float[Tensor, "1 3"],
+    ) -> Float[Tensor, "2 3"]:
+        return x + y
 
     # With torch backend
     ct.backend.set_backend("torch")
