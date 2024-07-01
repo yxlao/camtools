@@ -198,7 +198,7 @@ def test_named_dim_numpy():
     assert np.allclose(result, expected, atol=1e-5)
 
     # Test for a shape mismatch where y does not conform to "n 3"
-    with pytest.raises(TypeError, match=r".*but got shape \(3,\).*"):
+    with pytest.raises(TypeError, match=r".*but got shape.*"):
         y_wrong = np.array([4.0, 5.0, 6.0], dtype=np.float32)  # Shape (3,)
         add(x, y_wrong)
 

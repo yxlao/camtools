@@ -86,6 +86,19 @@ def _shape_from_dims(
     return tuple(shape)
 
 
+def _is_shape_compatible(
+    arg_shape: Tuple[Union[int, None], ...],
+    gt_shape: Tuple[Union[int, None], ...],
+) -> bool:
+    if len(arg_shape) != len(gt_shape):
+        return False
+
+    return all(
+        arg_dim == gt_dim or gt_dim is None
+        for arg_dim, gt_dim in zip(arg_shape, gt_shape)
+    )
+
+
 def _assert_tensor_hint(
     hint: jaxtyping.AbstractArray,
     arg: Any,
@@ -112,10 +125,7 @@ def _assert_tensor_hint(
 
     # Check shapes.
     gt_shape = _shape_from_dims(hint.dims)
-    if not all(
-        arg_dim == gt_dim or gt_dim is None
-        for arg_dim, gt_dim in zip(arg.shape, gt_shape)
-    ):
+    if not _is_shape_compatible(arg.shape, gt_shape):
         raise TypeError(
             f"{arg_name} must be a tensor of shape {gt_shape}, "
             f"but got shape {arg.shape}."
