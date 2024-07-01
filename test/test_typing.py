@@ -85,11 +85,13 @@ def test_type_hint_arguments():
     y = np.array([[1, 1, 1]], dtype=np.float32)
     result = add(x, y)
     expected = np.array([[2, 3, 4], [5, 6, 7]], dtype=np.float32)
+    assert isinstance(result, np.ndarray)
     assert np.allclose(result, expected, atol=1e-5)
 
     # List can be converted to numpy automatically
     x = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
     result = add(x, y)
+    assert isinstance(result, np.ndarray)
     assert np.allclose(result, expected, atol=1e-5)
 
     # Incorrect shapes
@@ -111,3 +113,40 @@ def test_type_hint_arguments():
     with pytest.raises(TypeError, match=r".*but got dtype.*"):
         y_wrong = [[1, 1, 1]]
         add(x, y_wrong)
+
+    # With torch backend
+    ct.backend.set_backend("torch")
+    x = torch.tensor([[1, 2, 3], [4, 5, 6]], dtype=torch.float32)
+    y = torch.tensor([[1, 1, 1]], dtype=torch.float32)
+    result = add(x, y)
+    expected = torch.tensor([[2, 3, 4], [5, 6, 7]], dtype=torch.float32)
+    assert isinstance(result, torch.Tensor)
+    assert torch.allclose(result, expected, atol=1e-5)
+
+    # List can be converted to torch automatically
+    x = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
+    result = add(x, y)
+    assert isinstance(result, torch.Tensor)
+    assert torch.allclose(result, expected, atol=1e-5)
+
+    # Incorrect shapes
+    with pytest.raises(TypeError, match=r".*but got shape.*"):
+        y_wrong = torch.tensor([[1, 1, 1, 1]], dtype=torch.float32)
+        add(x, y_wrong)
+
+    # Incorrect shape with lists
+    with pytest.raises(TypeError, match=r".*but got shape.*"):
+        y_wrong = [[1.0, 1.0, 1.0, 1.0]]
+        add(x, y_wrong)
+
+    # Incorrect dtype
+    with pytest.raises(TypeError, match=r".*but got dtype.*"):
+        y_wrong = torch.tensor([[1, 1, 1]], dtype=torch.int64)
+        add(x, y_wrong)
+
+    # Incorrect dtype with lists
+    with pytest.raises(TypeError, match=r".*but got dtype.*"):
+        y_wrong = [[1, 1, 1]]
+        add(x, y_wrong)
+
+    ct.backend.set_backend("numpy")
