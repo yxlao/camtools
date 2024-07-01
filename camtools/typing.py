@@ -113,28 +113,6 @@ def check_shape_and_dtype(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        arg_name_to_hint = typing.get_type_hints(func)
-        arg_name_to_arg = {
-            **dict(zip(func.__code__.co_varnames[: func.__code__.co_argcount], args)),
-            **kwargs,
-        }
-
-        for arg_name, arg in arg_name_to_arg.items():
-            if arg_name in arg_name_to_hint:
-                hint = arg_name_to_hint[arg_name]
-                _assert_tensor_hint(hint, arg, arg_name)
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
-def check_shape_and_dtype(func):
-    """
-    A decorator to enforce type and shape specifications as per type hints.
-    """
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
         sig = signature(func)
         bound_args = sig.bind_partial(*args, **kwargs)
         bound_args.apply_defaults()
