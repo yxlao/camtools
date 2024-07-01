@@ -5,7 +5,6 @@ from typing import Any, Tuple, Union
 
 import jaxtyping
 import numpy as np
-import torch
 from jaxtyping import _array_types
 
 from . import backend
@@ -13,8 +12,8 @@ from . import backend
 
 class Tensor:
     """
-    An abstract tensor type for type hinting only. Typically np.ndarray or
-    torch.Tensor is supported.
+    An abstract tensor type for type hinting only.
+    Typically np.ndarray or torch.Tensor is supported.
     """
 
     pass
@@ -45,10 +44,14 @@ def _dtype_to_str(dtype):
     """
     if isinstance(dtype, np.dtype):
         return dtype.name
-    elif isinstance(dtype, torch.dtype):
-        return str(dtype).split(".")[1]
-    else:
-        raise ValueError(f"Unknown dtype {dtype}.")
+
+    if backend.is_torch_available():
+        import torch
+
+        if isinstance(dtype, torch.dtype):
+            return str(dtype).split(".")[1]
+
+    return ValueError(f"Unknown dtype {dtype}.")
 
 
 def _shape_from_dims_str(
@@ -76,6 +79,8 @@ def _assert_tensor_hint(
     """
     # Check array types.
     if backend.is_torch_available():
+        import torch
+
         valid_array_types = (np.ndarray, torch.Tensor)
     else:
         valid_array_types = (np.ndarray,)
