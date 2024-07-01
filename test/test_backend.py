@@ -93,21 +93,21 @@ def test_type_hint_arguments():
     assert np.allclose(result, expected, atol=1e-5)
 
     # Incorrect shapes
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match=r".*but got shape.*"):
         y_wrong = np.array([[1, 1, 1, 1]], dtype=np.float32)
         add(x, y_wrong)
 
     # Incorrect shape with lists
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match=r".*but got shape.*"):
         y_wrong = [[1.0, 1.0, 1.0, 1.0]]
         add(x, y_wrong)
 
     # Incorrect dtype
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match=r".*but got dtype.*"):
         y_wrong = np.array([[1, 1, 1]], dtype=np.int64)
         add(x, y_wrong)
 
     # Incorrect dtype with lists
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match=r".*but got dtype.*"):
         y_wrong = [[1, 1, 1]]
         add(x, y_wrong)
