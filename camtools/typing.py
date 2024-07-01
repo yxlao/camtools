@@ -1,6 +1,6 @@
 import typing
 from functools import wraps
-from typing import Tuple, Union, get_args
+from typing import Tuple, Union, Any
 
 import jaxtyping
 import numpy as np
@@ -62,11 +62,17 @@ def _shape_from_dims_str(
     return tuple(shape)
 
 
-def _assert_tensor_hint(hint, arg, arg_name):
-    # If there exists one non jaxtyping hint, skip the check.
-    if not issubclass(hint, jaxtyping.AbstractArray):
-        return
-
+def _assert_tensor_hint(
+    hint: jaxtyping.AbstractArray,
+    arg: Any,
+    arg_name: str,
+):
+    """
+    Args:
+        hint: A type hint for a tensor, must be javtyping.AbstractArray.
+        arg: An argument to check, typically a tensor.
+        arg_name: The name of the argument, for error messages.
+    """
     # Check array types.
     if backend.is_torch_available():
         valid_array_types = (np.ndarray, torch.Tensor)
@@ -110,12 +116,10 @@ def check_shape_and_dtype(func):
             **dict(zip(func.__code__.co_varnames[: func.__code__.co_argcount], args)),
             **kwargs,
         }
-
         for arg_name, arg in all_args.items():
             if arg_name in hints:
                 hint = hints[arg_name]
                 _assert_tensor_hint(hint, arg, arg_name)
-
         return func(*args, **kwargs)
 
     return wrapper
