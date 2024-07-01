@@ -25,12 +25,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .[dev]
-      - name: Run unit tests (numpy only)
+      - name: Run unit tests (numpy)
         run: |
           pytest
       - name: Install dependencies with torch
         run: |
           pip install -e .[torch]
-      - name: Run unit tests (with torch)
+      - name: Run unit tests (numpy + torch)
         run: |
           pytest
