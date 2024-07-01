@@ -1,13 +1,12 @@
 import typing
 from functools import wraps
-from typing import Tuple, Union, Any
+from inspect import signature
+from typing import Any, Tuple, Union
 
 import jaxtyping
 import numpy as np
 import torch
 from jaxtyping import _array_types
-
-from inspect import signature, Parameter
 
 from . import backend
 

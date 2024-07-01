@@ -1,15 +1,7 @@
-"""
-Test basic usage of ivy and its interaction with numpy and torch.
-"""
-
-import typing
-from functools import wraps
-from typing import Union
-
 import numpy as np
 import pytest
 import torch
-from jaxtyping import Float, UInt8, _array_types
+from jaxtyping import Float
 
 import camtools as ct
 from camtools.backend import ivy
