@@ -45,11 +45,20 @@ def get_backend() -> str:
     return _default_backend
 
 
-def with_native_backend(func):
+def with_auto_backend(func):
     """
-    1. Enable default camtools backend.
-    2. Return native backend array (setting array mode to False).
-    3. Converts lists to tensors if the type hint is a tensor.
+    Automatic backend selection for camtools functions.
+
+    1. (Backend selection) If the function arguments does not contain any
+       tensors, or only contains pure Python list as tensor, the default
+       ct.get_backend() is used for internal computation and return value.
+    2. (Backend selection) If the function arguments contains at least one
+       tensor, the corresponding backend is used for internal computation and
+       return value. The arguments can only contain tensors from one backend,
+       including tensors in nested lists, otherwise an error will be raised.
+    3. This wrapper will attempt to convert Python lists to tensors if the type
+       hint says it should be a tensor with jaxtyping.
+    4. This wrapper will set ivy.ArrayMode(False) within the function context.
     """
 
     @wraps(func)
@@ -82,3 +91,7 @@ def with_native_backend(func):
         return result
 
     return wrapper
+
+
+def convert_to_numpy_args(func):
+    pass
