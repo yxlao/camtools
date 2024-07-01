@@ -37,9 +37,9 @@ def test_creation_torch():
     assert isinstance(tensor, torch.Tensor)
     assert tensor.shape == (2, 3)
     assert tensor.dtype == torch.float32
-    ct.backend.set_backend("numpy")
 
-    # Now, the default backend is numpy
+    # Switch back to the default backend is numpy
+    ct.backend.set_backend("numpy")
     assert ct.backend.get_backend() == "numpy"
     tensor = creation()
     assert isinstance(tensor, np.ndarray)
