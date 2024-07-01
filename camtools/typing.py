@@ -12,6 +12,9 @@ from . import backend
 
 
 try:
+    # Try to import _FixedDim and _NamedDim from jaxtyping. This are internal
+    # classes where the APIs are not stable. There are no guarantees that these
+    # classes will be available in future versions of jaxtyping.
     _jaxtyping_version = pkg_resources.get_distribution("jaxtyping").version
     if LooseVersion(_jaxtyping_version) >= LooseVersion("0.2.20"):
         from jaxtyping._array_types import _FixedDim, _NamedDim
