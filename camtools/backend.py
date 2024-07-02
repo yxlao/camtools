@@ -3,7 +3,7 @@ import typing
 import warnings
 from functools import lru_cache, wraps
 from inspect import signature
-from typing import Any, Literal
+from typing import Any, Literal, Union
 
 import ivy
 import jaxtyping
@@ -89,22 +89,31 @@ def with_auto_backend(func):
     4. This wrapper will set ivy.ArrayMode(False) within the function context.
     """
 
-    def _collect_tensors(item: Any, tensors: list) -> None:
+    def _collect_tensors(item: Any) -> list:
         """
         Recursively collects tensors from nested iterable structures.
+        The function splits logic based on whether PyTorch is available.
         """
-        if isinstance(item, np.ndarray):
-            tensors.append(item)
-        elif is_torch_available():
+        tensors = []
+        stack = [item]
+
+        if is_torch_available():
             import torch
 
-            if isinstance(item, torch.Tensor):
-                tensors.append(item)
-        elif isinstance(item, collections.abc.Iterable) and not isinstance(
-            item, (str, bytes)
-        ):
-            for subitem in item:
-                _collect_tensors(subitem, tensors)
+            tensor_types = (np.ndarray, torch.Tensor)
+        else:
+            tensor_types = (np.ndarray,)
+
+        while stack:
+            current_item = stack.pop()
+            if isinstance(current_item, tensor_types):
+                tensors.append(current_item)
+            elif isinstance(current_item, collections.abc.Iterable) and not isinstance(
+                current_item, (str, bytes)
+            ):
+                stack.extend(current_item)
+
+        return tensors
 
     def _determine_backend(tensors: list) -> str:
         """
@@ -120,19 +129,21 @@ def with_auto_backend(func):
 
             if all(isinstance(t, torch.Tensor) for t in tensors):
                 return "torch"
-        raise TypeError("All tensors must be from the same backend (numpy or torch).")
+
+        raise TypeError("All tensors must be from the same backend.")
 
     @wraps(func)
     def wrapper(*args, **kwargs):
         stashed_backend = ivy.current_backend()
-        tensors = []
 
         # Unpack args and kwargs and collect all tensors
         sig = signature(func)
         bound_args = sig.bind(*args, **kwargs)
         bound_args.apply_defaults()
+
+        tensors = []
         for arg in bound_args.arguments.values():
-            _collect_tensors(arg, tensors)
+            tensors.extend(_collect_tensors(arg))
 
         arg_backend = _determine_backend(tensors)
         ivy.set_backend(arg_backend)
