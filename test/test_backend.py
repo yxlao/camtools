@@ -52,11 +52,11 @@ def test_pure_list_as_tensor():
     """
     Test handling of pure Python lists annotated as tensor type.
     """
-    ct.backend.set_backend("numpy")
 
     @ct.backend.with_auto_backend
     def func(x: Float[Tensor, "..."]):
-        return ivy.array(x)  # Convert list to tensor based on backend
+        # Convert list to tensor based on backend
+        return ivy.array(x)
 
     result = func([1.0, 2.0, 3.0])
     assert isinstance(
@@ -86,8 +86,9 @@ def test_container_of_tensors():
 
         numpy_data = [np.array([1, 2, 3]), np.array([4, 5, 6])]
         torch_data = [torch.tensor([1, 2, 3]), torch.tensor([4, 5, 6])]
+
+        # Tensors from different backends are mixed in containers
         with pytest.raises(TypeError):
-            # This should fail as tensors from different backends are mixed in containers
             concat_tensors(numpy_data, torch_data)
 
 
@@ -95,23 +96,11 @@ def test_ivy_array_mode():
     """
     Ensure ivy.ArrayMode(False) is applied within the function.
     """
-    ct.backend.set_backend("numpy")
     with ivy.ArrayMode() as mode:
         concat_tensors([1, 2, 3])
         assert (
             not mode.is_array_mode
         ), "ivy.ArrayMode should be set to False within the function."
-
-
-@pytest.fixture(autouse=True)
-def restore_backend():
-    """
-    Fixture to reset the backend after each test.
-    """
-    yield
-    ct.backend.set_backend(
-        "numpy"
-    )  # Reset to numpy after each test to avoid state leakage
 
 
 # Additional tests to cover diverse containers and type annotation scenarios
@@ -120,7 +109,6 @@ def test_tensor_containers(container):
     """
     Test with different collections of tensors.
     """
-    ct.backend.set_backend("numpy")
     numpy_tensor = np.ones((3, 3))
     if container in {
         set,
@@ -131,11 +119,7 @@ def test_tensor_containers(container):
             concat_tensors(container([numpy_tensor, numpy_tensor]))
     else:
         result = concat_tensors(container([numpy_tensor, numpy_tensor * 2]))
-        assert result.shape == (
-            2,
-            3,
-            3,
-        ), "Shape mismatch for tensor container processing."
+        assert result.shape == (2, 3, 3), "Shape mismatch for tensor."
 
 
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
@@ -147,7 +131,11 @@ def test_invalid_tensor_collections():
 
     numpy_tensor = np.ones((3, 3))
     torch_tensor = torch.ones((3, 3))
+
+    # Mixed backends in a list
     with pytest.raises(TypeError):
-        concat_tensors([numpy_tensor, torch_tensor])  # Mixed backends in a list
+        concat_tensors([numpy_tensor, torch_tensor])
+
+    # Mixed backends in a tuple
     with pytest.raises(TypeError):
-        concat_tensors((numpy_tensor, torch_tensor))  # Mixed backends in a tuple
+        concat_tensors((numpy_tensor, torch_tensor))
