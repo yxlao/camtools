@@ -71,6 +71,17 @@ def test_pure_list_as_tensor_torch():
         assert isinstance(result, torch.Tensor)
 
 
+def test_mix_list_and_tensor_types_numpy():
+    """
+    Test handling of mixed list and tensor types.
+    """
+    numpy_data = np.array([1, 2, 3])
+    list_data = [4, 5, 6]
+    result = concat_tensors(numpy_data, list_data)
+    assert isinstance(result, np.ndarray)
+    assert np.array_equal(result, np.array([1, 2, 3, 4, 5, 6]))
+
+
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
 def test_mixed_tensor_types():
     """
