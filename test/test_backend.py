@@ -149,8 +149,8 @@ def test_container_mix_numpy_torch_v1():
     """
     import torch
 
-    x = [np.array(1.0), np.array(2.0), np.array(3.0)]
-    y = [torch.tensor(4.0), torch.tensor(5.0), torch.tensor(6.0)]
+    x = np.array([1.0, 2.0, 3.0])
+    y = torch.tensor([4.0, 5.0, 6.0])
     with pytest.raises(TypeError, match=r".*must be from the same backend.*"):
         concat_tensors(x, y)
 
@@ -166,41 +166,3 @@ def test_container_mix_numpy_torch_v2():
     y = [np.array(4.0), np.array(5.0), torch.tensor(6.0)]
     with pytest.raises(TypeError, match=r".*must be from the same backend.*"):
         concat_tensors(x, y)
-
-
-# # Additional tests to cover diverse containers and type annotation scenarios
-# @pytest.mark.parametrize("container", [list, tuple, set])
-# def test_tensor_containers(container):
-#     """
-#     Test with different collections of tensors.
-#     """
-#     numpy_tensor = np.ones((3, 3))
-#     if container in {
-#         set,
-#     }:
-#         # Sets do not support indexing
-#         # They can't hold multiple mutable identical elements
-#         with pytest.raises(TypeError):
-#             concat_tensors(container([numpy_tensor, numpy_tensor]))
-#     else:
-#         result = concat_tensors(container([numpy_tensor, numpy_tensor * 2]))
-#         assert result.shape == (2, 3, 3)
-
-
-# @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-# def test_invalid_tensor_collections():
-#     """
-#     Test invalid collections with mixed backend tensors.
-#     """
-#     import torch
-
-#     numpy_tensor = np.ones((3, 3))
-#     torch_tensor = torch.ones((3, 3))
-
-#     # Mixed backends in a list
-#     with pytest.raises(TypeError):
-#         concat_tensors([numpy_tensor, torch_tensor])
-
-#     # Mixed backends in a tuple
-#     with pytest.raises(TypeError):
-#         concat_tensors((numpy_tensor, torch_tensor))
