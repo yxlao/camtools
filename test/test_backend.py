@@ -20,19 +20,17 @@ def concat_tensors(x: Float[Tensor, "..."], y: Float[Tensor, "..."]):
     return ivy.concat([x, y], axis=0)
 
 
-def test_no_tensor_default_backend_numpy():
+def test_default_backend_numpy():
     """
     Test the default backend when no tensors are provided.
     """
     result = concat_tensors([1, 2, 3], [4, 5, 6])
-    assert isinstance(result, np.ndarray), "Expected numpy array with no tensor inputs."
-    assert np.array_equal(
-        result, np.array([1, 2, 3, 4, 5, 6])
-    ), "Array contents mismatch."
+    assert isinstance(result, np.ndarray)
+    assert np.array_equal(result, np.array([1, 2, 3, 4, 5, 6]))
 
 
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-def test_no_tensor_default_backend_torch():
+def test_default_backend_torch():
     """
     Test the default backend when no tensors are provided.
     """
@@ -40,28 +38,37 @@ def test_no_tensor_default_backend_torch():
 
     with ct.backend.ScopedBackend("torch"):
         result = concat_tensors([1, 2, 3], [4, 5, 6])
-        assert isinstance(
-            result, torch.Tensor
-        ), "Expected torch tensor with no tensor inputs."
-    assert torch.equal(
-        result, torch.tensor([1, 2, 3, 4, 5, 6])
-    ), "Tensor contents mismatch."
+        assert isinstance(result, torch.Tensor)
+    assert torch.equal(result, torch.tensor([1, 2, 3, 4, 5, 6]))
 
 
-def test_pure_list_as_tensor():
+def test_pure_list_as_tensor_numpy():
     """
     Test handling of pure Python lists annotated as tensor type.
     """
 
     @ct.backend.with_auto_backend
     def func(x: Float[Tensor, "..."]):
-        # Convert list to tensor based on backend
-        return ivy.array(x)
+        return ivy.native_array(x)
 
     result = func([1.0, 2.0, 3.0])
-    assert isinstance(
-        result, np.ndarray
-    ), "Expected numpy array when lists are type-annotated as tensors."
+    assert isinstance(result, np.ndarray)
+
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_pure_list_as_tensor_torch():
+    """
+    Test handling of pure Python lists annotated as tensor type.
+    """
+    import torch
+
+    @ct.backend.with_auto_backend
+    def func(x: Float[Tensor, "..."]):
+        return ivy.native_array(x)
+
+    with ct.backend.ScopedBackend("torch"):
+        result = func([1.0, 2.0, 3.0])
+        assert isinstance(result, torch.Tensor)
 
 
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
@@ -98,9 +105,7 @@ def test_ivy_array_mode():
     """
     with ivy.ArrayMode() as mode:
         concat_tensors([1, 2, 3])
-        assert (
-            not mode.is_array_mode
-        ), "ivy.ArrayMode should be set to False within the function."
+        assert not mode.is_array_mode
 
 
 # Additional tests to cover diverse containers and type annotation scenarios
@@ -119,7 +124,7 @@ def test_tensor_containers(container):
             concat_tensors(container([numpy_tensor, numpy_tensor]))
     else:
         result = concat_tensors(container([numpy_tensor, numpy_tensor * 2]))
-        assert result.shape == (2, 3, 3), "Shape mismatch for tensor."
+        assert result.shape == (2, 3, 3)
 
 
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
