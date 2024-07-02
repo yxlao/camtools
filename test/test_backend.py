@@ -3,7 +3,6 @@ import pytest
 import camtools as ct
 import ivy
 from jaxtyping import Float
-from camtools.backend import with_auto_backend, set_backend, get_backend
 from camtools.typing import Tensor
 
 
@@ -16,17 +15,16 @@ def is_torch_available():
         return False
 
 
-# Mock function to test automatic backend handling
 @ct.backend.with_auto_backend
-def concat_tensors(*args):
-    return ivy.concat(args, axis=0)
+def concat_tensors(x: Float[Tensor, "..."], y: Float[Tensor, "..."]):
+    return ivy.concat([x, y], axis=0)
 
 
 def test_no_tensor_default_backend():
     """
     Test the default backend when no tensors are provided.
     """
-    set_backend("numpy")  # Set default backend to numpy
+    ct.backend.set_backend("numpy")  # Set default backend to numpy
     # This should use the default backend as no tensors are involved
     result = concat_tensors([1, 2, 3], [4, 5, 6])
     assert isinstance(result, np.ndarray), "Expected numpy array with no tensor inputs."
@@ -39,7 +37,7 @@ def test_pure_list_as_tensor():
     """
     Test handling of pure Python lists annotated as tensor type.
     """
-    set_backend("numpy")
+    ct.backend.set_backend("numpy")
 
     @ct.backend.with_auto_backend
     def func(x: Float[Tensor, "..."]):
@@ -82,7 +80,7 @@ def test_ivy_array_mode():
     """
     Ensure ivy.ArrayMode(False) is applied within the function.
     """
-    set_backend("numpy")
+    ct.backend.set_backend("numpy")
     with ivy.ArrayMode() as mode:
         concat_tensors([1, 2, 3])
         assert (
@@ -96,7 +94,9 @@ def restore_backend():
     Fixture to reset the backend after each test.
     """
     yield
-    set_backend("numpy")  # Reset to numpy after each test to avoid state leakage
+    ct.backend.set_backend(
+        "numpy"
+    )  # Reset to numpy after each test to avoid state leakage
 
 
 # Additional tests to cover diverse containers and type annotation scenarios
@@ -105,7 +105,7 @@ def test_tensor_containers(container):
     """
     Test with different collections of tensors.
     """
-    set_backend("numpy")
+    ct.backend.set_backend("numpy")
     numpy_tensor = np.ones((3, 3))
     if container in {
         set,
