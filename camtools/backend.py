@@ -47,6 +47,31 @@ def get_backend() -> str:
     return _default_backend
 
 
+class ScopedBackend:
+    """
+    Context manager to temporarily set the backend for camtools.
+
+    Example:
+    ```python
+    with ct.backend.ScopedBackend("torch"):
+        # Code that uses torch backend here
+        pass
+
+    # Code that uses the default backend here
+    ```
+    """
+
+    def __init__(self, target_backend: Literal["numpy", "torch"]):
+        self.target_backend = target_backend
+
+    def __enter__(self):
+        self.stashed_backend = get_backend()
+        set_backend(self.target_backend)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        set_backend(self.stashed_backend)
+
+
 def with_auto_backend(func):
     """
     Automatic backend selection for camtools functions.
