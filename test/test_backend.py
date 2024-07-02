@@ -20,17 +20,32 @@ def concat_tensors(x: Float[Tensor, "..."], y: Float[Tensor, "..."]):
     return ivy.concat([x, y], axis=0)
 
 
-def test_no_tensor_default_backend():
+def test_no_tensor_default_backend_numpy():
     """
     Test the default backend when no tensors are provided.
     """
-    ct.backend.set_backend("numpy")  # Set default backend to numpy
-    # This should use the default backend as no tensors are involved
     result = concat_tensors([1, 2, 3], [4, 5, 6])
     assert isinstance(result, np.ndarray), "Expected numpy array with no tensor inputs."
     assert np.array_equal(
         result, np.array([1, 2, 3, 4, 5, 6])
     ), "Array contents mismatch."
+
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_no_tensor_default_backend_torch():
+    """
+    Test the default backend when no tensors are provided.
+    """
+    import torch
+
+    with ct.backend.ScopedBackend("torch"):
+        result = concat_tensors([1, 2, 3], [4, 5, 6])
+        assert isinstance(
+            result, torch.Tensor
+        ), "Expected torch tensor with no tensor inputs."
+    assert torch.equal(
+        result, torch.tensor([1, 2, 3, 4, 5, 6])
+    ), "Tensor contents mismatch."
 
 
 def test_pure_list_as_tensor():
