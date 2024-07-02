@@ -142,30 +142,30 @@ def test_container_of_tensors_torch():
     assert torch.equal(result, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
 
-# @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-# def test_container_mix_numpy_torch_v1():
-#     """
-#     Test error handling with mixed tensor types across containers.
-#     """
-#     import torch
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_container_mix_numpy_torch_v1():
+    """
+    Test error handling with mixed tensor types across containers.
+    """
+    import torch
 
-#     x = [np.array(1.0), np.array(2.0), np.array(3.0)]
-#     y = [torch.tensor(4.0), torch.tensor(5.0), torch.tensor(6.0)]
-#     with pytest.raises(TypeError, match=r".*must be from the same backend.*"):
-#         concat_tensors(x, y)
+    x = [np.array(1.0), np.array(2.0), np.array(3.0)]
+    y = [torch.tensor(4.0), torch.tensor(5.0), torch.tensor(6.0)]
+    with pytest.raises(TypeError, match=r".*must be from the same backend.*"):
+        concat_tensors(x, y)
 
 
-# @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-# def test_container_mix_numpy_torch_v2():
-#     """
-#     Test error handling with mixed tensor types across containers.
-#     """
-#     import torch
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_container_mix_numpy_torch_v2():
+    """
+    Test error handling with mixed tensor types across containers.
+    """
+    import torch
 
-#     x = [np.array(1.0), np.array(2.0), np.array(3.0)]
-#     y = [np.array(4.0), np.array(5.0), torch.tensor(6.0)]
-#     with pytest.raises(TypeError, match=r".*must be from the same backend.*"):
-#         concat_tensors(x, y)
+    x = [np.array(1.0), np.array(2.0), np.array(3.0)]
+    y = [np.array(4.0), np.array(5.0), torch.tensor(6.0)]
+    with pytest.raises(TypeError, match=r".*must be from the same backend.*"):
+        concat_tensors(x, y)
 
 
 # # Additional tests to cover diverse containers and type annotation scenarios
