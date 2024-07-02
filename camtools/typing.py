@@ -10,21 +10,6 @@ import pkg_resources
 
 from . import backend
 
-try:
-    # Try to import _FixedDim and _NamedDim from jaxtyping. This are internal
-    # classes where the APIs are not stable. There are no guarantees that these
-    # classes will be available in future versions of jaxtyping.
-    _jaxtyping_version = pkg_resources.get_distribution("jaxtyping").version
-    if LooseVersion(_jaxtyping_version) >= LooseVersion("0.2.20"):
-        from jaxtyping._array_types import _FixedDim, _NamedDim
-    else:
-        from jaxtyping.array_types import _FixedDim, _NamedDim
-except ImportError:
-    raise ImportError(
-        f"Failed to import _FixedDim and _NamedDim. with "
-        f"jaxtyping version {_jaxtyping_version}."
-    )
-
 
 class Tensor:
     """
@@ -70,17 +55,15 @@ def _dtype_to_str(dtype):
     return ValueError(f"Unknown dtype {dtype}.")
 
 
-def _shape_from_dims(
-    dims: Tuple[
-        Union[_FixedDim, _NamedDim],
-        ...,
-    ]
-) -> Tuple[Union[int, None], ...]:
+def _shape_from_dim_str(dim_str: str) -> Tuple[Union[int, None, str], ...]:
     shape = []
-    for dim in dims:
-        if isinstance(dim, _FixedDim):
-            shape.append(dim.size)
-        elif isinstance(dim, _NamedDim):
+    elements = dim_str.split()
+    for elem in elements:
+        if elem == "...":
+            shape.append("...")
+        elif elem.isdigit():
+            shape.append(int(elem))
+        else:
             shape.append(None)
     return tuple(shape)
 
@@ -123,7 +106,7 @@ def _assert_tensor_hint(
         )
 
     # Check shapes.
-    gt_shape = _shape_from_dims(hint.dims)
+    gt_shape = _shape_from_dim_str(hint.dim_str)
     if not _is_shape_compatible(arg.shape, gt_shape):
         raise TypeError(
             f"{arg_name} must be a tensor of shape {gt_shape}, "
