@@ -69,16 +69,35 @@ def _shape_from_dim_str(dim_str: str) -> Tuple[Union[int, None, str], ...]:
 
 
 def _is_shape_compatible(
-    arg_shape: Tuple[Union[int, None], ...],
-    gt_shape: Tuple[Union[int, None], ...],
+    arg_shape: Tuple[Union[int, None, str], ...],
+    gt_shape: Tuple[Union[int, None, str], ...],
 ) -> bool:
-    if len(arg_shape) != len(gt_shape):
-        return False
+    if "..." in gt_shape:
+        if len(arg_shape) < len(gt_shape) - 1:
+            return False
+        # We only support one ellipsis
+        if gt_shape.count("...") > 1:
+            raise ValueError(
+                "Only one ellipsis is supported in the shape hint for now."
+            )
 
-    return all(
-        arg_dim == gt_dim or gt_dim is None
-        for arg_dim, gt_dim in zip(arg_shape, gt_shape)
-    )
+        # Compare dimensions before and after the ellipsis
+        pre_ellipsis = gt_shape.index("...")
+        post_ellipsis = len(gt_shape) - pre_ellipsis - 1
+        return all(
+            arg_shape[i] == gt_shape[i] or gt_shape[i] is None
+            for i in range(pre_ellipsis)
+        ) and all(
+            arg_shape[-i - 1] == gt_shape[-i - 1] or gt_shape[-i - 1] is None
+            for i in range(post_ellipsis)
+        )
+    else:
+        if len(arg_shape) != len(gt_shape):
+            return False
+        return all(
+            arg_dim == gt_dim or gt_dim is None
+            for arg_dim, gt_dim in zip(arg_shape, gt_shape)
+        )
 
 
 def _assert_tensor_hint(
