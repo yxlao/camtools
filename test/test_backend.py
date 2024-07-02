@@ -25,9 +25,9 @@ def test_default_backend_numpy():
     """
     Test the default backend when no tensors are provided.
     """
-    result = concat_tensors([1, 2, 3], [4, 5, 6])
+    result = concat_tensors([1.0, 2.0, 3.0], [4.0, 5.0, 6.0])
     assert isinstance(result, np.ndarray)
-    assert np.array_equal(result, np.array([1, 2, 3, 4, 5, 6]))
+    assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
 
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
@@ -38,9 +38,10 @@ def test_default_backend_torch():
     import torch
 
     with ct.backend.ScopedBackend("torch"):
-        result = concat_tensors([1, 2, 3], [4, 5, 6])
-        assert isinstance(result, torch.Tensor)
-    assert torch.equal(result, torch.tensor([1, 2, 3, 4, 5, 6]))
+        result = concat_tensors([1.0, 2.0, 3.0], [4.0, 5.0, 6.0])
+
+    assert isinstance(result, torch.Tensor)
+    assert torch.equal(result, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
 
 def test_pure_list_as_tensor_numpy():

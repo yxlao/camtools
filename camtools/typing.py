@@ -120,7 +120,7 @@ def _assert_tensor_hint(
         valid_array_types = (np.ndarray,)
     if not isinstance(arg, valid_array_types):
         raise TypeError(
-            f"{arg_name} must be a tensor of type {valid_array_types}, "
+            f"{arg_name} must be of type {valid_array_types}, "
             f"but got type {type(arg)}."
         )
 
@@ -128,15 +128,14 @@ def _assert_tensor_hint(
     gt_shape = _shape_from_dim_str(hint.dim_str)
     if not _is_shape_compatible(arg.shape, gt_shape):
         raise TypeError(
-            f"{arg_name} must be a tensor of shape {gt_shape}, "
-            f"but got shape {arg.shape}."
+            f"{arg_name} must be of shape {gt_shape}, but got shape {arg.shape}."
         )
 
     # Check dtype.
     gt_dtypes = hint.dtypes
     if _dtype_to_str(arg.dtype) not in gt_dtypes:
         raise TypeError(
-            f"{arg_name} must be a tensor of dtype {gt_dtypes}, "
+            f"{arg_name} must be of dtype {gt_dtypes}, "
             f"but got dtype {_dtype_to_str(arg.dtype)}."
         )
 
