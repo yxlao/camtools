@@ -10,21 +10,6 @@ import pkg_resources
 
 from . import backend
 
-try:
-    # Try to import _FixedDim and _NamedDim from jaxtyping. This are internal
-    # classes where the APIs are not stable. There are no guarantees that these
-    # classes will be available in future versions of jaxtyping.
-    _jaxtyping_version = pkg_resources.get_distribution("jaxtyping").version
-    if LooseVersion(_jaxtyping_version) >= LooseVersion("0.2.20"):
-        from jaxtyping._array_types import _FixedDim, _NamedDim
-    else:
-        from jaxtyping.array_types import _FixedDim, _NamedDim
-except ImportError:
-    raise ImportError(
-        f"Failed to import _FixedDim and _NamedDim. with "
-        f"jaxtyping version {_jaxtyping_version}."
-    )
-
 
 class Tensor:
     """
@@ -70,32 +55,49 @@ def _dtype_to_str(dtype):
     return ValueError(f"Unknown dtype {dtype}.")
 
 
-def _shape_from_dims(
-    dims: Tuple[
-        Union[_FixedDim, _NamedDim],
-        ...,
-    ]
-) -> Tuple[Union[int, None], ...]:
+def _shape_from_dim_str(dim_str: str) -> Tuple[Union[int, None, str], ...]:
     shape = []
-    for dim in dims:
-        if isinstance(dim, _FixedDim):
-            shape.append(dim.size)
-        elif isinstance(dim, _NamedDim):
+    elements = dim_str.split()
+    for elem in elements:
+        if elem == "...":
+            shape.append("...")
+        elif elem.isdigit():
+            shape.append(int(elem))
+        else:
             shape.append(None)
     return tuple(shape)
 
 
 def _is_shape_compatible(
-    arg_shape: Tuple[Union[int, None], ...],
-    gt_shape: Tuple[Union[int, None], ...],
+    arg_shape: Tuple[Union[int, None, str], ...],
+    gt_shape: Tuple[Union[int, None, str], ...],
 ) -> bool:
-    if len(arg_shape) != len(gt_shape):
-        return False
+    if "..." in gt_shape:
+        if len(arg_shape) < len(gt_shape) - 1:
+            return False
+        # We only support one ellipsis for now
+        if gt_shape.count("...") > 1:
+            raise ValueError(
+                "Only one ellipsis is supported in the shape hint for now."
+            )
 
-    return all(
-        arg_dim == gt_dim or gt_dim is None
-        for arg_dim, gt_dim in zip(arg_shape, gt_shape)
-    )
+        # Compare dimensions before and after the ellipsis
+        pre_ellipsis = gt_shape.index("...")
+        post_ellipsis = len(gt_shape) - pre_ellipsis - 1
+        return all(
+            arg_shape[i] == gt_shape[i] or gt_shape[i] is None
+            for i in range(pre_ellipsis)
+        ) and all(
+            arg_shape[-i - 1] == gt_shape[-i - 1] or gt_shape[-i - 1] is None
+            for i in range(post_ellipsis)
+        )
+    else:
+        if len(arg_shape) != len(gt_shape):
+            return False
+        return all(
+            arg_dim == gt_dim or gt_dim is None
+            for arg_dim, gt_dim in zip(arg_shape, gt_shape)
+        )
 
 
 def _assert_tensor_hint(
@@ -118,23 +120,22 @@ def _assert_tensor_hint(
         valid_array_types = (np.ndarray,)
     if not isinstance(arg, valid_array_types):
         raise TypeError(
-            f"{arg_name} must be a tensor of type {valid_array_types}, "
+            f"{arg_name} must be of type {valid_array_types}, "
             f"but got type {type(arg)}."
         )
 
     # Check shapes.
-    gt_shape = _shape_from_dims(hint.dims)
+    gt_shape = _shape_from_dim_str(hint.dim_str)
     if not _is_shape_compatible(arg.shape, gt_shape):
         raise TypeError(
-            f"{arg_name} must be a tensor of shape {gt_shape}, "
-            f"but got shape {arg.shape}."
+            f"{arg_name} must be of shape {gt_shape}, but got shape {arg.shape}."
         )
 
     # Check dtype.
     gt_dtypes = hint.dtypes
     if _dtype_to_str(arg.dtype) not in gt_dtypes:
         raise TypeError(
-            f"{arg_name} must be a tensor of dtype {gt_dtypes}, "
+            f"{arg_name} must be of dtype {gt_dtypes}, "
             f"but got dtype {_dtype_to_str(arg.dtype)}."
         )
 
