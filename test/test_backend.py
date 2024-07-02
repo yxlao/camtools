@@ -16,6 +16,7 @@ def is_torch_available():
 
 
 @ct.backend.with_auto_backend
+@ct.typing.check_shape_and_dtype
 def concat_tensors(x: Float[Tensor, "..."], y: Float[Tensor, "..."]):
     return ivy.concat([x, y], axis=0)
 
