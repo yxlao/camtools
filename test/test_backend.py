@@ -73,43 +73,73 @@ def test_pure_list_as_tensor_torch():
         assert isinstance(result, torch.Tensor)
 
 
-def test_mix_list_and_tensor_types_numpy():
+def test_mix_list_and_numpy():
     """
     Test handling of mixed list and tensor types.
     """
-    numpy_data = np.array([1, 2, 3])
-    list_data = [4, 5, 6]
+    numpy_data = np.array([1.0, 2.0, 3.0])
+    list_data = [4.0, 5.0, 6.0]
     result = concat_tensors(numpy_data, list_data)
     assert isinstance(result, np.ndarray)
-    assert np.array_equal(result, np.array([1, 2, 3, 4, 5, 6]))
+    assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
 
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-def test_mixed_tensor_types():
+def test_mix_list_and_torch():
+    """
+    Test handling of mixed list and tensor types.
+    """
+    import torch
+
+    numpy_data = np.array([1.0, 2.0, 3.0])
+    list_data = [4.0, 5.0, 6.0]
+
+    with ct.backend.ScopedBackend("torch"):
+        result = concat_tensors(numpy_data, list_data)
+
+    assert isinstance(result, torch.Tensor)
+    assert torch.equal(result, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_mix_numpy_and_torch():
     """
     Test error handling with mixed tensor types across arguments.
     """
     import torch
 
-    numpy_data = np.array([1, 2, 3])
-    torch_data = torch.tensor([4, 5, 6])
-    with pytest.raises(TypeError):
+    numpy_data = np.array([1.0, 2.0, 3.0])
+    torch_data = torch.tensor([4.0, 5.0, 6.0])
+    with pytest.raises(TypeError, match=r".*must be from the same backend.*"):
         concat_tensors(numpy_data, torch_data)
 
 
-def test_container_of_tensors():
+def test_container_of_tensors_numpy():
     """
     Test handling of containers holding tensors from different backends.
     """
-    if is_torch_available():
-        import torch
 
-        numpy_data = [np.array([1, 2, 3]), np.array([4, 5, 6])]
-        torch_data = [torch.tensor([1, 2, 3]), torch.tensor([4, 5, 6])]
+    x = [np.array(1.0), np.array(2.0), np.array(3.0)]
+    y = [np.array(4.0), np.array(5.0), np.array(6.0)]
+    result = concat_tensors(x, y)
+    assert isinstance(result, np.ndarray)
+    assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
-        # Tensors from different backends are mixed in containers
-        with pytest.raises(TypeError):
-            concat_tensors(numpy_data, torch_data)
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_container_of_tensors_torch():
+    """
+    Test handling of containers holding tensors from different backends.
+    """
+    import torch
+
+    x = [torch.tensor(1.0), torch.tensor(2.0), torch.tensor(3.0)]
+    y = [torch.tensor(4.0), torch.tensor(5.0), torch.tensor(6.0)]
+    with ct.backend.ScopedBackend("torch"):
+        result = concat_tensors(x, y)
+
+    assert isinstance(result, torch.Tensor)
+    assert torch.equal(result, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
 
 def test_ivy_array_mode():
