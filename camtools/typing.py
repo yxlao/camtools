@@ -75,7 +75,7 @@ def _is_shape_compatible(
     if "..." in gt_shape:
         if len(arg_shape) < len(gt_shape) - 1:
             return False
-        # We only support one ellipsis
+        # We only support one ellipsis for now
         if gt_shape.count("...") > 1:
             raise ValueError(
                 "Only one ellipsis is supported in the shape hint for now."
