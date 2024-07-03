@@ -159,12 +159,11 @@ def with_tensor_auto_backend(func):
                 with ivy.ArrayMode(False):
                     # Convert list -> native tensor if the type hint is a tensor
                     for arg_name, arg in bound_args.arguments.items():
-                        hint = typing.get_type_hints(func)[arg_name]
                         if (
                             arg_name in typing.get_type_hints(func)
-                            and inspect.isclass(hint)
+                            and inspect.isclass(typing.get_type_hints(func)[arg_name])
                             and issubclass(
-                                hint,
+                                typing.get_type_hints(func)[arg_name],
                                 jaxtyping.AbstractArray,
                             )
                             and isinstance(arg, list)
