@@ -120,10 +120,11 @@ class ScopedBackend:
 
 def tensor_auto_backend(func):
     """
-    Automatic backend selection based on the backend of type-annotated input tensors.
-    If there are no tensors, or if the tensors do not have the necessary type annotations,
-    the default backend is used. The function targets specifically jaxtyping.AbstractArray
-    annotations to determine tensor treatment and backend usage.
+    Automatic backend selection based on the backend of type-annotated input
+    tensors. If there are no tensors, or if the tensors do not have the
+    necessary type annotations, the default backend is used. The function
+    targets specifically jaxtyping.AbstractArray annotations to determine tensor
+    treatment and backend usage.
 
     Detailed behaviors:
     1. Only processes input arguments that are explicitly typed as
@@ -220,13 +221,14 @@ def tensor_auto_backend(func):
         else:
             raise ValueError(f"Unsupported backend {backend}.")
 
-    def _update_bound_args_to_backend(
+    def _convert_bound_args_to_backend(
         bound_args: inspect.BoundArguments,
         arg_name_to_hint: Dict[str, Any],
         backend: str,
     ):
         """
         Update the bound_args inplace to convert tensors to the specified backend.
+        The bound_args is also returned for convenience.
         """
         for arg_name, arg in bound_args.arguments.items():
             if (
@@ -237,6 +239,7 @@ def tensor_auto_backend(func):
                 bound_args.arguments[arg_name] = _convert_tensor_to_backend(
                     arg, backend
                 )
+        return bound_args
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -257,7 +260,7 @@ def tensor_auto_backend(func):
             warnings.simplefilter("ignore", category=UserWarning)
             with ivy.ArrayMode(False):
                 # Convert list/tensor -> native tensor
-                _update_bound_args_to_backend(
+                bound_args = _convert_bound_args_to_backend(
                     bound_args,
                     arg_name_to_hint,
                     arg_backend,
