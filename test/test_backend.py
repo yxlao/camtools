@@ -33,6 +33,36 @@ def test_default_backend_torch():
     assert torch.equal(result, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
 
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_auto_backend_numpy_to_torch():
+    """
+    When default backend is numpy, and tensors from torch is provided,
+    the tensor_auto_backend should switch to torch backend.
+    """
+    x = torch.tensor([1.0, 2.0, 3.0])
+    y = torch.tensor([4.0, 5.0, 6.0])
+    with ct.backend.ScopedBackend("numpy"):
+        result = concat_tensors(x, y)
+
+    assert isinstance(result, torch.Tensor)
+    assert torch.equal(result, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_auto_backend_torch_to_numpy():
+    """
+    When default backend is torch, and tensors from numpy is provided,
+    the tensor_auto_backend should switch to numpy backend.
+    """
+    x = np.array([1.0, 2.0, 3.0])
+    y = np.array([4.0, 5.0, 6.0])
+    with ct.backend.ScopedBackend("torch"):
+        result = concat_tensors(x, y)
+
+    assert isinstance(result, np.ndarray)
+    assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+
 def test_pure_list_as_tensor_numpy():
     """
     Test handling of pure Python lists annotated as tensor type.
@@ -414,3 +444,121 @@ def test_named_dim_torch():
     with pytest.raises(TypeError, match=r".*but got dtype.*"):
         y_wrong = [[4, 5, 6], [7, 8, 9]]  # int type elements in list
         add(x, y_wrong)
+
+
+def test_concat_tensors_with_numpy():
+    @ct.backend.tensor_numpy_backend
+    def concat_tensors_with_numpy(
+        x: Float[ct.backend.Tensor, "..."],
+        y: Float[ct.backend.Tensor, "..."],
+    ):
+        assert isinstance(x, np.ndarray)
+        assert isinstance(y, np.ndarray)
+        return np.concatenate([x, y], axis=0)
+
+    # Test with numpy arrays
+    x = np.array([1.0, 2.0, 3.0])
+    y = np.array([4.0, 5.0, 6.0])
+    result = concat_tensors_with_numpy(x, y)
+    assert isinstance(result, np.ndarray)
+    assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+    # Test with torch tensors
+    if is_torch_available():
+        x = torch.tensor([1.0, 2.0, 3.0])
+        y = torch.tensor([4.0, 5.0, 6.0])
+        result = concat_tensors_with_numpy(x, y)
+        assert isinstance(result, np.ndarray)
+        assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+        # Even setting the backend to torch should not affect the function
+        with ct.backend.ScopedBackend("torch"):
+            result = concat_tensors_with_numpy(x, y)
+            assert isinstance(result, np.ndarray)
+            assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+    # Test with lists
+    x = [1.0, 2.0, 3.0]
+    y = [4.0, 5.0, 6.0]
+    result = concat_tensors_with_numpy(x, y)
+    assert isinstance(result, np.ndarray)
+    assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+    # Numpy and list mixed
+    x = np.array([1.0, 2.0, 3.0])
+    y = [4.0, 5.0, 6.0]
+    result = concat_tensors_with_numpy(x, y)
+    assert isinstance(result, np.ndarray)
+    assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+    # Torch and list mixed
+    if is_torch_available():
+        x = torch.tensor([1.0, 2.0, 3.0])
+        y = [4.0, 5.0, 6.0]
+        result = concat_tensors_with_numpy(x, y)
+        assert isinstance(result, np.ndarray)
+        assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+        # Even setting the backend to torch should not affect the function
+        with ct.backend.ScopedBackend("torch"):
+            result = concat_tensors_with_numpy(x, y)
+            assert isinstance(result, np.ndarray)
+            assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_concat_tensors_with_torch():
+    @ct.backend.tensor_torch_backend
+    def concat_tensors_with_torch(
+        x: Float[ct.backend.Tensor, "..."],
+        y: Float[ct.backend.Tensor, "..."],
+    ):
+        assert isinstance(x, torch.Tensor)
+        assert isinstance(y, torch.Tensor)
+        return torch.cat([x, y], axis=0)
+
+    # Test with numpy arrays
+    x_np = np.array([1.0, 2.0, 3.0])
+    y_np = np.array([4.0, 5.0, 6.0])
+    result_np = concat_tensors_with_torch(x_np, y_np)
+    assert isinstance(result_np, torch.Tensor)
+    assert torch.allclose(result_np, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+    # Test with torch tensors
+    x_torch = torch.tensor([1.0, 2.0, 3.0])
+    y_torch = torch.tensor([4.0, 5.0, 6.0])
+    result_torch = concat_tensors_with_torch(x_torch, y_torch)
+    assert isinstance(result_torch, torch.Tensor)
+    assert torch.equal(result_torch, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+    # Test with lists
+    x_list = [1.0, 2.0, 3.0]
+    y_list = [4.0, 5.0, 6.0]
+    result_list = concat_tensors_with_torch(x_list, y_list)
+    assert isinstance(result_list, torch.Tensor)
+    assert torch.allclose(result_list, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+    # Mixed types: numpy array and list
+    x_mixed = np.array([1.0, 2.0, 3.0])
+    y_mixed = [4.0, 5.0, 6.0]
+    result_mixed = concat_tensors_with_torch(x_mixed, y_mixed)
+    assert isinstance(result_mixed, torch.Tensor)
+    assert torch.allclose(result_mixed, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+    # Mixed types: torch tensor and list
+    x_mixed_torch = torch.tensor([1.0, 2.0, 3.0])
+    y_mixed_list = [4.0, 5.0, 6.0]
+    result_mixed_torch_list = concat_tensors_with_torch(x_mixed_torch, y_mixed_list)
+    assert isinstance(result_mixed_torch_list, torch.Tensor)
+    assert torch.allclose(
+        result_mixed_torch_list, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
+    )
+
+    # Testing within a different backend scope
+    if ct.backend.is_torch_available():
+        with ct.backend.ScopedBackend("numpy"):
+            result_scope = concat_tensors_with_torch(x_torch, y_torch)
+            assert isinstance(result_scope, torch.Tensor)
+            assert torch.equal(
+                result_scope, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
+            )
