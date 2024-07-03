@@ -4,7 +4,7 @@ import typing
 import warnings
 from functools import lru_cache, wraps
 from inspect import signature
-from typing import Any, Literal, Tuple, Union
+from typing import Any, Literal, Tuple, Union, Dict, List
 
 import jaxtyping
 import numpy as np
@@ -120,109 +120,152 @@ class ScopedBackend:
 
 def tensor_auto_backend(func):
     """
-    Automatic backend selection for type-annotated input tensors. The wrapped
-    function will attempt to run the function based on the backend of the input
-    tensors. If there are no input tensors, the default backend is used.
+    Automatic backend selection based on the backend of type-annotated input tensors.
+    If there are no tensors, or if the tensors do not have the necessary type annotations,
+    the default backend is used. The function targets specifically jaxtyping.AbstractArray
+    annotations to determine tensor treatment and backend usage.
 
     Detailed behaviors:
-    1. This wrapper will only process input arguments with type hints that are
-       tensors (jaxtyping.AbstractArray). The type hints must be exactly
-       jaxtyping.AbstractArray, and not a container of tensors. For example,
-       Float[Tensor, "..."] will be handled, while List[Float[Tensor, "..."]]
-       will not be handled. Untyped arguments or arguments with type hints will
-       maintain their default behavior.
-    2. If am argument's type hint is jaxtyping.AbstractArray, the argument
-       value must be one of np.ndarray, torch.Tensor, or a (nested) list of
-       {np.ndarray, torch.Tensor, Python numerical values). Other argument
-       values will raise an error.
-    3. This wrapper will attempt to convert Python lists to tensors if the type
-       hint says it should be a tensor with jaxtyping.
-    4. If the function arguments contain at least one numpy or torch tensor,
-       the corresponding backend is used for internal computation and return
-       value. The arguments can only contain tensors from one backend, including
-       tensors in nested lists, otherwise an error will be raised.
-    5. If the function arguments contain no tensors, the default backend is used.
-       This can happen when there are no arguments with type hints of
-       jaxtyping.AbstractArray, or when all argument values with type hints of
-       jaxtyping.AbstractArray are not tensors (e.g. a list of Python numerical
-       values).
+    1. Only processes input arguments that are explicitly typed as
+       jaxtyping.AbstractArray. Arguments without this type hint or with
+       different annotations maintain their default behavior without backend
+       modification.
+    2. Supports handling of numpy.ndarray, torch.Tensor, and Python lists that
+       should be converted to tensors based on their type hints.
+    3. If the type hint is jaxtyping.AbstractArray and the argument is a list,
+       the list will be converted to a tensor using the native array
+       functionality of the active backend.
+    4. Ensures all tensor arguments must be from the same backend to avoid
+       conflicts.
+    5. Uses the default backend if no tensors are present or if the tensors do
+       not require specific backend handling based on their annotations.
     """
 
-    def _collect_tensors(item: Any) -> list:
+    def _collect_tensors(args: List[Any]) -> List[Any]:
         """
-        Recursively collects tensors from nested iterable structures.
-        The function splits logic based on whether PyTorch is available.
+        Recursively collects np.ndarray and torch.Tensor objects. Other types
+        including lists are ignored. Processing lists can be slow, as we need
+        to check each element for tensors.
         """
-        tensors = []
-        stack = [item]
-
         if is_torch_available():
             tensor_types = (np.ndarray, torch.Tensor)
         else:
             tensor_types = (np.ndarray,)
 
-        while stack:
-            current_item = stack.pop()
-            if isinstance(current_item, tensor_types):
-                tensors.append(current_item)
-            elif isinstance(current_item, collections.abc.Iterable) and not isinstance(
-                current_item, (str, bytes)
-            ):
-                stack.extend(current_item)
+        tensors = []
+        for arg in args:
+            if isinstance(arg, tensor_types):
+                tensors.append(arg)
 
         return tensors
 
-    def _determine_backend(tensors: list) -> str:
+    def _determine_backend(
+        arg_name_to_arg: Dict[str, Any],
+        arg_name_to_hint: Dict[str, Any],
+    ) -> str:
         """
-        Determines the backend based on the types of tensors found.
+        Also throws an error if the tensors are not from the same backend.
         """
+        tensor_annotated_args = []
+        for arg_name, hint in arg_name_to_hint.items():
+            if (
+                arg_name in arg_name_to_arg
+                and inspect.isclass(hint)
+                and issubclass(hint, jaxtyping.AbstractArray)
+            ):
+                arg = arg_name_to_arg[arg_name]
+                tensor_annotated_args.append(arg)
+
+        tensors = _collect_tensors(tensor_annotated_args)
+
         if not tensors:
             return get_backend()
-
-        if all(isinstance(t, np.ndarray) for t in tensors):
+        elif all(isinstance(t, np.ndarray) for t in tensors):
             return "numpy"
-        elif is_torch_available():
-            if all(isinstance(t, torch.Tensor) for t in tensors):
-                return "torch"
+        elif is_torch_available() and all(isinstance(t, torch.Tensor) for t in tensors):
+            return "torch"
+        else:
+            raise TypeError("All tensors must be from the same backend.")
 
-        raise TypeError("All tensors must be from the same backend.")
+    def _convert_tensor_to_backend(arg, backend):
+        """
+        Convert the tensor to the specified backend. It shall already be checked
+        that the arg is a tensor-like object, the tensor is type-annotated, and
+        the backend is valid.
+        """
+        if backend == "numpy":
+            if isinstance(arg, np.ndarray):
+                return arg
+            elif is_torch_available() and isinstance(arg, torch.Tensor):
+                return arg.detach().cpu().numpy()
+            elif isinstance(arg, list):
+                return np.array(arg)  # Handle dtypes?
+            else:
+                raise ValueError(
+                    f"Unsupported type {type(arg)} for conversion to numpy."
+                )
+        elif backend == "torch":
+            if not is_torch_available:
+                raise ValueError("Torch is not available.")
+            elif isinstance(arg, torch.Tensor):
+                return arg
+            elif isinstance(arg, np.ndarray):
+                return torch.from_numpy(arg)
+            elif isinstance(arg, list):
+                return torch.tensor(arg)
+            else:
+                raise ValueError(
+                    f"Unsupported type {type(arg)} for conversion to torch."
+                )
+        else:
+            raise ValueError(f"Unsupported backend {backend}.")
+
+    def _update_bound_args_to_backend(
+        bound_args: inspect.BoundArguments,
+        arg_name_to_hint: Dict[str, Any],
+        backend: str,
+    ):
+        """
+        Update the bound_args inplace to convert tensors to the specified backend.
+        """
+        for arg_name, arg in bound_args.arguments.items():
+            if (
+                arg_name in arg_name_to_hint
+                and inspect.isclass(arg_name_to_hint[arg_name])
+                and issubclass(arg_name_to_hint[arg_name], jaxtyping.AbstractArray)
+            ):
+                bound_args.arguments[arg_name] = _convert_tensor_to_backend(
+                    arg, backend
+                )
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        stashed_backend = ivy.current_backend()
-
-        # Unpack args and kwargs and collect all tensors
+        # Unpack args and hints
         sig = signature(func)
         bound_args = sig.bind(*args, **kwargs)
         bound_args.apply_defaults()
+        arg_name_to_arg = bound_args.arguments
+        arg_name_to_hint = typing.get_type_hints(func)
 
-        tensors = []
-        for arg in bound_args.arguments.values():
-            tensors.extend(_collect_tensors(arg))
-
-        arg_backend = _determine_backend(tensors)
+        # Determine backend
+        arg_backend = _determine_backend(arg_name_to_arg, arg_name_to_hint)
+        stashed_backend = ivy.current_backend()
         ivy.set_backend(arg_backend)
 
+        # Convert tensors to the backend
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             with ivy.ArrayMode(False):
-
-                # Convert list -> native tensor if the type hint is a tensor
-                for arg_name, arg in bound_args.arguments.items():
-                    if (
-                        arg_name in typing.get_type_hints(func)
-                        and inspect.isclass(typing.get_type_hints(func)[arg_name])
-                        and issubclass(
-                            typing.get_type_hints(func)[arg_name],
-                            jaxtyping.AbstractArray,
-                        )
-                        and isinstance(arg, list)
-                    ):
-                        bound_args.arguments[arg_name] = ivy.native_array(arg)
-
+                # Convert list/tensor -> native tensor
+                _update_bound_args_to_backend(
+                    bound_args,
+                    arg_name_to_hint,
+                    arg_backend,
+                )
                 # Call the function
                 result = func(*bound_args.args, **bound_args.kwargs)
 
+        # Reset backend
         ivy.set_backend(stashed_backend)
         return result
 
@@ -318,7 +361,6 @@ def tensor_type_check(func):
         sig = signature(func)
         bound_args = sig.bind(*args, **kwargs)
         bound_args.apply_defaults()
-
         arg_name_to_arg = bound_args.arguments
         arg_name_to_hint = typing.get_type_hints(func)
 

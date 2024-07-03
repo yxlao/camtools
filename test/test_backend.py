@@ -136,14 +136,37 @@ def test_container_mix_numpy_torch_v1():
 
 
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-def test_container_mix_numpy_torch_v2():
+def test_container_mix_numpy_torch_v2_numpy():
     """
-    Test error handling with mixed tensor types across containers.
+    Test handling with mixed tensor types across containers.
+
+    In this case as lists are not type-checked, we both x and y will be
+    converted to default backend's arrays internally. That is,
+    x <- np.array(x) and y <- np.array(y) are both valid operation.
     """
     x = [np.array(1.0), np.array(2.0), np.array(3.0)]
     y = [np.array(4.0), np.array(5.0), torch.tensor(6.0)]
-    with pytest.raises(TypeError, match=r".*must be from the same backend.*"):
-        concat_tensors(x, y)
+    result = concat_tensors(x, y)
+    assert isinstance(result, np.ndarray)
+    assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_container_mix_numpy_torch_v2_torch():
+    """
+    Test handling with mixed tensor types across containers.
+
+    In this case as lists are not type-checked, we both x and y will be
+    converted to default backend's arrays internally. That is,
+    x <- np.array(x) and y <- np.array(y) are both valid operation.
+    """
+    x = [torch.tensor(1.0), torch.tensor(2.0), torch.tensor(3.0)]
+    y = [torch.tensor(4.0), torch.tensor(5.0), np.array(6.0)]
+    with ct.backend.ScopedBackend("torch"):
+        result = concat_tensors(x, y)
+
+    assert isinstance(result, torch.Tensor)
+    assert torch.equal(result, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
 
 def test_creation_numpy():
