@@ -1,12 +1,11 @@
+import inspect
 import typing
-from distutils.version import LooseVersion
 from functools import wraps
 from inspect import signature
 from typing import Any, Tuple, Union
 
 import jaxtyping
 import numpy as np
-import pkg_resources
 
 from . import backend
 
@@ -140,9 +139,14 @@ def _assert_tensor_hint(
         )
 
 
-def check_shape_and_dtype(func):
+def check_tensor_shape_and_dtype(func):
     """
     A decorator to enforce type and shape specifications as per type hints.
+
+    The checks will only be performed if the tensor's type hint is exactly
+    jaxtyping.AbstractArray. If it is a container of tensors, the check will
+    not be performed. For example, Float[Tensor, "..."] will be checked, while
+    List[Float[Tensor, "..."]] will not be checked.
     """
 
     @wraps(func)
@@ -157,7 +161,7 @@ def check_shape_and_dtype(func):
         for arg_name, arg in arg_name_to_arg.items():
             if arg_name in arg_name_to_hint:
                 hint = arg_name_to_hint[arg_name]
-                if issubclass(hint, jaxtyping.AbstractArray):
+                if inspect.isclass(hint) and issubclass(hint, jaxtyping.AbstractArray):
                     _assert_tensor_hint(hint, arg, arg_name)
 
         return func(*args, **kwargs)

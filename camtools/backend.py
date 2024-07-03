@@ -4,8 +4,8 @@ import warnings
 from functools import lru_cache, wraps
 from inspect import signature
 from typing import Any, Literal, Union
+import inspect
 
-import ivy
 import jaxtyping
 import numpy as np
 
@@ -72,7 +72,7 @@ class ScopedBackend:
         set_backend(self.stashed_backend)
 
 
-def with_auto_backend(func):
+def with_tensor_auto_backend(func):
     """
     Automatic backend selection for camtools functions.
 
@@ -87,6 +87,11 @@ def with_auto_backend(func):
     3. This wrapper will attempt to convert Python lists to tensors if the type
        hint says it should be a tensor with jaxtyping.
     4. This wrapper will set ivy.ArrayMode(False) within the function context.
+    5. The automatic backend conversion is not recursive, meaning that the
+       backend selection is only based on the top-level arguments. If the type
+       hint is a container of tensors, the backend selection will not be applied
+       to the nested tensors. For example, Float[Tensor, "..."] will be handled,
+       while List[Float[Tensor, "..."]] will not be handled.
     """
 
     def _collect_tensors(item: Any) -> list:
@@ -154,10 +159,12 @@ def with_auto_backend(func):
                 with ivy.ArrayMode(False):
                     # Convert list -> native tensor if the type hint is a tensor
                     for arg_name, arg in bound_args.arguments.items():
+                        hint = typing.get_type_hints(func)[arg_name]
                         if (
                             arg_name in typing.get_type_hints(func)
+                            and inspect.isclass(hint)
                             and issubclass(
-                                typing.get_type_hints(func)[arg_name],
+                                hint,
                                 jaxtyping.AbstractArray,
                             )
                             and isinstance(arg, list)

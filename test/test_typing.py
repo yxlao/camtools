@@ -8,7 +8,7 @@ from camtools.typing import Tensor
 
 
 def test_creation_numpy():
-    @ct.backend.with_auto_backend
+    @ct.backend.with_tensor_auto_backend
     def creation():
         zeros = ivy.zeros([2, 3])
         return zeros
@@ -25,7 +25,7 @@ def test_creation_numpy():
 def test_creation_torch():
     import torch
 
-    @ct.backend.with_auto_backend
+    @ct.backend.with_tensor_auto_backend
     def creation():
         zeros = ivy.zeros([2, 3])
         return zeros
@@ -45,7 +45,7 @@ def test_creation_torch():
 
 
 def test_arguments_numpy():
-    @ct.backend.with_auto_backend
+    @ct.backend.with_tensor_auto_backend
     def add(x, y):
         return x + y
 
@@ -62,7 +62,7 @@ def test_arguments_numpy():
 def test_arguments_torch():
     import torch
 
-    @ct.backend.with_auto_backend
+    @ct.backend.with_tensor_auto_backend
     def add(x, y):
         return x + y
 
@@ -82,8 +82,8 @@ def test_arguments_torch():
 
 
 def test_type_hint_arguments_numpy():
-    @ct.backend.with_auto_backend
-    @ct.typing.check_shape_and_dtype
+    @ct.backend.with_tensor_auto_backend
+    @ct.typing.check_tensor_shape_and_dtype
     def add(
         x: Float[Tensor, "2 3"],
         y: Float[Tensor, "1 3"],
@@ -129,8 +129,8 @@ def test_type_hint_arguments_numpy():
 def test_type_hint_arguments_torch():
     import torch
 
-    @ct.backend.with_auto_backend
-    @ct.typing.check_shape_and_dtype
+    @ct.backend.with_tensor_auto_backend
+    @ct.typing.check_tensor_shape_and_dtype
     def add(
         x: Float[Tensor, "2 3"],
         y: Float[Tensor, "1 3"],
@@ -174,8 +174,8 @@ def test_type_hint_arguments_torch():
 
 
 def test_named_dim_numpy():
-    @ct.backend.with_auto_backend
-    @ct.typing.check_shape_and_dtype
+    @ct.backend.with_tensor_auto_backend
+    @ct.typing.check_tensor_shape_and_dtype
     def add(
         x: Float[Tensor, "3"],
         y: Float[Tensor, "n 3"],
@@ -220,8 +220,8 @@ def test_named_dim_numpy():
 def test_named_dim_torch():
     import torch
 
-    @ct.backend.with_auto_backend
-    @ct.typing.check_shape_and_dtype
+    @ct.backend.with_tensor_auto_backend
+    @ct.typing.check_tensor_shape_and_dtype
     def add(
         x: Float[Tensor, "3"],
         y: Float[Tensor, "n 3"],
