@@ -120,24 +120,32 @@ class ScopedBackend:
 
 def tensor_auto_backend(func):
     """
-    Automatic backend selection for camtools functions.
+    Automatic backend selection for type-annotated input tensors. The wrapped
+    function will attempt to run the function based on the backend of the input
+    tensors. If there are no input tensors, the default backend is used.
 
-    1. (Backend selection) If the function arguments does not contain any
-       tensors, or only contains pure Python list and type-annotated as tensor,
-       the default ct.get_backend() is used for internal computation and return
-       value.
-    2. (Backend selection) If the function arguments contains at least one
-       tensor, the corresponding backend is used for internal computation and
-       return value. The arguments can only contain tensors from one backend,
-       including tensors in nested lists, otherwise an error will be raised.
+    Detailed behaviors:
+    1. This wrapper will only process input arguments with type hints that are
+       tensors (jaxtyping.AbstractArray). The type hints must be exactly
+       jaxtyping.AbstractArray, and not a container of tensors. For example,
+       Float[Tensor, "..."] will be handled, while List[Float[Tensor, "..."]]
+       will not be handled. Untyped arguments or arguments with type hints will
+       maintain their default behavior.
+    2. If am argument's type hint is jaxtyping.AbstractArray, the argument
+       value must be one of np.ndarray, torch.Tensor, or a (nested) list of
+       {np.ndarray, torch.Tensor, Python numerical values). Other argument
+       values will raise an error.
     3. This wrapper will attempt to convert Python lists to tensors if the type
        hint says it should be a tensor with jaxtyping.
-    4. This wrapper will set ivy.ArrayMode(False) within the function context.
-    5. The automatic backend conversion is not recursive, meaning that the
-       backend selection is only based on the top-level arguments. If the type
-       hint is a container of tensors, the backend selection will not be applied
-       to the nested tensors. For example, Float[Tensor, "..."] will be handled,
-       while List[Float[Tensor, "..."]] will not be handled.
+    4. If the function arguments contain at least one numpy or torch tensor,
+       the corresponding backend is used for internal computation and return
+       value. The arguments can only contain tensors from one backend, including
+       tensors in nested lists, otherwise an error will be raised.
+    5. If the function arguments contain no tensors, the default backend is used.
+       This can happen when there are no arguments with type hints of
+       jaxtyping.AbstractArray, or when all argument values with type hints of
+       jaxtyping.AbstractArray are not tensors (e.g. a list of Python numerical
+       values).
     """
 
     def _collect_tensors(item: Any) -> list:
@@ -195,27 +203,101 @@ def tensor_auto_backend(func):
         arg_backend = _determine_backend(tensors)
         ivy.set_backend(arg_backend)
 
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", category=UserWarning)
-                with ivy.ArrayMode(False):
-                    # Convert list -> native tensor if the type hint is a tensor
-                    for arg_name, arg in bound_args.arguments.items():
-                        if (
-                            arg_name in typing.get_type_hints(func)
-                            and inspect.isclass(typing.get_type_hints(func)[arg_name])
-                            and issubclass(
-                                typing.get_type_hints(func)[arg_name],
-                                jaxtyping.AbstractArray,
-                            )
-                            and isinstance(arg, list)
-                        ):
-                            bound_args.arguments[arg_name] = ivy.native_array(arg)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
+            with ivy.ArrayMode(False):
 
-                    # Call the function
-                    result = func(*bound_args.args, **bound_args.kwargs)
-        finally:
-            ivy.set_backend(stashed_backend)
+                # Convert list -> native tensor if the type hint is a tensor
+                for arg_name, arg in bound_args.arguments.items():
+                    if (
+                        arg_name in typing.get_type_hints(func)
+                        and inspect.isclass(typing.get_type_hints(func)[arg_name])
+                        and issubclass(
+                            typing.get_type_hints(func)[arg_name],
+                            jaxtyping.AbstractArray,
+                        )
+                        and isinstance(arg, list)
+                    ):
+                        bound_args.arguments[arg_name] = ivy.native_array(arg)
+
+                # Call the function
+                result = func(*bound_args.args, **bound_args.kwargs)
+
+        ivy.set_backend(stashed_backend)
+        return result
+
+    return wrapper
+
+
+def tensor_numpy_backend(func):
+    """
+    Decorator to automatically convert input tensors to numpy arrays if they are
+    annotated as such using jaxtyping, regardless of their original backend.
+
+    Behavior:
+    1. Only converts arguments that are annotated explicitly with a jaxtyping
+       tensor type. If the type hint is a container of tensors, the conversion
+       will not be performed.
+    2. Supports conversion of lists into numpy arrays if they are intended to be
+       tensors, according to the function's type annotations.
+    3. The conversion is applied to top-level arguments and does not recursively
+       convert tensors within nested custom types (e.g., custom classes
+       containing tensors).
+    4. This decorator is particularly useful for functions requiring consistent
+       tensor handling specifically with numpy, ensuring compatibility and
+       simplifying operations that depend on numpy's functionality.
+
+    Note:
+    - The decorator inspects type annotations and applies conversions where
+      specified.
+    - Lists of tensors or tensors within lists annotated as tensors
+      will be converted to numpy arrays if not already in that format.
+    """
+
+    def _convert_to_numpy(item):
+        """
+        Recursively convert tensors to numpy arrays based on specified type.
+
+        Only handles list, numpy, and torch tensor types. Other types are
+        returned as is.
+        """
+        if isinstance(item, np.ndarray):
+            return item
+
+        if is_torch_available() and isinstance(item, torch.Tensor):
+            return item.detach().cpu().numpy()
+
+        if isinstance(item, list):
+            return [_convert_to_numpy(i) for i in item]
+
+        raise TypeError(f"Unsupported type {type(item)} for conversion to numpy.")
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        sig = signature(func)
+        bound_args = sig.bind(*args, **kwargs)
+        bound_args.apply_defaults()
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
+            with ivy.ArrayMode(False):
+                # - Convert list -> numpy array if the type hint is a tensor
+                # - Convert torch -> numpy array if the type hint is a tensor and
+                #   the input is a torch tensor
+                for arg_name, arg in bound_args.arguments.items():
+                    if (
+                        arg_name in typing.get_type_hints(func)
+                        and inspect.isclass(typing.get_type_hints(func)[arg_name])
+                        and issubclass(
+                            typing.get_type_hints(func)[arg_name],
+                            jaxtyping.AbstractArray,
+                        )
+                    ):
+                        bound_args.arguments[arg_name] = _convert_to_numpy(arg)
+
+                # Call the function
+                result = func(*bound_args.args, **bound_args.kwargs)
+
         return result
 
     return wrapper
@@ -234,7 +316,7 @@ def tensor_type_check(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         sig = signature(func)
-        bound_args = sig.bind_partial(*args, **kwargs)
+        bound_args = sig.bind(*args, **kwargs)
         bound_args.apply_defaults()
 
         arg_name_to_arg = bound_args.arguments
