@@ -118,7 +118,7 @@ class ScopedBackend:
         set_backend(self.stashed_backend)
 
 
-def tensor_auto_backend(func):
+def tensor_auto_backend(func, force_backend=None):
     """
     Automatic backend selection based on the backend of type-annotated input
     tensors. If there are no tensors, or if the tensors do not have the
@@ -140,6 +140,10 @@ def tensor_auto_backend(func):
        conflicts.
     5. Uses the default backend if no tensors are present or if the tensors do
        not require specific backend handling based on their annotations.
+    6. If force_backend is specified, the inferred backend from arguments
+       and type hints will be ignored, and the specified backend will be used
+       instead. Don't confuse this with the default backend as this takes
+       higher precedence.
     """
 
     def _collect_tensors(args: List[Any]) -> List[Any]:
@@ -251,7 +255,13 @@ def tensor_auto_backend(func):
         arg_name_to_hint = typing.get_type_hints(func)
 
         # Determine backend
-        arg_backend = _determine_backend(arg_name_to_arg, arg_name_to_hint)
+        if force_backend is None:
+            arg_backend = _determine_backend(arg_name_to_arg, arg_name_to_hint)
+        elif force_backend in ("numpy", "torch"):
+            arg_backend = force_backend
+        else:
+            raise ValueError(f"Unsupported forced backend {force_backend}.")
+
         stashed_backend = ivy.current_backend()
         ivy.set_backend(arg_backend)
 
@@ -300,67 +310,15 @@ def tensor_numpy_backend(func):
       specified.
     - Lists of tensors or tensors within lists annotated as tensors
       will be converted to numpy arrays if not already in that format.
+
+    This function simply wraps the tensor_auto_backend function with the
+    force_backend argument set to "numpy".
     """
-
-    def _convert_to_numpy(arg):
-        """
-        Convert an argument to a numpy array if it is a tensor or a list of
-        tensor-like values.
-        """
-        if isinstance(arg, np.ndarray):
-            return arg
-        elif is_torch_available() and isinstance(arg, torch.Tensor):
-            return arg.cpu().numpy()
-        elif isinstance(arg, list):
-            return np.array(arg)
-        else:
-            raise TypeError(f"Unsupported type {type(arg)} for conversion to numpy.")
-
-    def _apply_conversion(args, kwargs, type_hints):
-        """
-        Apply numpy conversion to arguments based on their type annotations.
-        """
-        new_args = []
-        for arg, hint in zip(args, type_hints):
-            if inspect.isclass(hint) and issubclass(hint, jaxtyping.AbstractArray):
-                new_args.append(_convert_to_numpy(arg))
-            else:
-                new_args.append(arg)
-
-        new_kwargs = {}
-        for key, arg in kwargs.items():
-            hint = type_hints.get(key)
-            if inspect.isclass(hint) and issubclass(hint, jaxtyping.AbstractArray):
-                new_kwargs[key] = _convert_to_numpy(arg)
-            else:
-                new_kwargs[key] = arg
-
-        return new_args, new_kwargs
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        sig = signature(func)
-        bound_args = sig.bind(*args, **kwargs)
-        bound_args.apply_defaults()
-
-        type_hints = typing.get_type_hints(func)
-        new_args, new_kwargs = _apply_conversion(
-            bound_args.args, bound_args.kwargs, type_hints
-        )
-
-        # Manage backend and suppress warnings
-        stashed_backend = ivy.current_backend()
-        ivy.set_backend("numpy")
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=UserWarning)
-            with ivy.ArrayMode(False):
-                result = func(*new_args, **new_kwargs)
-
-        # Reset backend after function execution
-        ivy.set_backend(stashed_backend)
-
-        return result
+        # Wrap the original function with tensor_auto_backend enforcing numpy.
+        return tensor_auto_backend(func, force_backend="numpy")(*args, **kwargs)
 
     return wrapper
 
@@ -390,67 +348,15 @@ def tensor_torch_backend(func):
       specified.
     - Lists of tensors or tensors within lists annotated as tensors
       will be converted to torch tensors if not already in that format.
+
+    This function simply wraps the tensor_auto_backend function with the
+    force_backend argument set to "torch".
     """
-
-    def _convert_to_torch(arg):
-        """
-        Convert an argument to a torch tensor if it is a tensor or a list of
-        tensor-like values.
-        """
-        if isinstance(arg, torch.Tensor):
-            return arg
-        elif isinstance(arg, np.ndarray):
-            return torch.from_numpy(arg)
-        elif isinstance(arg, list):
-            return torch.tensor(arg)
-        else:
-            raise TypeError(f"Unsupported type {type(arg)} for conversion to torch.")
-
-    def _apply_conversion(args, kwargs, type_hints):
-        """
-        Apply torch conversion to arguments based on their type annotations.
-        """
-        new_args = []
-        for arg, hint in zip(args, type_hints):
-            if inspect.isclass(hint) and issubclass(hint, jaxtyping.AbstractArray):
-                new_args.append(_convert_to_torch(arg))
-            else:
-                new_args.append(arg)
-
-        new_kwargs = {}
-        for key, arg in kwargs.items():
-            hint = type_hints.get(key)
-            if inspect.isclass(hint) and issubclass(hint, jaxtyping.AbstractArray):
-                new_kwargs[key] = _convert_to_torch(arg)
-            else:
-                new_kwargs[key] = arg
-
-        return new_args, new_kwargs
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        sig = signature(func)
-        bound_args = sig.bind(*args, **kwargs)
-        bound_args.apply_defaults()
-
-        type_hints = typing.get_type_hints(func)
-        new_args, new_kwargs = _apply_conversion(
-            bound_args.args, bound_args.kwargs, type_hints
-        )
-
-        # Manage backend and suppress warnings
-        stashed_backend = ivy.current_backend()
-        ivy.set_backend("torch")
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=UserWarning)
-            with ivy.ArrayMode(False):
-                result = func(*new_args, **new_kwargs)
-
-        # Reset backend after function execution
-        ivy.set_backend(stashed_backend)
-
-        return result
+        # Wrap the original function with tensor_auto_backend enforcing torch.
+        return tensor_auto_backend(func, force_backend="torch")(*args, **kwargs)
 
     return wrapper
 

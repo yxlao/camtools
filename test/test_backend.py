@@ -449,8 +449,8 @@ def test_named_dim_torch():
 def test_concat_tensors_with_numpy():
     @ct.backend.tensor_numpy_backend
     def concat_tensors_with_numpy(
-        x: Float[ct.backend.Tensor, "..."],
-        y: Float[ct.backend.Tensor, "..."],
+        x: Float[Tensor, "..."],
+        y: Float[Tensor, "..."],
     ):
         assert isinstance(x, np.ndarray)
         assert isinstance(y, np.ndarray)
@@ -510,16 +510,16 @@ def test_concat_tensors_with_numpy():
 def test_concat_tensors_with_torch():
     @ct.backend.tensor_torch_backend
     def concat_tensors_with_torch(
-        x: Float[ct.backend.Tensor, "..."],
-        y: Float[ct.backend.Tensor, "..."],
+        x: Float[Tensor, "..."],
+        y: Float[Tensor, "..."],
     ):
         assert isinstance(x, torch.Tensor)
         assert isinstance(y, torch.Tensor)
         return torch.cat([x, y], axis=0)
 
     # Test with numpy arrays
-    x_np = np.array([1.0, 2.0, 3.0])
-    y_np = np.array([4.0, 5.0, 6.0])
+    x_np = np.array([1.0, 2.0, 3.0]).astype(np.float32)
+    y_np = np.array([4.0, 5.0, 6.0]).astype(np.float32)
     result_np = concat_tensors_with_torch(x_np, y_np)
     assert isinstance(result_np, torch.Tensor)
     assert torch.allclose(result_np, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
@@ -539,7 +539,7 @@ def test_concat_tensors_with_torch():
     assert torch.allclose(result_list, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
     # Mixed types: numpy array and list
-    x_mixed = np.array([1.0, 2.0, 3.0])
+    x_mixed = np.array([1.0, 2.0, 3.0]).astype(np.float32)
     y_mixed = [4.0, 5.0, 6.0]
     result_mixed = concat_tensors_with_torch(x_mixed, y_mixed)
     assert isinstance(result_mixed, torch.Tensor)
