@@ -13,7 +13,7 @@ _default_backend = "numpy"
 
 
 @lru_cache(maxsize=None)
-def _safely_import_torch_before_open3d():
+def _safely_import_torch():
     """
     Open3D has an issue where it must be imported before torch. If Open3D is
     installed, this function will import Open3D before torch. Otherwise, it
@@ -29,24 +29,23 @@ def _safely_import_torch_before_open3d():
         module: The torch module if available, otherwise None.
     """
     try:
-        import open3d
+        __import__("open3d")
     except ImportError:
         pass
 
     try:
-        import torch
-
-        return torch
+        _torch = __import__("torch")
+        return _torch
     except ImportError:
         return None
 
 
-torch = _safely_import_torch_before_open3d()
+torch = _safely_import_torch()
 
 
 @lru_cache(maxsize=None)
 def is_torch_available():
-    return _safely_import_torch_before_open3d() is not None
+    return _safely_import_torch() is not None
 
 
 @lru_cache(maxsize=None)
@@ -150,8 +149,6 @@ def tensor_auto_backend(func):
         stack = [item]
 
         if is_torch_available():
-            import torch
-
             tensor_types = (np.ndarray, torch.Tensor)
         else:
             tensor_types = (np.ndarray,)
@@ -177,8 +174,6 @@ def tensor_auto_backend(func):
         if all(isinstance(t, np.ndarray) for t in tensors):
             return "numpy"
         elif is_torch_available():
-            import torch
-
             if all(isinstance(t, torch.Tensor) for t in tensors):
                 return "torch"
 
@@ -283,8 +278,6 @@ def _dtype_to_str(dtype):
         return dtype.name
 
     if is_torch_available():
-        import torch
-
         if isinstance(dtype, torch.dtype):
             return str(dtype).split(".")[1]
 
@@ -349,8 +342,6 @@ def _assert_tensor_hint(
     """
     # Check array types.
     if is_torch_available():
-        import torch
-
         valid_array_types = (np.ndarray, torch.Tensor)
     else:
         valid_array_types = (np.ndarray,)

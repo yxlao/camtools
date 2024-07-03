@@ -3,16 +3,7 @@ import pytest
 from jaxtyping import Float
 
 import camtools as ct
-from camtools.backend import Tensor, ivy
-
-
-def is_torch_available():
-    try:
-        import torch
-
-        return True
-    except ImportError:
-        return False
+from camtools.backend import Tensor, ivy, is_torch_available, torch
 
 
 @ct.backend.tensor_auto_backend
@@ -35,8 +26,6 @@ def test_default_backend_torch():
     """
     Test the default backend when no tensors are provided.
     """
-    import torch
-
     with ct.backend.ScopedBackend("torch"):
         result = concat_tensors([1.0, 2.0, 3.0], [4.0, 5.0, 6.0])
 
@@ -62,7 +51,6 @@ def test_pure_list_as_tensor_torch():
     """
     Test handling of pure Python lists annotated as tensor type.
     """
-    import torch
 
     @ct.backend.tensor_auto_backend
     def func(x: Float[Tensor, "..."]):
@@ -89,8 +77,6 @@ def test_mix_list_and_torch():
     """
     Test handling of mixed list and tensor types.
     """
-    import torch
-
     x = torch.tensor([1.0, 2.0, 3.0])
     y = [4.0, 5.0, 6.0]
 
@@ -106,8 +92,6 @@ def test_mix_numpy_and_torch():
     """
     Test error handling with mixed tensor types across arguments.
     """
-    import torch
-
     x = np.array([1.0, 2.0, 3.0])
     y = torch.tensor([4.0, 5.0, 6.0])
     with pytest.raises(TypeError, match=r".*must be from the same backend.*"):
@@ -131,8 +115,6 @@ def test_container_of_tensors_torch():
     """
     Test handling of containers holding tensors from different backends.
     """
-    import torch
-
     x = [torch.tensor(1.0), torch.tensor(2.0), torch.tensor(3.0)]
     y = torch.tensor([4.0, 5.0, 6.0])
     with ct.backend.ScopedBackend("torch"):
@@ -147,8 +129,6 @@ def test_container_mix_numpy_torch_v1():
     """
     Test error handling with mixed tensor types across containers.
     """
-    import torch
-
     x = np.array([1.0, 2.0, 3.0])
     y = torch.tensor([4.0, 5.0, 6.0])
     with pytest.raises(TypeError, match=r".*must be from the same backend.*"):
@@ -160,8 +140,6 @@ def test_container_mix_numpy_torch_v2():
     """
     Test error handling with mixed tensor types across containers.
     """
-    import torch
-
     x = [np.array(1.0), np.array(2.0), np.array(3.0)]
     y = [np.array(4.0), np.array(5.0), torch.tensor(6.0)]
     with pytest.raises(TypeError, match=r".*must be from the same backend.*"):
@@ -184,8 +162,6 @@ def test_creation_numpy():
 
 @pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
 def test_creation_torch():
-    import torch
-
     @ct.backend.tensor_auto_backend
     def creation():
         zeros = ivy.zeros([2, 3])
@@ -221,8 +197,6 @@ def test_arguments_numpy():
 
 @pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
 def test_arguments_torch():
-    import torch
-
     @ct.backend.tensor_auto_backend
     def add(x, y):
         return x + y
@@ -288,8 +262,6 @@ def test_type_hint_arguments_numpy():
 
 @pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
 def test_type_hint_arguments_torch():
-    import torch
-
     @ct.backend.tensor_auto_backend
     @ct.backend.tensor_type_check
     def add(
@@ -379,8 +351,6 @@ def test_named_dim_numpy():
 
 @pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
 def test_named_dim_torch():
-    import torch
-
     @ct.backend.tensor_auto_backend
     @ct.backend.tensor_type_check
     def add(
