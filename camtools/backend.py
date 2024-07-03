@@ -9,17 +9,65 @@ from typing import Any, Literal, Tuple, Union
 import jaxtyping
 import numpy as np
 
-# Internally use "from camtools.backend import ivy" to make sure ivy is imported
-# after the warnings filter is set. This is a temporary workaround to suppress
-# the deprecation warning from numpy 2.0.
-warnings.filterwarnings(
-    "ignore",
-    category=DeprecationWarning,
-    message=".*numpy.core.numeric is deprecated.*",
-)
-import ivy
-
 _default_backend = "numpy"
+
+
+@lru_cache(maxsize=None)
+def _safely_import_torch_before_open3d():
+    """
+    Open3D has an issue where it must be imported before torch. If Open3D is
+    installed, this function will import Open3D before torch. Otherwise, it
+    will return simply import and return torch.
+
+    Use this function to import torch within camtools to handle the Open3D
+    import order issue. That is, within camtools, we shall avoid `import torch`,
+    and instead use `from camtools.backend import torch`. As torch is an
+    optional dependency for camtools, this function will return None if torch
+    is not available.
+
+    Returns:
+        module: The torch module if available, otherwise None.
+    """
+    try:
+        import open3d
+    except ImportError:
+        pass
+
+    try:
+        import torch
+
+        return torch
+    except ImportError:
+        return None
+
+
+torch = _safely_import_torch_before_open3d()
+
+
+@lru_cache(maxsize=None)
+def is_torch_available():
+    return _safely_import_torch_before_open3d() is not None
+
+
+@lru_cache(maxsize=None)
+def _safely_import_ivy():
+    """
+    This function sets up the warnings filter to suppress the deprecation
+    before importing ivy. This is a temporary workaround to suppress the
+    deprecation warning from numpy 2.0.
+
+    Within camtools, we shall avoid `import ivy`, and instead use
+    `from camtools.backend import ivy`.
+    """
+    warnings.filterwarnings(
+        "ignore",
+        category=DeprecationWarning,
+        message=".*numpy.core.numeric is deprecated.*",
+    )
+    return __import__("ivy")
+
+
+ivy = _safely_import_ivy()
 
 
 class Tensor:
@@ -29,16 +77,6 @@ class Tensor:
     """
 
     pass
-
-
-@lru_cache(maxsize=None)
-def is_torch_available():
-    try:
-        import torch
-
-        return True
-    except ImportError:
-        return False
 
 
 def set_backend(backend: Literal["numpy", "torch"]) -> None:
