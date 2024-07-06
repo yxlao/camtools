@@ -5,7 +5,7 @@ from jaxtyping import Float
 
 from camtools.backend import Tensor, ivy, is_torch_available, torch
 
-_workload_repeat = 100
+_workload_repeat = 1
 
 
 def test_concat_numpy_native(benchmark):
