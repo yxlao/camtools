@@ -1,4 +1,3 @@
-import collections.abc
 import inspect
 import typing
 import warnings
@@ -60,8 +59,15 @@ def _safely_import_ivy():
     """
     warnings.filterwarnings(
         "ignore",
-        category=DeprecationWarning,
         message=".*numpy.core.numeric is deprecated.*",
+        category=DeprecationWarning,
+        module="ivy",
+    )
+    warnings.filterwarnings(
+        "ignore",
+        message=".*Compositional function.*array_mode is set to False.*",
+        category=UserWarning,
+        module="ivy",
     )
     return __import__("ivy")
 
@@ -266,17 +272,15 @@ def tensor_auto_backend(func, force_backend=None):
         ivy.set_backend(arg_backend)
 
         # Convert tensors to the backend
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=UserWarning)
-            with ivy.ArrayMode(False):
-                # Convert list/tensor -> native tensor
-                bound_args = _convert_bound_args_to_backend(
-                    bound_args,
-                    arg_name_to_hint,
-                    arg_backend,
-                )
-                # Call the function
-                result = func(*bound_args.args, **bound_args.kwargs)
+        with ivy.ArrayMode(False):
+            # Convert list/tensor -> native tensor
+            bound_args = _convert_bound_args_to_backend(
+                bound_args,
+                arg_name_to_hint,
+                arg_backend,
+            )
+            # Call the function
+            result = func(*bound_args.args, **bound_args.kwargs)
 
         # Reset backend
         ivy.set_backend(stashed_backend)

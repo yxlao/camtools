@@ -4,6 +4,17 @@ from jaxtyping import Float
 
 import camtools as ct
 from camtools.backend import Tensor, ivy, is_torch_available, torch
+import warnings
+
+
+@pytest.fixture(autouse=True)
+def ignore_ivy_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        message=".*Compositional function.*array_mode is set to False.*",
+        category=UserWarning,
+    )
+    yield
 
 
 @ct.backend.tensor_auto_backend
