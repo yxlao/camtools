@@ -15,7 +15,6 @@ def workload(x, y):
 
 
 @ct.backend.tensor_to_numpy_backend
-@ct.backend.tensor_type_check
 def _dot_with_decorator(
     x: Float[Tensor, "..."],
     y: Float[Tensor, "..."],

@@ -32,7 +32,6 @@ def test_concat_torch_to_numpy_manual(benchmark):
 def test_concat_torch_to_numpy_auto(benchmark):
 
     @ct.backend.tensor_to_numpy_backend
-    @ct.backend.tensor_type_check
     def concat(
         x: Float[Tensor, "..."],
         y: Float[Tensor, "..."],

@@ -18,7 +18,6 @@ def ignore_ivy_warnings():
 
 
 @ct.backend.tensor_to_auto_backend
-@ct.backend.tensor_type_check
 def concat(x: Float[Tensor, "..."], y: Float[Tensor, "..."]):
     return ivy.concat([x, y], axis=0)
 
@@ -153,7 +152,6 @@ def test_creation():
 
 def test_type_hint_arguments_numpy():
     @ct.backend.tensor_to_auto_backend
-    @ct.backend.tensor_type_check
     def add(
         x: Float[Tensor, "2 3"],
         y: Float[Tensor, "1 3"],
@@ -198,7 +196,6 @@ def test_type_hint_arguments_numpy():
 @pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
 def test_type_hint_arguments_torch():
     @ct.backend.tensor_to_auto_backend
-    @ct.backend.tensor_type_check
     def add(
         x: Float[Tensor, "2 3"],
         y: Float[Tensor, "1 3"],
@@ -241,7 +238,6 @@ def test_type_hint_arguments_torch():
 
 def test_named_dim_numpy():
     @ct.backend.tensor_to_auto_backend
-    @ct.backend.tensor_type_check
     def add(
         x: Float[Tensor, "3"],
         y: Float[Tensor, "n 3"],
@@ -285,7 +281,6 @@ def test_named_dim_numpy():
 @pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
 def test_named_dim_torch():
     @ct.backend.tensor_to_auto_backend
-    @ct.backend.tensor_type_check
     def add(
         x: Float[Tensor, "3"],
         y: Float[Tensor, "n 3"],

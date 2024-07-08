@@ -203,6 +203,27 @@ def _get_valid_array_types():
     return valid_array_types
 
 
+# Global flag to enable or disable tensor type check
+_tensor_check_enabled = True
+
+
+def enable_tensor_check(enabled: bool):
+    """
+    Enable or disable the tensor type check globally. This is useful for
+    debugging purposes to disable the type check without removing the
+    decorator. By default, the tensor type check is enabled.
+    """
+    global _tensor_check_enabled
+    _tensor_check_enabled = enabled
+
+
+def is_tensor_check_enabled() -> bool:
+    """
+    Returns True if tensor type check is enabled, otherwise False.
+    """
+    return _tensor_check_enabled
+
+
 class Tensor:
     """
     An abstract tensor type for type hinting only.
@@ -215,10 +236,11 @@ class Tensor:
 def tensor_to_auto_backend(func, force_backend=None):
     """
     Automatic backend selection based on the backend of type-annotated input
-    tensors. If there are no tensors, or if the tensors do not have the
-    necessary type annotations, the default backend is used. The function
-    targets specifically jaxtyping.AbstractArray annotations to determine tensor
-    treatment and backend usage.
+    tensors, and run tensor type and shape checks if is_tensor_check_enabled().
+    If there are no tensors, or if the tensors do not have the necessary type
+    annotations, the default backend is used. The function targets specifically
+    jaxtyping.AbstractArray annotations to determine tensor treatment and
+    backend usage.
 
     Detailed behaviors:
     1. Only processes input arguments that are explicitly typed as
@@ -366,6 +388,24 @@ def tensor_to_auto_backend(func, force_backend=None):
             arg_name_to_hint,
             arg_backend,
         )
+
+        # Check tensor dtype and shape
+        if is_tensor_check_enabled():
+            for arg_name, arg in bound_args.arguments.items():
+                if (
+                    arg_name in arg_name_to_hint
+                    and inspect.isclass(arg_name_to_hint[arg_name])
+                    and issubclass(arg_name_to_hint[arg_name], jaxtyping.AbstractArray)
+                ):
+                    hint = arg_name_to_hint[arg_name]
+                    if isinstance(arg, _get_valid_array_types()):
+                        _assert_tensor_hint(
+                            hint=hint,
+                            arg_shape=arg.shape,
+                            arg_dtype=arg.dtype,
+                            arg_name=arg_name,
+                        )
+
         # Call the function
         result = func(*bound_args.args, **bound_args.kwargs)
 
@@ -448,50 +488,5 @@ def tensor_to_torch_backend(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         return wrapped_func(*args, **kwargs)
-
-    return wrapper
-
-
-def tensor_type_check(func):
-    """
-    A decorator to enforce type and shape specifications as per type hints.
-
-    The checks will only be performed if the tensor's type hint is exactly
-    jaxtyping.AbstractArray. If it is a container of tensors, the check will
-    not be performed. For example, Float[Tensor, "..."] will be checked, while
-    List[Float[Tensor, "..."]] will not be checked.
-    """
-    # Pre-compute the function signature and type hints
-    # This is called per function declaration and not per function call
-    sig = inspect.signature(func)
-    arg_name_to_hint = typing.get_type_hints(func)
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # Binding arguments to their names
-        bound_args = sig.bind(*args, **kwargs)
-        bound_args.apply_defaults()
-        arg_name_to_arg = bound_args.arguments
-
-        # Checking each argument against its type hint
-        for arg_name, arg in arg_name_to_arg.items():
-            if arg_name in arg_name_to_hint:
-                hint = arg_name_to_hint[arg_name]
-                if inspect.isclass(hint) and issubclass(hint, jaxtyping.AbstractArray):
-                    # Arg must be a tensor
-                    if not isinstance(arg, _get_valid_array_types()):
-                        raise TypeError(
-                            f"{arg_name} must be {_get_valid_array_types()}, "
-                            f"but got type {type(arg)}."
-                        )
-                    # Arg must match the shape and dtype hint
-                    _assert_tensor_hint(
-                        hint=hint,
-                        arg_shape=arg.shape,
-                        arg_dtype=arg.dtype,
-                        arg_name=arg_name,
-                    )
-
-        return func(*args, **kwargs)
 
     return wrapper
