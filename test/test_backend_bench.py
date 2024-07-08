@@ -48,7 +48,7 @@ def test_concat_torch_to_numpy_manual(benchmark):
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
 def test_concat_torch_to_numpy_auto(benchmark):
 
-    @ct.backend.tensor_numpy_backend
+    @ct.backend.tensor_to_numpy_backend
     def concat(
         x: Float[Tensor, "..."],
         y: Float[Tensor, "..."],

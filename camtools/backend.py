@@ -82,7 +82,7 @@ class Tensor:
     pass
 
 
-def tensor_auto_backend(func, force_backend=None):
+def tensor_to_auto_backend(func, force_backend=None):
     """
     Automatic backend selection based on the backend of type-annotated input
     tensors. If there are no tensors, or if the tensors do not have the
@@ -241,7 +241,7 @@ def tensor_auto_backend(func, force_backend=None):
     return wrapper
 
 
-def tensor_numpy_backend(func):
+def tensor_to_numpy_backend(func):
     """
     Run this function by first converting its input tensors to numpy arrays.
     Only jaxtyping-annotated tensors will be processed. This wrapper shall be
@@ -274,12 +274,12 @@ def tensor_numpy_backend(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         # Wrap the original function with tensor_auto_backend enforcing numpy.
-        return tensor_auto_backend(func, force_backend="numpy")(*args, **kwargs)
+        return tensor_to_auto_backend(func, force_backend="numpy")(*args, **kwargs)
 
     return wrapper
 
 
-def tensor_torch_backend(func):
+def tensor_to_torch_backend(func):
     """
     Run this function by first converting its input tensors to torch tensors.
     Only jaxtyping-annotated tensors will be processed. This wrapper shall be
@@ -312,7 +312,7 @@ def tensor_torch_backend(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         # Wrap the original function with tensor_auto_backend enforcing torch.
-        return tensor_auto_backend(func, force_backend="torch")(*args, **kwargs)
+        return tensor_to_auto_backend(func, force_backend="torch")(*args, **kwargs)
 
     return wrapper
 

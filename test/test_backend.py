@@ -17,7 +17,7 @@ def ignore_ivy_warnings():
     yield
 
 
-@ct.backend.tensor_auto_backend
+@ct.backend.tensor_to_auto_backend
 @ct.backend.tensor_type_check
 def concat(x: Float[Tensor, "..."], y: Float[Tensor, "..."]):
     return ivy.concat([x, y], axis=0)
@@ -139,7 +139,7 @@ def test_concat_list_of_numpy_and_torch():
 
 
 def test_creation():
-    @ct.backend.tensor_auto_backend
+    @ct.backend.tensor_to_auto_backend
     def creation():
         zeros = ivy.zeros([2, 3])
         return zeros
@@ -152,7 +152,7 @@ def test_creation():
 
 
 def test_type_hint_arguments_numpy():
-    @ct.backend.tensor_auto_backend
+    @ct.backend.tensor_to_auto_backend
     @ct.backend.tensor_type_check
     def add(
         x: Float[Tensor, "2 3"],
@@ -197,7 +197,7 @@ def test_type_hint_arguments_numpy():
 
 @pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
 def test_type_hint_arguments_torch():
-    @ct.backend.tensor_auto_backend
+    @ct.backend.tensor_to_auto_backend
     @ct.backend.tensor_type_check
     def add(
         x: Float[Tensor, "2 3"],
@@ -240,7 +240,7 @@ def test_type_hint_arguments_torch():
 
 
 def test_named_dim_numpy():
-    @ct.backend.tensor_auto_backend
+    @ct.backend.tensor_to_auto_backend
     @ct.backend.tensor_type_check
     def add(
         x: Float[Tensor, "3"],
@@ -284,7 +284,7 @@ def test_named_dim_numpy():
 
 @pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
 def test_named_dim_torch():
-    @ct.backend.tensor_auto_backend
+    @ct.backend.tensor_to_auto_backend
     @ct.backend.tensor_type_check
     def add(
         x: Float[Tensor, "3"],
@@ -327,7 +327,7 @@ def test_named_dim_torch():
 
 
 def test_concat_tensors_with_numpy():
-    @ct.backend.tensor_numpy_backend
+    @ct.backend.tensor_to_numpy_backend
     def concat_tensors_with_numpy(
         x: Float[Tensor, "..."],
         y: Float[Tensor, "..."],
@@ -376,7 +376,7 @@ def test_concat_tensors_with_numpy():
 
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
 def test_concat_tensors_with_torch():
-    @ct.backend.tensor_torch_backend
+    @ct.backend.tensor_to_torch_backend
     def concat_tensors_with_torch(
         x: Float[Tensor, "..."],
         y: Float[Tensor, "..."],
