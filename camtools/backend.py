@@ -209,14 +209,17 @@ def tensor_to_auto_backend(func, force_backend=None):
                 )
         return bound_args
 
+    # Pre-compute the function signature and type hints
+    # This is called per function declaration and not per function call
+    sig = inspect.signature(func)
+    arg_name_to_hint = typing.get_type_hints(func)
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         # Unpack args and hints
-        sig = inspect.signature(func)
         bound_args = sig.bind(*args, **kwargs)
         bound_args.apply_defaults()
         arg_name_to_arg = bound_args.arguments
-        arg_name_to_hint = typing.get_type_hints(func)
 
         # Determine backend
         if force_backend is None:
@@ -327,15 +330,19 @@ def tensor_type_check(func):
     not be performed. For example, Float[Tensor, "..."] will be checked, while
     List[Float[Tensor, "..."]] will not be checked.
     """
+    # Pre-compute the function signature and type hints
+    # This is called per function declaration and not per function call
+    sig = inspect.signature(func)
+    arg_name_to_hint = typing.get_type_hints(func)
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        sig = inspect.signature(func)
+        # Binding arguments to their names
         bound_args = sig.bind(*args, **kwargs)
         bound_args.apply_defaults()
         arg_name_to_arg = bound_args.arguments
-        arg_name_to_hint = typing.get_type_hints(func)
 
+        # Checking each argument against its type hint
         for arg_name, arg in arg_name_to_arg.items():
             if arg_name in arg_name_to_hint:
                 hint = arg_name_to_hint[arg_name]
