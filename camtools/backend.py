@@ -67,7 +67,9 @@ def _safely_import_ivy():
         category=UserWarning,
         module="ivy",
     )
-    return __import__("ivy")
+    ivy = __import__("ivy")
+    ivy.set_array_mode(False)
+    return ivy
 
 
 ivy = _safely_import_ivy()
@@ -226,15 +228,15 @@ def tensor_to_auto_backend(func, force_backend=None):
             raise ValueError(f"Unsupported forced backend {force_backend}.")
 
         # Convert tensors to the backend
-        with ivy.ArrayMode(False):
-            # Convert list/tensor -> native tensor
-            bound_args = _convert_bound_args_to_backend(
-                bound_args,
-                arg_name_to_hint,
-                arg_backend,
-            )
-            # Call the function
-            result = func(*bound_args.args, **bound_args.kwargs)
+        # with ivy.ArrayMode(False):
+        # Convert list/tensor -> native tensor
+        bound_args = _convert_bound_args_to_backend(
+            bound_args,
+            arg_name_to_hint,
+            arg_backend,
+        )
+        # Call the function
+        result = func(*bound_args.args, **bound_args.kwargs)
 
         return result
 

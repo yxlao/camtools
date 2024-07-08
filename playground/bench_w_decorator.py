@@ -14,9 +14,6 @@ def _dot_with_decorator(
     x: Float[Tensor, "..."],
     y: Float[Tensor, "..."],
 ):
-    assert isinstance(x, np.ndarray)
-    assert isinstance(y, np.ndarray)
-
     x = np.repeat(x, _array_repeat)
     y = np.repeat(y, _array_repeat)
     return np.dot(x, y)

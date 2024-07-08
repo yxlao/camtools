@@ -14,9 +14,6 @@ def dot(
 ):
     x = x.cpu().numpy()
     y = y.cpu().numpy()
-    assert isinstance(x, np.ndarray)
-    assert isinstance(y, np.ndarray)
-
     x = np.repeat(x, _array_repeat)
     y = np.repeat(y, _array_repeat)
     return np.dot(x, y)
