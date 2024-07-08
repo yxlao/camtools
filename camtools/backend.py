@@ -108,7 +108,7 @@ def _dtype_to_str(dtype):
     return ValueError(f"Unknown dtype {dtype}.")
 
 
-@lru_cache(maxsize=64)
+@lru_cache(maxsize=1024)
 def _shape_from_dim_str(dim_str: str) -> Tuple[Union[int, None, str], ...]:
     shape = []
     elements = dim_str.split()
@@ -122,7 +122,7 @@ def _shape_from_dim_str(dim_str: str) -> Tuple[Union[int, None, str], ...]:
     return tuple(shape)
 
 
-@lru_cache(maxsize=256)
+@lru_cache(maxsize=1024)
 def _is_shape_compatible(
     arg_shape: Tuple[Union[int, None, str], ...],
     gt_shape: Tuple[Union[int, None, str], ...],
@@ -178,7 +178,6 @@ def _assert_tensor_hint(
         arg: An argument to check, typically a tensor.
         arg_name: The name of the argument, for error messages.
     """
-
     # Check shapes.
     gt_shape = _shape_from_dim_str(hint.dim_str)
     if not _is_shape_compatible(arg_shape, gt_shape):
