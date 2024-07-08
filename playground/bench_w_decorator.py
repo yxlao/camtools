@@ -27,8 +27,11 @@ def run_with_decorator():
 
 
 def main():
-    profiler = cProfile.Profile()
+    # Warmup
+    run_with_decorator()
 
+    # Profile
+    profiler = cProfile.Profile()
     profiler.enable()
     run_with_decorator()
     profiler.disable()
