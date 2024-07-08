@@ -8,8 +8,6 @@ from typing import Any, Literal, Tuple, Union, Dict, List
 import jaxtyping
 import numpy as np
 
-_default_backend = "numpy"
-
 
 @lru_cache(maxsize=None)
 def _safely_import_torch():
@@ -84,46 +82,6 @@ class Tensor:
     pass
 
 
-def set_backend(backend: Literal["numpy", "torch"]) -> None:
-    """
-    Set the default backend for camtools.
-    """
-    global _default_backend
-    _default_backend = backend
-
-
-def get_backend() -> str:
-    """
-    Get the default backend for camtools.
-    """
-    return _default_backend
-
-
-class ScopedBackend:
-    """
-    Context manager to temporarily set the backend for camtools.
-
-    Example:
-    ```python
-    with ct.backend.ScopedBackend("torch"):
-        # Code that uses torch backend here
-        pass
-
-    # Code that uses the default backend here
-    ```
-    """
-
-    def __init__(self, target_backend: Literal["numpy", "torch"]):
-        self.target_backend = target_backend
-
-    def __enter__(self):
-        self.stashed_backend = get_backend()
-        set_backend(self.target_backend)
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        set_backend(self.stashed_backend)
-
-
 def tensor_auto_backend(func, force_backend=None):
     """
     Automatic backend selection based on the backend of type-annotated input
@@ -190,7 +148,7 @@ def tensor_auto_backend(func, force_backend=None):
         tensors = _collect_tensors(tensor_annotated_args)
 
         if not tensors:
-            return get_backend()
+            return "numpy"
         elif all(isinstance(t, np.ndarray) for t in tensors):
             return "numpy"
         elif is_torch_available() and all(isinstance(t, torch.Tensor) for t in tensors):
