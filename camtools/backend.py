@@ -330,7 +330,7 @@ def tensor_type_check(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        sig = signature(func)
+        sig = inspect.signature(func)
         bound_args = sig.bind(*args, **kwargs)
         bound_args.apply_defaults()
         arg_name_to_arg = bound_args.arguments
