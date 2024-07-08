@@ -144,7 +144,6 @@ def tensor_auto_backend(func, force_backend=None):
             ):
                 arg = arg_name_to_arg[arg_name]
                 tensor_annotated_args.append(arg)
-
         tensors = _collect_tensors(tensor_annotated_args)
 
         if not tensors:
