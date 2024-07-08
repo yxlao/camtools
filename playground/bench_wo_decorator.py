@@ -8,15 +8,19 @@ from camtools.backend import Tensor, torch
 _array_repeat = 1000
 
 
+def workload(x, y):
+    x = np.repeat(x, _array_repeat)
+    y = np.repeat(y, _array_repeat)
+    return np.dot(x, y)
+
+
 def dot(
     x: Float[Tensor, "..."],
     y: Float[Tensor, "..."],
 ):
     x = x.detach().cpu().numpy()
     y = y.detach().cpu().numpy()
-    x = np.repeat(x, _array_repeat)
-    y = np.repeat(y, _array_repeat)
-    return np.dot(x, y)
+    return workload(x, y)
 
 
 def run_without_decorator():
