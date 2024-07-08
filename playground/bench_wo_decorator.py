@@ -12,8 +12,8 @@ def dot(
     x: Float[Tensor, "..."],
     y: Float[Tensor, "..."],
 ):
-    x = x.cpu().numpy()
-    y = y.cpu().numpy()
+    x = x.detach().cpu().numpy()
+    y = y.detach().cpu().numpy()
     x = np.repeat(x, _array_repeat)
     y = np.repeat(y, _array_repeat)
     return np.dot(x, y)

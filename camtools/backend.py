@@ -2,7 +2,6 @@ import inspect
 import typing
 import warnings
 from functools import lru_cache, wraps
-from inspect import signature
 from typing import Any, Literal, Tuple, Union, Dict, List
 
 import jaxtyping
@@ -167,7 +166,7 @@ def tensor_to_auto_backend(func, force_backend=None):
             if isinstance(arg, np.ndarray):
                 return arg
             elif is_torch_available() and isinstance(arg, torch.Tensor):
-                return arg.detach().cpu().numpy()
+                return arg.cpu().numpy()
             elif isinstance(arg, list):
                 return np.array(arg)  # Handle dtypes?
             else:
@@ -213,7 +212,7 @@ def tensor_to_auto_backend(func, force_backend=None):
     @wraps(func)
     def wrapper(*args, **kwargs):
         # Unpack args and hints
-        sig = signature(func)
+        sig = inspect.signature(func)
         bound_args = sig.bind(*args, **kwargs)
         bound_args.apply_defaults()
         arg_name_to_arg = bound_args.arguments
