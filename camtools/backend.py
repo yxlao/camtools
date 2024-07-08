@@ -268,9 +268,6 @@ def tensor_auto_backend(func, force_backend=None):
         else:
             raise ValueError(f"Unsupported forced backend {force_backend}.")
 
-        stashed_backend = ivy.current_backend()
-        ivy.set_backend(arg_backend)
-
         # Convert tensors to the backend
         with ivy.ArrayMode(False):
             # Convert list/tensor -> native tensor
@@ -282,8 +279,6 @@ def tensor_auto_backend(func, force_backend=None):
             # Call the function
             result = func(*bound_args.args, **bound_args.kwargs)
 
-        # Reset backend
-        ivy.set_backend(stashed_backend)
         return result
 
     return wrapper
