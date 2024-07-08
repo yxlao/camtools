@@ -274,11 +274,12 @@ def tensor_to_numpy_backend(func):
     This function simply wraps the tensor_auto_backend function with the
     force_backend argument set to "numpy".
     """
+    # Wrap the original function with tensor_auto_backend enforcing numpy.
+    wrapped_func = tensor_to_auto_backend(func, force_backend="numpy")
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        # Wrap the original function with tensor_auto_backend enforcing numpy.
-        return tensor_to_auto_backend(func, force_backend="numpy")(*args, **kwargs)
+        return wrapped_func(*args, **kwargs)
 
     return wrapper
 
@@ -312,11 +313,12 @@ def tensor_to_torch_backend(func):
     This function simply wraps the tensor_auto_backend function with the
     force_backend argument set to "torch".
     """
+    # Wrap the original function with tensor_auto_backend enforcing torch.
+    wrapped_func = tensor_to_auto_backend(func, force_backend="torch")
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        # Wrap the original function with tensor_auto_backend enforcing torch.
-        return tensor_to_auto_backend(func, force_backend="torch")(*args, **kwargs)
+        return wrapped_func(*args, **kwargs)
 
     return wrapper
 
