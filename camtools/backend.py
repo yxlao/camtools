@@ -317,9 +317,9 @@ def tensor_to_auto_backend(func, force_backend=None):
             if isinstance(arg, np.ndarray):
                 return arg
             elif is_torch_available() and isinstance(arg, torch.Tensor):
-                return arg.cpu().numpy()
+                return arg.detach().cpu().numpy()
             elif isinstance(arg, list):
-                return np.array(arg)  # Handle dtypes?
+                return np.array(arg)
             else:
                 raise ValueError(
                     f"Unsupported type {type(arg)} for conversion to numpy."
