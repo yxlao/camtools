@@ -9,6 +9,7 @@ from typing import Tuple
 from . import image
 from . import io
 from . import sanity
+from .backend import torch
 
 
 def image_psnr(
@@ -94,7 +95,6 @@ def image_lpips(
     Returns:
         LPIPS value in float.
     """
-    import torch
     import lpips
 
     if im_mask is None:
