@@ -343,48 +343,44 @@ def tensor_to_auto_backend(func, force_backend=None):
     # Pre-compute the function signature and type hints
     # This is called per function declaration and not per function call
     sig = inspect.signature(func)
-    hint_dict = typing.get_type_hints(func)
+    arg_name_to_hint = typing.get_type_hints(func)
+    tensor_arg_name_to_hint = {
+        name: hint
+        for name, hint in arg_name_to_hint.items()
+        if inspect.isclass(hint) and issubclass(hint, jaxtyping.AbstractArray)
+    }
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        # Construct the full argument dictionary from args and kwargs
         arg_names = [param.name for param in sig.parameters.values()]
-        arg_dict = dict(zip(arg_names, args))
-        arg_dict.update(kwargs)
+        arg_name_to_arg = dict(zip(arg_names, args))
+        arg_name_to_arg.update(kwargs)
 
         # Fill in missing arguments with their default values
         for arg_name, param in sig.parameters.items():
-            if arg_name not in arg_dict and param.default is not param.empty:
-                arg_dict[arg_name] = param.default
+            if arg_name not in arg_name_to_arg and param.default is not param.empty:
+                arg_name_to_arg[arg_name] = param.default
 
         # Determine backend
         if force_backend is None:
-            backend = _determine_backend(arg_dict, hint_dict)
+            backend = _determine_backend(arg_name_to_arg, tensor_arg_name_to_hint)
         elif force_backend in ("numpy", "torch"):
             backend = force_backend
         else:
             raise ValueError(f"Unsupported forced backend {force_backend}.")
 
         # Convert tensors to the appropriate backend
-        for arg_name, hint in hint_dict.items():
-            if (
-                arg_name in arg_dict
-                and inspect.isclass(hint)
-                and issubclass(hint, jaxtyping.AbstractArray)
-            ):
-                arg_dict[arg_name] = _convert_tensor_to_backend(
-                    arg_dict[arg_name], backend
+        for arg_name in tensor_arg_name_to_hint:
+            if arg_name in arg_name_to_arg:
+                arg_name_to_arg[arg_name] = _convert_tensor_to_backend(
+                    arg_name_to_arg[arg_name], backend
                 )
 
         # Check tensor dtype and shape if enabled
         if is_tensor_check_enabled():
-            for arg_name, arg in arg_dict.items():
-                if (
-                    arg_name in hint_dict
-                    and inspect.isclass(hint_dict[arg_name])
-                    and issubclass(hint_dict[arg_name], jaxtyping.AbstractArray)
-                ):
-                    hint = hint_dict[arg_name]
+            for arg_name, arg in arg_name_to_arg.items():
+                if arg_name in tensor_arg_name_to_hint:
+                    hint = tensor_arg_name_to_hint[arg_name]
                     if isinstance(arg, _get_valid_array_types()):
                         _assert_tensor_hint(
                             hint=hint,
@@ -394,7 +390,7 @@ def tensor_to_auto_backend(func, force_backend=None):
                         )
 
         # Call the original function with updated arguments
-        result = func(**arg_dict)
+        result = func(**arg_name_to_arg)
 
         return result
 
