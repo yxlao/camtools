@@ -1,18 +1,14 @@
-import collections.abc
 import inspect
 import typing
 import warnings
 from functools import lru_cache, wraps
-from inspect import signature
-from typing import Any, Literal, Tuple, Union, Dict, List
+from typing import Any, Tuple, Union
 
 import jaxtyping
 import numpy as np
 
-_default_backend = "numpy"
 
-
-@lru_cache(maxsize=None)
+@lru_cache(maxsize=1)
 def _safely_import_torch():
     """
     Open3D has an issue where it must be imported before torch. If Open3D is
@@ -43,12 +39,12 @@ def _safely_import_torch():
 torch = _safely_import_torch()
 
 
-@lru_cache(maxsize=None)
+@lru_cache(maxsize=1)
 def is_torch_available():
     return _safely_import_torch() is not None
 
 
-@lru_cache(maxsize=None)
+@lru_cache(maxsize=1)
 def _safely_import_ivy():
     """
     This function sets up the warnings filter to suppress the deprecation
@@ -60,336 +56,25 @@ def _safely_import_ivy():
     """
     warnings.filterwarnings(
         "ignore",
-        category=DeprecationWarning,
         message=".*numpy.core.numeric is deprecated.*",
+        category=DeprecationWarning,
+        module="ivy",
     )
-    return __import__("ivy")
+    warnings.filterwarnings(
+        "ignore",
+        message=".*Compositional function.*array_mode is set to False.*",
+        category=UserWarning,
+        module="ivy",
+    )
+    ivy = __import__("ivy")
+    ivy.set_array_mode(False)
+    return ivy
 
 
 ivy = _safely_import_ivy()
 
 
-class Tensor:
-    """
-    An abstract tensor type for type hinting only.
-    Typically np.ndarray or torch.Tensor is supported.
-    """
-
-    pass
-
-
-def set_backend(backend: Literal["numpy", "torch"]) -> None:
-    """
-    Set the default backend for camtools.
-    """
-    global _default_backend
-    _default_backend = backend
-
-
-def get_backend() -> str:
-    """
-    Get the default backend for camtools.
-    """
-    return _default_backend
-
-
-class ScopedBackend:
-    """
-    Context manager to temporarily set the backend for camtools.
-
-    Example:
-    ```python
-    with ct.backend.ScopedBackend("torch"):
-        # Code that uses torch backend here
-        pass
-
-    # Code that uses the default backend here
-    ```
-    """
-
-    def __init__(self, target_backend: Literal["numpy", "torch"]):
-        self.target_backend = target_backend
-
-    def __enter__(self):
-        self.stashed_backend = get_backend()
-        set_backend(self.target_backend)
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        set_backend(self.stashed_backend)
-
-
-def tensor_auto_backend(func, force_backend=None):
-    """
-    Automatic backend selection based on the backend of type-annotated input
-    tensors. If there are no tensors, or if the tensors do not have the
-    necessary type annotations, the default backend is used. The function
-    targets specifically jaxtyping.AbstractArray annotations to determine tensor
-    treatment and backend usage.
-
-    Detailed behaviors:
-    1. Only processes input arguments that are explicitly typed as
-       jaxtyping.AbstractArray. Arguments without this type hint or with
-       different annotations maintain their default behavior without backend
-       modification.
-    2. Supports handling of numpy.ndarray, torch.Tensor, and Python lists that
-       should be converted to tensors based on their type hints.
-    3. If the type hint is jaxtyping.AbstractArray and the argument is a list,
-       the list will be converted to a tensor using the native array
-       functionality of the active backend.
-    4. Ensures all tensor arguments must be from the same backend to avoid
-       conflicts.
-    5. Uses the default backend if no tensors are present or if the tensors do
-       not require specific backend handling based on their annotations.
-    6. If force_backend is specified, the inferred backend from arguments
-       and type hints will be ignored, and the specified backend will be used
-       instead. Don't confuse this with the default backend as this takes
-       higher precedence.
-    """
-
-    def _collect_tensors(args: List[Any]) -> List[Any]:
-        """
-        Recursively collects np.ndarray and torch.Tensor objects. Other types
-        including lists are ignored. Processing lists can be slow, as we need
-        to check each element for tensors.
-        """
-        if is_torch_available():
-            tensor_types = (np.ndarray, torch.Tensor)
-        else:
-            tensor_types = (np.ndarray,)
-
-        tensors = []
-        for arg in args:
-            if isinstance(arg, tensor_types):
-                tensors.append(arg)
-
-        return tensors
-
-    def _determine_backend(
-        arg_name_to_arg: Dict[str, Any],
-        arg_name_to_hint: Dict[str, Any],
-    ) -> str:
-        """
-        Also throws an error if the tensors are not from the same backend.
-        """
-        tensor_annotated_args = []
-        for arg_name, hint in arg_name_to_hint.items():
-            if (
-                arg_name in arg_name_to_arg
-                and inspect.isclass(hint)
-                and issubclass(hint, jaxtyping.AbstractArray)
-            ):
-                arg = arg_name_to_arg[arg_name]
-                tensor_annotated_args.append(arg)
-
-        tensors = _collect_tensors(tensor_annotated_args)
-
-        if not tensors:
-            return get_backend()
-        elif all(isinstance(t, np.ndarray) for t in tensors):
-            return "numpy"
-        elif is_torch_available() and all(isinstance(t, torch.Tensor) for t in tensors):
-            return "torch"
-        else:
-            raise TypeError("All tensors must be from the same backend.")
-
-    def _convert_tensor_to_backend(arg, backend):
-        """
-        Convert the tensor to the specified backend. It shall already be checked
-        that the arg is a tensor-like object, the tensor is type-annotated, and
-        the backend is valid.
-        """
-        if backend == "numpy":
-            if isinstance(arg, np.ndarray):
-                return arg
-            elif is_torch_available() and isinstance(arg, torch.Tensor):
-                return arg.detach().cpu().numpy()
-            elif isinstance(arg, list):
-                return np.array(arg)  # Handle dtypes?
-            else:
-                raise ValueError(
-                    f"Unsupported type {type(arg)} for conversion to numpy."
-                )
-        elif backend == "torch":
-            if not is_torch_available:
-                raise ValueError("Torch is not available.")
-            elif isinstance(arg, torch.Tensor):
-                return arg
-            elif isinstance(arg, np.ndarray):
-                return torch.from_numpy(arg)
-            elif isinstance(arg, list):
-                return torch.tensor(arg)
-            else:
-                raise ValueError(
-                    f"Unsupported type {type(arg)} for conversion to torch."
-                )
-        else:
-            raise ValueError(f"Unsupported backend {backend}.")
-
-    def _convert_bound_args_to_backend(
-        bound_args: inspect.BoundArguments,
-        arg_name_to_hint: Dict[str, Any],
-        backend: str,
-    ):
-        """
-        Update the bound_args inplace to convert tensors to the specified backend.
-        The bound_args is also returned for convenience.
-        """
-        for arg_name, arg in bound_args.arguments.items():
-            if (
-                arg_name in arg_name_to_hint
-                and inspect.isclass(arg_name_to_hint[arg_name])
-                and issubclass(arg_name_to_hint[arg_name], jaxtyping.AbstractArray)
-            ):
-                bound_args.arguments[arg_name] = _convert_tensor_to_backend(
-                    arg, backend
-                )
-        return bound_args
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # Unpack args and hints
-        sig = signature(func)
-        bound_args = sig.bind(*args, **kwargs)
-        bound_args.apply_defaults()
-        arg_name_to_arg = bound_args.arguments
-        arg_name_to_hint = typing.get_type_hints(func)
-
-        # Determine backend
-        if force_backend is None:
-            arg_backend = _determine_backend(arg_name_to_arg, arg_name_to_hint)
-        elif force_backend in ("numpy", "torch"):
-            arg_backend = force_backend
-        else:
-            raise ValueError(f"Unsupported forced backend {force_backend}.")
-
-        stashed_backend = ivy.current_backend()
-        ivy.set_backend(arg_backend)
-
-        # Convert tensors to the backend
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=UserWarning)
-            with ivy.ArrayMode(False):
-                # Convert list/tensor -> native tensor
-                bound_args = _convert_bound_args_to_backend(
-                    bound_args,
-                    arg_name_to_hint,
-                    arg_backend,
-                )
-                # Call the function
-                result = func(*bound_args.args, **bound_args.kwargs)
-
-        # Reset backend
-        ivy.set_backend(stashed_backend)
-        return result
-
-    return wrapper
-
-
-def tensor_numpy_backend(func):
-    """
-    Run this function by first converting its input tensors to numpy arrays.
-    Only jaxtyping-annotated tensors will be processed. This wrapper shall be
-    used if the internal implementation is numpy-only or if we expect to return
-    numpy arrays.
-
-    Behavior:
-    1. Only converts arguments that are annotated explicitly with a jaxtyping
-       tensor type. If the type hint is a container of tensors, the conversion
-       will not be performed.
-    2. Supports conversion of lists into numpy arrays if they are intended to be
-       tensors, according to the function's type annotations.
-    3. The conversion is applied to top-level arguments and does not recursively
-       convert tensors within nested custom types (e.g., custom classes
-       containing tensors).
-    4. This decorator is particularly useful for functions requiring consistent
-       tensor handling specifically with numpy, ensuring compatibility and
-       simplifying operations that depend on numpy's functionality.
-
-    Note:
-    - The decorator inspects type annotations and applies conversions where
-      specified.
-    - Lists of tensors or tensors within lists annotated as tensors
-      will be converted to numpy arrays if not already in that format.
-
-    This function simply wraps the tensor_auto_backend function with the
-    force_backend argument set to "numpy".
-    """
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # Wrap the original function with tensor_auto_backend enforcing numpy.
-        return tensor_auto_backend(func, force_backend="numpy")(*args, **kwargs)
-
-    return wrapper
-
-
-def tensor_torch_backend(func):
-    """
-    Run this function by first converting its input tensors to torch tensors.
-    Only jaxtyping-annotated tensors will be processed. This wrapper shall be
-    used if the internal implementation is torch-only or if we expect to return
-    torch tensors.
-
-    Behavior:
-    1. Only converts arguments that are annotated explicitly with a jaxtyping
-       tensor type. If the type hint is a container of tensors, the conversion
-       will not be performed.
-    2. Supports conversion of lists into torch tensors if they are intended to be
-       tensors, according to the function's type annotations.
-    3. The conversion is applied to top-level arguments and does not recursively
-       convert tensors within nested custom types (e.g., custom classes
-       containing tensors).
-    4. This decorator is particularly useful for functions requiring consistent
-       tensor handling specifically with torch, ensuring compatibility and
-       simplifying operations that depend on torch's functionality.
-
-    Note:
-    - The decorator inspects type annotations and applies conversions where
-      specified.
-    - Lists of tensors or tensors within lists annotated as tensors
-      will be converted to torch tensors if not already in that format.
-
-    This function simply wraps the tensor_auto_backend function with the
-    force_backend argument set to "torch".
-    """
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # Wrap the original function with tensor_auto_backend enforcing torch.
-        return tensor_auto_backend(func, force_backend="torch")(*args, **kwargs)
-
-    return wrapper
-
-
-def tensor_type_check(func):
-    """
-    A decorator to enforce type and shape specifications as per type hints.
-
-    The checks will only be performed if the tensor's type hint is exactly
-    jaxtyping.AbstractArray. If it is a container of tensors, the check will
-    not be performed. For example, Float[Tensor, "..."] will be checked, while
-    List[Float[Tensor, "..."]] will not be checked.
-    """
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        sig = signature(func)
-        bound_args = sig.bind(*args, **kwargs)
-        bound_args.apply_defaults()
-        arg_name_to_arg = bound_args.arguments
-        arg_name_to_hint = typing.get_type_hints(func)
-
-        for arg_name, arg in arg_name_to_arg.items():
-            if arg_name in arg_name_to_hint:
-                hint = arg_name_to_hint[arg_name]
-                if inspect.isclass(hint) and issubclass(hint, jaxtyping.AbstractArray):
-                    _assert_tensor_hint(hint, arg, arg_name)
-
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
+@lru_cache(maxsize=64)
 def _dtype_to_str(dtype):
     """
     Convert numpy or torch dtype to string
@@ -423,6 +108,7 @@ def _dtype_to_str(dtype):
     return ValueError(f"Unknown dtype {dtype}.")
 
 
+@lru_cache(maxsize=1024)
 def _shape_from_dim_str(dim_str: str) -> Tuple[Union[int, None, str], ...]:
     shape = []
     elements = dim_str.split()
@@ -436,41 +122,54 @@ def _shape_from_dim_str(dim_str: str) -> Tuple[Union[int, None, str], ...]:
     return tuple(shape)
 
 
+@lru_cache(maxsize=1024)
 def _is_shape_compatible(
     arg_shape: Tuple[Union[int, None, str], ...],
     gt_shape: Tuple[Union[int, None, str], ...],
 ) -> bool:
     if "..." in gt_shape:
-        if len(arg_shape) < len(gt_shape) - 1:
-            return False
-        # We only support one ellipsis for now
-        if gt_shape.count("...") > 1:
+        pre_ellipsis = None
+        post_ellipsis = None
+
+        for i, dim in enumerate(gt_shape):
+            if dim == "...":
+                pre_ellipsis = i
+                post_ellipsis = len(gt_shape) - i - 1
+                break
+
+        if pre_ellipsis is None or gt_shape.count("...") > 1:
             raise ValueError(
                 "Only one ellipsis is supported in the shape hint for now."
             )
 
-        # Compare dimensions before and after the ellipsis
-        pre_ellipsis = gt_shape.index("...")
-        post_ellipsis = len(gt_shape) - pre_ellipsis - 1
-        return all(
-            arg_shape[i] == gt_shape[i] or gt_shape[i] is None
-            for i in range(pre_ellipsis)
-        ) and all(
-            arg_shape[-i - 1] == gt_shape[-i - 1] or gt_shape[-i - 1] is None
-            for i in range(post_ellipsis)
-        )
+        if len(arg_shape) < len(gt_shape) - 1:
+            return False
+
+        for i in range(pre_ellipsis):
+            if arg_shape[i] != gt_shape[i] and gt_shape[i] is not None:
+                return False
+
+        for i in range(1, post_ellipsis + 1):
+            if arg_shape[-i] != gt_shape[-i] and gt_shape[-i] is not None:
+                return False
+
+        return True
     else:
         if len(arg_shape) != len(gt_shape):
             return False
-        return all(
-            arg_dim == gt_dim or gt_dim is None
-            for arg_dim, gt_dim in zip(arg_shape, gt_shape)
-        )
+
+        for arg_dim, gt_dim in zip(arg_shape, gt_shape):
+            if arg_dim != gt_dim and gt_dim is not None:
+                return False
+
+        return True
 
 
+@lru_cache(maxsize=1024)
 def _assert_tensor_hint(
     hint: jaxtyping.AbstractArray,
-    arg: Any,
+    arg_shape: Tuple[int, ...],
+    arg_dtype: Any,
     arg_name: str,
 ):
     """
@@ -479,28 +178,304 @@ def _assert_tensor_hint(
         arg: An argument to check, typically a tensor.
         arg_name: The name of the argument, for error messages.
     """
-    # Check array types.
-    if is_torch_available():
-        valid_array_types = (np.ndarray, torch.Tensor)
-    else:
-        valid_array_types = (np.ndarray,)
-    if not isinstance(arg, valid_array_types):
-        raise TypeError(
-            f"{arg_name} must be of type {valid_array_types}, "
-            f"but got type {type(arg)}."
-        )
-
     # Check shapes.
     gt_shape = _shape_from_dim_str(hint.dim_str)
-    if not _is_shape_compatible(arg.shape, gt_shape):
+    if not _is_shape_compatible(arg_shape, gt_shape):
         raise TypeError(
-            f"{arg_name} must be of shape {gt_shape}, but got shape {arg.shape}."
+            f"{arg_name} must be of shape {gt_shape}, but got shape {arg_shape}."
         )
 
     # Check dtype.
     gt_dtypes = hint.dtypes
-    if _dtype_to_str(arg.dtype) not in gt_dtypes:
+    if _dtype_to_str(arg_dtype) not in gt_dtypes:
         raise TypeError(
             f"{arg_name} must be of dtype {gt_dtypes}, "
-            f"but got dtype {_dtype_to_str(arg.dtype)}."
+            f"but got dtype {_dtype_to_str(arg_dtype)}."
         )
+
+
+@lru_cache(maxsize=1)
+def _get_valid_array_types():
+    if is_torch_available():
+        valid_array_types = (np.ndarray, torch.Tensor)
+    else:
+        valid_array_types = (np.ndarray,)
+    return valid_array_types
+
+
+# Global variable to keep track of the tensor type check status
+_tensor_check_enabled = True
+
+
+def enable_tensor_check():
+    """
+    Enable the tensor type check globally. This function activates type checking
+    for tensors, which is useful for ensuring that tensor operations are
+    performed correctly, especially during debugging and development.
+    """
+    global _tensor_check_enabled
+    _tensor_check_enabled = True
+
+
+def disable_tensor_check():
+    """
+    Disable the tensor type check globally. This function deactivates type checking
+    for tensors, which can be useful for performance optimizations or when
+    type checks are known to be unnecessary or problematic.
+    """
+    global _tensor_check_enabled
+    _tensor_check_enabled = False
+
+
+def is_tensor_check_enabled():
+    """
+    Returns True if the tensor dtype and shape check is enabled, and False
+    otherwise. This will be used when @tensor_to_auto_backend,
+    @tensor_to_numpy_backend, or @tensor_to_torch_backend is called.
+    """
+    return _tensor_check_enabled
+
+
+class Tensor:
+    """
+    An abstract tensor type for type hinting only.
+    Typically np.ndarray or torch.Tensor is supported.
+    """
+
+    pass
+
+
+def tensor_to_auto_backend(func, force_backend=None):
+    """
+    Automatic backend selection based on the backend of type-annotated input
+    tensors, and run tensor type and shape checks if is_tensor_check_enabled().
+    If there are no tensors, or if the tensors do not have the necessary type
+    annotations, the default backend is used. The function targets specifically
+    jaxtyping.AbstractArray annotations to determine tensor treatment and
+    backend usage.
+
+    Detailed behaviors:
+    1. Only processes input arguments that are explicitly typed as
+       jaxtyping.AbstractArray. Arguments without this type hint or with
+       different annotations maintain their default behavior without backend
+       modification.
+    2. Supports handling of numpy.ndarray, torch.Tensor, and Python lists that
+       should be converted to tensors based on their type hints.
+    3. If the type hint is jaxtyping.AbstractArray and the argument is a list,
+       the list will be converted to a tensor using the native array
+       functionality of the active backend.
+    4. Ensures all tensor arguments must be from the same backend to avoid
+       conflicts.
+    5. Uses the default backend if no tensors are present or if the tensors do
+       not require specific backend handling based on their annotations.
+    6. If force_backend is specified, the inferred backend from arguments
+       and type hints will be ignored, and the specified backend will be used
+       instead. Don't confuse this with the default backend as this takes
+       higher precedence.
+    """
+
+    # Pre-compute the function signature and type hints
+    # This is called per function declaration and not per function call
+    sig = inspect.signature(func)
+    arg_names = [
+        param.name
+        for param in sig.parameters.values()
+        if param.kind
+        in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            inspect.Parameter.KEYWORD_ONLY,
+        )
+    ]
+    arg_name_to_hint = {
+        name: hint
+        for name, hint in typing.get_type_hints(func).items()
+        if name in arg_names
+    }
+    tensor_names = [
+        name
+        for name, hint in arg_name_to_hint.items()
+        if inspect.isclass(hint) and issubclass(hint, jaxtyping.AbstractArray)
+    ]
+
+    def _convert_tensor_to_backend(arg, backend):
+        """
+        Convert the tensor to the specified backend. It shall already be checked
+        that the arg is a tensor-like object, the tensor is type-annotated, and
+        the backend is valid.
+        """
+        if backend == "numpy":
+            if isinstance(arg, np.ndarray):
+                return arg
+            elif is_torch_available() and isinstance(arg, torch.Tensor):
+                return arg.detach().cpu().numpy()
+            elif isinstance(arg, (list, tuple)):
+                return np.array(arg)
+            else:
+                raise ValueError(
+                    f"Unsupported type {type(arg)} for conversion to numpy."
+                )
+        elif backend == "torch":
+            if not is_torch_available():
+                raise ValueError("Torch is not available.")
+            elif isinstance(arg, torch.Tensor):
+                return arg
+            elif isinstance(arg, np.ndarray):
+                return torch.from_numpy(arg)
+            elif isinstance(arg, (list, tuple)):
+                return torch.tensor(arg)
+            else:
+                raise ValueError(
+                    f"Unsupported type {type(arg)} for conversion to torch."
+                )
+        else:
+            raise ValueError(f"Unsupported backend {backend}.")
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        # Bind args and kwargs
+        # This is faster than sig.bind() but less flexible
+        arg_name_to_arg = dict(zip(arg_names, args))
+        arg_name_to_arg.update(kwargs)
+
+        # Fill in missing arguments with their default values
+        for arg_name, param in sig.parameters.items():
+            if arg_name not in arg_name_to_arg and param.default is not param.empty:
+                arg_name_to_arg[arg_name] = param.default
+
+        # Determine backend
+        if force_backend is None:
+            # Recursively collect np.ndarray and torch.Tensor objects
+            # Other types including lists are ignored
+            if is_torch_available():
+                tensor_types = (np.ndarray, torch.Tensor)
+            else:
+                tensor_types = (np.ndarray,)
+            tensors = [
+                arg_name_to_arg[tensor_name]
+                for tensor_name in tensor_names
+                if isinstance(arg_name_to_arg[tensor_name], tensor_types)
+            ]
+
+            # Determine the backend based on tensor types present
+            if not tensors:
+                backend = "numpy"
+            else:
+                tensor_types_used = {type(t) for t in tensors}
+                if tensor_types_used == {np.ndarray}:
+                    backend = "numpy"
+                elif is_torch_available() and tensor_types_used == {torch.Tensor}:
+                    backend = "torch"
+                else:
+                    raise TypeError(
+                        f"All tensors must be from the same backend, "
+                        f"but got {tensor_types_used}."
+                    )
+        elif force_backend in ("numpy", "torch"):
+            backend = force_backend
+        else:
+            raise ValueError(f"Unsupported forced backend {force_backend}.")
+
+        # Convert tensors to the appropriate backend
+        for tensor_name in tensor_names:
+            arg_name_to_arg[tensor_name] = _convert_tensor_to_backend(
+                arg_name_to_arg[tensor_name], backend
+            )
+
+        # Check tensor dtype and shape if enabled
+        if is_tensor_check_enabled():
+            for tensor_name in tensor_names:
+                hint = arg_name_to_hint[tensor_name]
+                tensor_arg = arg_name_to_arg[tensor_name]
+                if isinstance(tensor_arg, _get_valid_array_types()):
+                    _assert_tensor_hint(
+                        hint=hint,
+                        arg_shape=tensor_arg.shape,
+                        arg_dtype=tensor_arg.dtype,
+                        arg_name=tensor_name,
+                    )
+
+        # Call the original function with updated arguments
+        result = func(**arg_name_to_arg)
+
+        return result
+
+    return wrapper
+
+
+def tensor_to_numpy_backend(func):
+    """
+    Run this function by first converting its input tensors to numpy arrays.
+    Only jaxtyping-annotated tensors will be processed. This wrapper shall be
+    used if the internal implementation is numpy-only or if we expect to return
+    numpy arrays.
+
+    Behavior:
+    1. Only converts arguments that are annotated explicitly with a jaxtyping
+       tensor type. If the type hint is a container of tensors, the conversion
+       will not be performed.
+    2. Supports conversion of lists into numpy arrays if they are intended to be
+       tensors, according to the function's type annotations.
+    3. The conversion is applied to top-level arguments and does not recursively
+       convert tensors within nested custom types (e.g., custom classes
+       containing tensors).
+    4. This decorator is particularly useful for functions requiring consistent
+       tensor handling specifically with numpy, ensuring compatibility and
+       simplifying operations that depend on numpy's functionality.
+
+    Note:
+    - The decorator inspects type annotations and applies conversions where
+      specified.
+    - Lists of tensors or tensors within lists annotated as tensors
+      will be converted to numpy arrays if not already in that format.
+
+    This function simply wraps the tensor_auto_backend function with the
+    force_backend argument set to "numpy".
+    """
+    # Wrap the original function with tensor_auto_backend enforcing numpy.
+    wrapped_func = tensor_to_auto_backend(func, force_backend="numpy")
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return wrapped_func(*args, **kwargs)
+
+    return wrapper
+
+
+def tensor_to_torch_backend(func):
+    """
+    Run this function by first converting its input tensors to torch tensors.
+    Only jaxtyping-annotated tensors will be processed. This wrapper shall be
+    used if the internal implementation is torch-only or if we expect to return
+    torch tensors.
+
+    Behavior:
+    1. Only converts arguments that are annotated explicitly with a jaxtyping
+       tensor type. If the type hint is a container of tensors, the conversion
+       will not be performed.
+    2. Supports conversion of lists into torch tensors if they are intended to be
+       tensors, according to the function's type annotations.
+    3. The conversion is applied to top-level arguments and does not recursively
+       convert tensors within nested custom types (e.g., custom classes
+       containing tensors).
+    4. This decorator is particularly useful for functions requiring consistent
+       tensor handling specifically with torch, ensuring compatibility and
+       simplifying operations that depend on torch's functionality.
+
+    Note:
+    - The decorator inspects type annotations and applies conversions where
+      specified.
+    - Lists of tensors or tensors within lists annotated as tensors
+      will be converted to torch tensors if not already in that format.
+
+    This function simply wraps the tensor_auto_backend function with the
+    force_backend argument set to "torch".
+    """
+    # Wrap the original function with tensor_auto_backend enforcing torch.
+    wrapped_func = tensor_to_auto_backend(func, force_backend="torch")
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return wrapped_func(*args, **kwargs)
+
+    return wrapper

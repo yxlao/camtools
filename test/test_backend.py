@@ -4,274 +4,154 @@ from jaxtyping import Float
 
 import camtools as ct
 from camtools.backend import Tensor, ivy, is_torch_available, torch
+import warnings
 
 
-@ct.backend.tensor_auto_backend
-@ct.backend.tensor_type_check
-def concat_tensors(x: Float[Tensor, "..."], y: Float[Tensor, "..."]):
+@pytest.fixture(autouse=True)
+def ignore_ivy_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        message=".*Compositional function.*array_mode is set to False.*",
+        category=UserWarning,
+    )
+    yield
+
+
+@ct.backend.tensor_to_auto_backend
+def concat(x: Float[Tensor, "..."], y: Float[Tensor, "..."]):
     return ivy.concat([x, y], axis=0)
 
 
-def test_default_backend_numpy():
+def test_concat_numpy():
     """
     Test the default backend when no tensors are provided.
-    """
-    result = concat_tensors([1.0, 2.0, 3.0], [4.0, 5.0, 6.0])
-    assert isinstance(result, np.ndarray)
-    assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
-
-
-@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-def test_default_backend_torch():
-    """
-    Test the default backend when no tensors are provided.
-    """
-    with ct.backend.ScopedBackend("torch"):
-        result = concat_tensors([1.0, 2.0, 3.0], [4.0, 5.0, 6.0])
-
-    assert isinstance(result, torch.Tensor)
-    assert torch.equal(result, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
-
-
-@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-def test_auto_backend_numpy_to_torch():
-    """
-    When default backend is numpy, and tensors from torch is provided,
-    the tensor_auto_backend should switch to torch backend.
-    """
-    x = torch.tensor([1.0, 2.0, 3.0])
-    y = torch.tensor([4.0, 5.0, 6.0])
-    with ct.backend.ScopedBackend("numpy"):
-        result = concat_tensors(x, y)
-
-    assert isinstance(result, torch.Tensor)
-    assert torch.equal(result, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
-
-
-@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-def test_auto_backend_torch_to_numpy():
-    """
-    When default backend is torch, and tensors from numpy is provided,
-    the tensor_auto_backend should switch to numpy backend.
     """
     x = np.array([1.0, 2.0, 3.0])
     y = np.array([4.0, 5.0, 6.0])
-    with ct.backend.ScopedBackend("torch"):
-        result = concat_tensors(x, y)
-
-    assert isinstance(result, np.ndarray)
-    assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
-
-
-def test_pure_list_as_tensor_numpy():
-    """
-    Test handling of pure Python lists annotated as tensor type.
-    """
-
-    @ct.backend.tensor_auto_backend
-    def func(x: Float[Tensor, "..."]):
-        return ivy.native_array(x)
-
-    result = func([1.0, 2.0, 3.0])
-    assert isinstance(result, np.ndarray)
-
-
-@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-def test_pure_list_as_tensor_torch():
-    """
-    Test handling of pure Python lists annotated as tensor type.
-    """
-
-    @ct.backend.tensor_auto_backend
-    def func(x: Float[Tensor, "..."]):
-        return ivy.native_array(x)
-
-    with ct.backend.ScopedBackend("torch"):
-        result = func([1.0, 2.0, 3.0])
-        assert isinstance(result, torch.Tensor)
-
-
-def test_mix_list_and_numpy():
-    """
-    Test handling of mixed list and tensor types.
-    """
-    x = np.array([1.0, 2.0, 3.0])
-    y = [4.0, 5.0, 6.0]
-    result = concat_tensors(x, y)
+    result = concat(x, y)
     assert isinstance(result, np.ndarray)
     assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
 
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-def test_mix_list_and_torch():
+def test_concat_torch():
     """
-    Test handling of mixed list and tensor types.
+    Test the default backend when no tensors are provided.
     """
     x = torch.tensor([1.0, 2.0, 3.0])
+    y = torch.tensor([4.0, 5.0, 6.0])
+    result = concat(x, y)
+    assert isinstance(result, torch.Tensor)
+    assert torch.equal(result, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+
+def test_concat_list_to_numpy():
+    """
+    Test the default backend when no tensors are provided.
+    """
+    x = [1.0, 2.0, 3.0]
     y = [4.0, 5.0, 6.0]
+    result = concat(x, y)
+    assert isinstance(result, np.ndarray)
+    assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
-    with ct.backend.ScopedBackend("torch"):
-        result = concat_tensors(x, y)
 
+def test_concat_mix_list_and_numpy():
+    """
+    Test handling of mixed list and tensor types.
+    """
+    x = [1.0, 2.0, 3.0]
+    y = np.array([4.0, 5.0, 6.0])
+    result = concat(x, y)
+    assert isinstance(result, np.ndarray)
+    assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_concat_mix_list_and_torch():
+    """
+    Test handling of mixed list and tensor types.
+    """
+    x = [1.0, 2.0, 3.0]
+    y = torch.tensor([4.0, 5.0, 6.0])
+    result = concat(x, y)
     assert isinstance(result, torch.Tensor)
     assert torch.equal(result, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
 
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-def test_mix_numpy_and_torch():
+def test_concat_mix_numpy_and_torch():
     """
     Test error handling with mixed tensor types across arguments.
     """
     x = np.array([1.0, 2.0, 3.0])
     y = torch.tensor([4.0, 5.0, 6.0])
     with pytest.raises(TypeError, match=r".*must be from the same backend.*"):
-        concat_tensors(x, y)
+        concat(x, y)
 
 
-def test_container_of_tensors_numpy():
+def test_concat_list_of_numpy():
     """
     Test handling of containers holding tensors from different backends.
     """
 
     x = [np.array(1.0), np.array(2.0), np.array(3.0)]
     y = np.array([4.0, 5.0, 6.0])
-    result = concat_tensors(x, y)
+    result = concat(x, y)
     assert isinstance(result, np.ndarray)
     assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
 
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-def test_container_of_tensors_torch():
+def test_concat_list_of_torch():
     """
     Test handling of containers holding tensors from different backends.
     """
     x = [torch.tensor(1.0), torch.tensor(2.0), torch.tensor(3.0)]
     y = torch.tensor([4.0, 5.0, 6.0])
-    with ct.backend.ScopedBackend("torch"):
-        result = concat_tensors(x, y)
+    result = concat(x, y)
 
     assert isinstance(result, torch.Tensor)
     assert torch.equal(result, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
 
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-def test_container_mix_numpy_torch_v1():
-    """
-    Test error handling with mixed tensor types across containers.
-    """
-    x = np.array([1.0, 2.0, 3.0])
-    y = torch.tensor([4.0, 5.0, 6.0])
-    with pytest.raises(TypeError, match=r".*must be from the same backend.*"):
-        concat_tensors(x, y)
-
-
-@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-def test_container_mix_numpy_torch_v2_numpy():
+def test_concat_list_of_numpy_and_torch():
     """
     Test handling with mixed tensor types across containers.
 
     In this case as lists are not type-checked, we both x and y will be
     converted to default backend's arrays internally. That is,
-    x <- np.array(x) and y <- np.array(y) are both valid operation.
+    x <- np.array(x) and y <- np.array(y) are both valid operation. In this
+    case, even though y contains tensors from both numpy and torch, as
+    np.asarray(y) is valid, the function should work.
+
+    However, this can be very slow. As creating a torch tensor from a list of
+    np.ndarray is very slow and likewise for creating np.ndarray from a list of
+    torch tensors. Therefore, you shall avoid doing this in practice.
     """
     x = [np.array(1.0), np.array(2.0), np.array(3.0)]
-    y = [np.array(4.0), np.array(5.0), torch.tensor(6.0)]
-    result = concat_tensors(x, y)
+    y = [torch.tensor(4.0), torch.tensor(5.0), torch.tensor(6.0)]
+    result = concat(x, y)
     assert isinstance(result, np.ndarray)
     assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
 
-@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-def test_container_mix_numpy_torch_v2_torch():
-    """
-    Test handling with mixed tensor types across containers.
-
-    In this case as lists are not type-checked, we both x and y will be
-    converted to default backend's arrays internally. That is,
-    x <- np.array(x) and y <- np.array(y) are both valid operation.
-    """
-    x = [torch.tensor(1.0), torch.tensor(2.0), torch.tensor(3.0)]
-    y = [torch.tensor(4.0), torch.tensor(5.0), np.array(6.0)]
-    with ct.backend.ScopedBackend("torch"):
-        result = concat_tensors(x, y)
-
-    assert isinstance(result, torch.Tensor)
-    assert torch.equal(result, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
-
-
-def test_creation_numpy():
-    @ct.backend.tensor_auto_backend
+def test_creation():
+    @ct.backend.tensor_to_auto_backend
     def creation():
         zeros = ivy.zeros([2, 3])
         return zeros
 
     # Default backend is numpy
-    assert ct.backend.get_backend() == "numpy"
     tensor = creation()
     assert isinstance(tensor, np.ndarray)
     assert tensor.shape == (2, 3)
     assert tensor.dtype == np.float32
 
 
-@pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
-def test_creation_torch():
-    @ct.backend.tensor_auto_backend
-    def creation():
-        zeros = ivy.zeros([2, 3])
-        return zeros
-
-    # Switch to torch backend
-    with ct.backend.ScopedBackend("torch"):
-        assert ct.backend.get_backend() == "torch"
-        tensor = creation()
-        assert isinstance(tensor, torch.Tensor)
-        assert tensor.shape == (2, 3)
-        assert tensor.dtype == torch.float32
-
-    # Switch back to the default backend is numpy
-    assert ct.backend.get_backend() == "numpy"
-    tensor = creation()
-    assert isinstance(tensor, np.ndarray)
-
-
-def test_arguments_numpy():
-    @ct.backend.tensor_auto_backend
-    def add(x, y):
-        return x + y
-
-    # Default backend is numpy
-    assert ct.backend.get_backend() == "numpy"
-    src_x = np.ones([2, 3]) * 2
-    src_y = np.ones([1, 3]) * 3
-    dst_expected = np.ones([2, 3]) * 5
-    dst = add(src_x, src_y)
-    np.testing.assert_allclose(dst, dst_expected, rtol=1e-5, atol=1e-5)
-
-
-@pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
-def test_arguments_torch():
-    @ct.backend.tensor_auto_backend
-    def add(x, y):
-        return x + y
-
-    # Default backend is numpy
-    assert ct.backend.get_backend() == "numpy"
-    src_x = np.ones([2, 3]) * 2
-    src_y = np.ones([1, 3]) * 3
-    dst_expected = np.ones([2, 3]) * 5
-    dst = add(src_x, src_y)
-    np.testing.assert_allclose(dst, dst_expected, rtol=1e-5, atol=1e-5)
-
-    # Mixed backend argument should raise error
-    src_x = np.ones([2, 3]) * 2
-    src_y = torch.ones([1, 3]) * 3
-    with pytest.raises(TypeError):
-        add(src_x, src_y)
-
-
 def test_type_hint_arguments_numpy():
-    @ct.backend.tensor_auto_backend
-    @ct.backend.tensor_type_check
+    @ct.backend.tensor_to_auto_backend
     def add(
         x: Float[Tensor, "2 3"],
         y: Float[Tensor, "1 3"],
@@ -315,53 +195,49 @@ def test_type_hint_arguments_numpy():
 
 @pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
 def test_type_hint_arguments_torch():
-    @ct.backend.tensor_auto_backend
-    @ct.backend.tensor_type_check
+    @ct.backend.tensor_to_auto_backend
     def add(
         x: Float[Tensor, "2 3"],
         y: Float[Tensor, "1 3"],
     ) -> Float[Tensor, "2 3"]:
         return x + y
 
-    with ct.backend.ScopedBackend("torch"):
+    x = torch.tensor([[1, 2, 3], [4, 5, 6]], dtype=torch.float32)
+    y = torch.tensor([[1, 1, 1]], dtype=torch.float32)
+    result = add(x, y)
+    expected = torch.tensor([[2, 3, 4], [5, 6, 7]], dtype=torch.float32)
+    assert isinstance(result, torch.Tensor)
+    assert torch.allclose(result, expected, atol=1e-5)
 
-        x = torch.tensor([[1, 2, 3], [4, 5, 6]], dtype=torch.float32)
-        y = torch.tensor([[1, 1, 1]], dtype=torch.float32)
-        result = add(x, y)
-        expected = torch.tensor([[2, 3, 4], [5, 6, 7]], dtype=torch.float32)
-        assert isinstance(result, torch.Tensor)
-        assert torch.allclose(result, expected, atol=1e-5)
+    # List can be converted to torch automatically
+    x = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
+    result = add(x, y)
+    assert isinstance(result, torch.Tensor)
+    assert torch.allclose(result, expected, atol=1e-5)
 
-        # List can be converted to torch automatically
-        x = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
-        result = add(x, y)
-        assert isinstance(result, torch.Tensor)
-        assert torch.allclose(result, expected, atol=1e-5)
+    # Incorrect shapes
+    with pytest.raises(TypeError, match=r".*but got shape.*"):
+        y_wrong = torch.tensor([[1, 1, 1, 1]], dtype=torch.float32)
+        add(x, y_wrong)
 
-        # Incorrect shapes
-        with pytest.raises(TypeError, match=r".*but got shape.*"):
-            y_wrong = torch.tensor([[1, 1, 1, 1]], dtype=torch.float32)
-            add(x, y_wrong)
+    # Incorrect shape with lists
+    with pytest.raises(TypeError, match=r".*but got shape.*"):
+        y_wrong = [[1.0, 1.0, 1.0, 1.0]]
+        add(x, y_wrong)
 
-        # Incorrect shape with lists
-        with pytest.raises(TypeError, match=r".*but got shape.*"):
-            y_wrong = [[1.0, 1.0, 1.0, 1.0]]
-            add(x, y_wrong)
+    # Incorrect dtype
+    with pytest.raises(TypeError, match=r".*but got dtype.*"):
+        y_wrong = torch.tensor([[1, 1, 1]], dtype=torch.int64)
+        add(x, y_wrong)
 
-        # Incorrect dtype
-        with pytest.raises(TypeError, match=r".*but got dtype.*"):
-            y_wrong = torch.tensor([[1, 1, 1]], dtype=torch.int64)
-            add(x, y_wrong)
-
-        # Incorrect dtype with lists
-        with pytest.raises(TypeError, match=r".*but got dtype.*"):
-            y_wrong = [[1, 1, 1]]
-            add(x, y_wrong)
+    # Incorrect dtype with lists
+    with pytest.raises(TypeError, match=r".*but got dtype.*"):
+        y_wrong = [[1, 1, 1]]
+        add(x, y_wrong)
 
 
 def test_named_dim_numpy():
-    @ct.backend.tensor_auto_backend
-    @ct.backend.tensor_type_check
+    @ct.backend.tensor_to_auto_backend
     def add(
         x: Float[Tensor, "3"],
         y: Float[Tensor, "n 3"],
@@ -404,8 +280,7 @@ def test_named_dim_numpy():
 
 @pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
 def test_named_dim_torch():
-    @ct.backend.tensor_auto_backend
-    @ct.backend.tensor_type_check
+    @ct.backend.tensor_to_auto_backend
     def add(
         x: Float[Tensor, "3"],
         y: Float[Tensor, "n 3"],
@@ -447,7 +322,7 @@ def test_named_dim_torch():
 
 
 def test_concat_tensors_with_numpy():
-    @ct.backend.tensor_numpy_backend
+    @ct.backend.tensor_to_numpy_backend
     def concat_tensors_with_numpy(
         x: Float[Tensor, "..."],
         y: Float[Tensor, "..."],
@@ -471,12 +346,6 @@ def test_concat_tensors_with_numpy():
         assert isinstance(result, np.ndarray)
         assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
-        # Even setting the backend to torch should not affect the function
-        with ct.backend.ScopedBackend("torch"):
-            result = concat_tensors_with_numpy(x, y)
-            assert isinstance(result, np.ndarray)
-            assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
-
     # Test with lists
     x = [1.0, 2.0, 3.0]
     y = [4.0, 5.0, 6.0]
@@ -499,16 +368,10 @@ def test_concat_tensors_with_numpy():
         assert isinstance(result, np.ndarray)
         assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
 
-        # Even setting the backend to torch should not affect the function
-        with ct.backend.ScopedBackend("torch"):
-            result = concat_tensors_with_numpy(x, y)
-            assert isinstance(result, np.ndarray)
-            assert np.array_equal(result, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
-
 
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
 def test_concat_tensors_with_torch():
-    @ct.backend.tensor_torch_backend
+    @ct.backend.tensor_to_torch_backend
     def concat_tensors_with_torch(
         x: Float[Tensor, "..."],
         y: Float[Tensor, "..."],
@@ -554,11 +417,90 @@ def test_concat_tensors_with_torch():
         result_mixed_torch_list, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
     )
 
-    # Testing within a different backend scope
-    if ct.backend.is_torch_available():
-        with ct.backend.ScopedBackend("numpy"):
-            result_scope = concat_tensors_with_torch(x_torch, y_torch)
-            assert isinstance(result_scope, torch.Tensor)
-            assert torch.equal(
-                result_scope, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
-            )
+
+@ct.backend.tensor_to_numpy_backend
+def sum_xyz(
+    x: Float[Tensor, "3"],
+    y: Float[Tensor, "3"] = (2.0, 2.0, 2.0),
+    z: Float[Tensor, "3"] = (3.0, 3.0, 3.0),
+):
+    assert isinstance(x, np.ndarray)
+    assert isinstance(y, np.ndarray)
+    assert isinstance(z, np.ndarray)
+    return x + y + z
+
+
+def test_kwargs_sum_xyz_with_x():
+    x = np.array([1.0, 1.0, 1.0])
+    result = sum_xyz(x)
+    expected_result = np.array([6.0, 6.0, 6.0])
+    assert np.allclose(result, expected_result)
+
+
+def test_kwargs_sum_xyz_with_x_y():
+    x = np.array([1.0, 1.0, 1.0])
+    y = np.array([5.0, 5.0, 5.0])
+    result = sum_xyz(x, y=y)
+    expected_result = np.array([9.0, 9.0, 9.0])
+    assert np.allclose(result, expected_result)
+
+
+def test_kwargs_sum_xyz_with_x_y_z():
+    x = np.array([1.0, 1.0, 1.0])
+    y = np.array([5.0, 5.0, 5.0])
+    z = np.array([10.0, 10.0, 10.0])
+    result = sum_xyz(x, y=y, z=z)
+    expected_result = np.array([16.0, 16.0, 16.0])
+    assert np.allclose(result, expected_result)
+
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_kwargs_sum_xyz_with_x_torch():
+    x = torch.tensor([1.0, 1.0, 1.0])
+    result = sum_xyz(x)
+    expected_result = np.array([6.0, 6.0, 6.0])
+    assert np.allclose(result, expected_result)
+
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_kwargs_sum_xyz_with_x_y_torch():
+    x = np.array([1.0, 1.0, 1.0])
+    y = torch.tensor([5.0, 5.0, 5.0])
+    result = sum_xyz(x, y=y)
+    expected_result = np.array([9.0, 9.0, 9.0])
+    assert np.allclose(result, expected_result)
+
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_kwargs_sum_xyz_with_x_y_z_torch():
+    x = np.array([1.0, 1.0, 1.0])
+    y = torch.tensor([5.0, 5.0, 5.0])
+    z = torch.tensor([10.0, 10.0, 10.0])
+    result = sum_xyz(x, y=y, z=z)
+    expected_result = np.array([16.0, 16.0, 16.0])
+    assert np.allclose(result, expected_result)
+
+
+def test_disable_tensor_check():
+    """
+    Test behavior when tensor type checks are disabled.
+    """
+    # Wrong shape
+    ct.backend.disable_tensor_check()
+    x = np.array([1.0, 1.0, 1.0], dtype=np.float32)
+    y = np.array(5.0, dtype=np.float32)
+    result = sum_xyz(x, y=y)
+    assert np.allclose(result, np.array([9.0, 9.0, 9.0]))
+    ct.backend.enable_tensor_check()
+    with pytest.raises(TypeError, match=r".*but got shape.*"):
+        sum_xyz(x, y=y)
+
+    # Wrong dtype
+    ct.backend.disable_tensor_check()
+    x = np.array([1.0, 1.0, 1.0], dtype=np.float32)
+    y = np.array([5, 5, 5], dtype=np.int32)
+    result = sum_xyz(x, y=y)
+    assert np.allclose(result, np.array([9.0, 9.0, 9.0]))
+    ct.backend.enable_tensor_check()
+    with pytest.raises(TypeError, match=r".*but got dtype.*"):
+        sum_xyz(x, y=y)
