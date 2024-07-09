@@ -11,6 +11,10 @@ def _sum(
     y: Float[Tensor, "3"] = torch.tensor([2.0, 2.0, 2.0]),
     z: Float[Tensor, "3"] = torch.tensor([3.0, 3.0, 3.0]),
 ):
+    """
+    While it is not good to use mutable default arguments, this is just for
+    demonstration purposes.
+    """
     assert isinstance(x, np.ndarray)
     assert isinstance(y, np.ndarray)
     assert isinstance(z, np.ndarray)
