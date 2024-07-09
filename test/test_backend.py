@@ -1,10 +1,11 @@
 import numpy as np
 import pytest
-from jaxtyping import Float
+from jaxtyping import Float, Int
 
 import camtools as ct
 from camtools.backend import Tensor, ivy, is_torch_available, torch
 import warnings
+from typing import Union
 
 
 @pytest.fixture(autouse=True)
@@ -17,7 +18,7 @@ def ignore_ivy_warnings():
     yield
 
 
-@ct.backend.tensor_to_auto_backend
+@ct.backend.tensor_backend_auto
 def concat(x: Float[Tensor, "..."], y: Float[Tensor, "..."]):
     return ivy.concat([x, y], axis=0)
 
@@ -86,7 +87,7 @@ def test_concat_mix_numpy_and_torch():
     """
     x = np.array([1.0, 2.0, 3.0])
     y = torch.tensor([4.0, 5.0, 6.0])
-    with pytest.raises(TypeError, match=r".*must be from the same backend.*"):
+    with pytest.raises(ValueError, match=r".*must be from the same backend.*"):
         concat(x, y)
 
 
@@ -138,7 +139,7 @@ def test_concat_list_of_numpy_and_torch():
 
 
 def test_creation():
-    @ct.backend.tensor_to_auto_backend
+    @ct.backend.tensor_backend_auto
     def creation():
         zeros = ivy.zeros([2, 3])
         return zeros
@@ -151,7 +152,7 @@ def test_creation():
 
 
 def test_type_hint_arguments_numpy():
-    @ct.backend.tensor_to_auto_backend
+    @ct.backend.tensor_backend_auto
     def add(
         x: Float[Tensor, "2 3"],
         y: Float[Tensor, "1 3"],
@@ -173,29 +174,29 @@ def test_type_hint_arguments_numpy():
     assert np.allclose(result, expected, atol=1e-5)
 
     # Incorrect shapes
-    with pytest.raises(TypeError, match=r".*but got shape.*"):
+    with pytest.raises(ValueError, match=r".*got shape.*"):
         y_wrong = np.array([[1, 1, 1, 1]], dtype=np.float32)
         add(x, y_wrong)
 
     # Incorrect shape with lists
-    with pytest.raises(TypeError, match=r".*but got shape.*"):
+    with pytest.raises(ValueError, match=r".*got shape.*"):
         y_wrong = [[1.0, 1.0, 1.0, 1.0]]
         add(x, y_wrong)
 
     # Incorrect dtype
-    with pytest.raises(TypeError, match=r".*but got dtype.*"):
+    with pytest.raises(ValueError, match=r".*got dtype.*"):
         y_wrong = np.array([[1, 1, 1]], dtype=np.int64)
         add(x, y_wrong)
 
     # Incorrect dtype with lists
-    with pytest.raises(TypeError, match=r".*but got dtype.*"):
+    with pytest.raises(ValueError, match=r".*got dtype.*"):
         y_wrong = [[1, 1, 1]]
         add(x, y_wrong)
 
 
 @pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
 def test_type_hint_arguments_torch():
-    @ct.backend.tensor_to_auto_backend
+    @ct.backend.tensor_backend_auto
     def add(
         x: Float[Tensor, "2 3"],
         y: Float[Tensor, "1 3"],
@@ -216,28 +217,28 @@ def test_type_hint_arguments_torch():
     assert torch.allclose(result, expected, atol=1e-5)
 
     # Incorrect shapes
-    with pytest.raises(TypeError, match=r".*but got shape.*"):
+    with pytest.raises(ValueError, match=r".*got shape.*"):
         y_wrong = torch.tensor([[1, 1, 1, 1]], dtype=torch.float32)
         add(x, y_wrong)
 
     # Incorrect shape with lists
-    with pytest.raises(TypeError, match=r".*but got shape.*"):
+    with pytest.raises(ValueError, match=r".*got shape.*"):
         y_wrong = [[1.0, 1.0, 1.0, 1.0]]
         add(x, y_wrong)
 
     # Incorrect dtype
-    with pytest.raises(TypeError, match=r".*but got dtype.*"):
+    with pytest.raises(ValueError, match=r".*got dtype.*"):
         y_wrong = torch.tensor([[1, 1, 1]], dtype=torch.int64)
         add(x, y_wrong)
 
     # Incorrect dtype with lists
-    with pytest.raises(TypeError, match=r".*but got dtype.*"):
+    with pytest.raises(ValueError, match=r".*got dtype.*"):
         y_wrong = [[1, 1, 1]]
         add(x, y_wrong)
 
 
 def test_named_dim_numpy():
-    @ct.backend.tensor_to_auto_backend
+    @ct.backend.tensor_backend_auto
     def add(
         x: Float[Tensor, "3"],
         y: Float[Tensor, "n 3"],
@@ -262,7 +263,7 @@ def test_named_dim_numpy():
     assert np.allclose(result, expected, atol=1e-5)
 
     # Test for a shape mismatch where y does not conform to "n 3"
-    with pytest.raises(TypeError, match=r".*but got shape.*"):
+    with pytest.raises(ValueError, match=r".*got shape.*"):
         y_wrong = np.array([4.0, 5.0, 6.0], dtype=np.float32)  # Shape (3,)
         add(x, y_wrong)
 
@@ -273,14 +274,14 @@ def test_named_dim_numpy():
     assert np.allclose(result, expected, atol=1e-5)
 
     # Incorrect dtype with lists, expect dtype error
-    with pytest.raises(TypeError, match=r".*but got dtype.*"):
+    with pytest.raises(ValueError, match=r".*got dtype.*"):
         y_wrong = [[4, 5, 6], [7, 8, 9]]  # int type elements in list
         add(x, y_wrong)
 
 
 @pytest.mark.skipif(not ct.backend.is_torch_available(), reason="Skip torch")
 def test_named_dim_torch():
-    @ct.backend.tensor_to_auto_backend
+    @ct.backend.tensor_backend_auto
     def add(
         x: Float[Tensor, "3"],
         y: Float[Tensor, "n 3"],
@@ -305,7 +306,7 @@ def test_named_dim_torch():
     assert torch.allclose(result, expected, atol=1e-5)
 
     # Test for a shape mismatch where y does not conform to "n 3"
-    with pytest.raises(TypeError, match=r".*but got shape.*"):
+    with pytest.raises(ValueError, match=r".*got shape.*"):
         y_wrong = torch.tensor([4.0, 5.0, 6.0], dtype=torch.float32)  # Shape (3,)
         add(x, y_wrong)
 
@@ -316,13 +317,13 @@ def test_named_dim_torch():
     assert torch.allclose(result, expected, atol=1e-5)
 
     # Incorrect dtype with lists, expect dtype error
-    with pytest.raises(TypeError, match=r".*but got dtype.*"):
+    with pytest.raises(ValueError, match=r".*got dtype.*"):
         y_wrong = [[4, 5, 6], [7, 8, 9]]  # int type elements in list
         add(x, y_wrong)
 
 
 def test_concat_tensors_with_numpy():
-    @ct.backend.tensor_to_numpy_backend
+    @ct.backend.tensor_backend_numpy
     def concat_tensors_with_numpy(
         x: Float[Tensor, "..."],
         y: Float[Tensor, "..."],
@@ -371,7 +372,7 @@ def test_concat_tensors_with_numpy():
 
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
 def test_concat_tensors_with_torch():
-    @ct.backend.tensor_to_torch_backend
+    @ct.backend.tensor_backend_torch
     def concat_tensors_with_torch(
         x: Float[Tensor, "..."],
         y: Float[Tensor, "..."],
@@ -418,7 +419,7 @@ def test_concat_tensors_with_torch():
     )
 
 
-@ct.backend.tensor_to_numpy_backend
+@ct.backend.tensor_backend_numpy
 def sum_xyz(
     x: Float[Tensor, "3"],
     y: Float[Tensor, "3"] = (2.0, 2.0, 2.0),
@@ -492,7 +493,7 @@ def test_disable_tensor_check():
     result = sum_xyz(x, y=y)
     assert np.allclose(result, np.array([9.0, 9.0, 9.0]))
     ct.backend.enable_tensor_check()
-    with pytest.raises(TypeError, match=r".*but got shape.*"):
+    with pytest.raises(ValueError, match=r".*got shape.*"):
         sum_xyz(x, y=y)
 
     # Wrong dtype
@@ -502,5 +503,36 @@ def test_disable_tensor_check():
     result = sum_xyz(x, y=y)
     assert np.allclose(result, np.array([9.0, 9.0, 9.0]))
     ct.backend.enable_tensor_check()
-    with pytest.raises(TypeError, match=r".*but got dtype.*"):
+    with pytest.raises(ValueError, match=r".*got dtype.*"):
         sum_xyz(x, y=y)
+
+
+def test_union_of_hints():
+
+    @ct.backend.tensor_backend_auto
+    def identity(
+        arr: Union[
+            Float[Tensor, "3 4"],
+            Float[Tensor, "N 3 4"],
+            Int[Tensor, "N 3 4"],
+        ]
+    ):
+        return arr
+
+    # Supported dtype and shape
+    x = np.random.rand(3, 4).astype(np.float32)
+    assert np.allclose(identity(x), x)
+    x = np.random.rand(5, 3, 4).astype(np.float32)
+    assert np.allclose(identity(x), x)
+    x = np.random.randint(0, 10, (5, 3, 4)).astype(np.int32)
+    assert np.allclose(identity(x), x)
+
+    # Wrong dtype
+    with pytest.raises(ValueError, match=r".*got dtype.*"):
+        x = np.random.randint(0, 10, (3, 4)).astype(np.int32)
+        identity(x)
+
+    # Wrong shape
+    with pytest.raises(ValueError, match=r".*got shape.*"):
+        x = np.random.rand(5, 4).astype(np.float32)
+        identity(x)
