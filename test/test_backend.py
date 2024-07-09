@@ -430,14 +430,14 @@ def sum_xyz(
     return x + y + z
 
 
-def test_sum_three_with_x():
+def test_kwargs_sum_xyz_with_x():
     x = np.array([1.0, 1.0, 1.0])
     result = sum_xyz(x)
     expected_result = np.array([6.0, 6.0, 6.0])
     assert np.allclose(result, expected_result)
 
 
-def test_sum_three_with_x_y():
+def test_kwargs_sum_xyz_with_x_y():
     x = np.array([1.0, 1.0, 1.0])
     y = np.array([5.0, 5.0, 5.0])
     result = sum_xyz(x, y=y)
@@ -445,8 +445,17 @@ def test_sum_three_with_x_y():
     assert np.allclose(result, expected_result)
 
 
+def test_kwargs_sum_xyz_with_x_y_z():
+    x = np.array([1.0, 1.0, 1.0])
+    y = np.array([5.0, 5.0, 5.0])
+    z = np.array([10.0, 10.0, 10.0])
+    result = sum_xyz(x, y=y, z=z)
+    expected_result = np.array([16.0, 16.0, 16.0])
+    assert np.allclose(result, expected_result)
+
+
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-def test_sum_three_with_x_torch():
+def test_kwargs_sum_xyz_with_x_torch():
     x = torch.tensor([1.0, 1.0, 1.0])
     result = sum_xyz(x)
     expected_result = np.array([6.0, 6.0, 6.0])
@@ -454,9 +463,19 @@ def test_sum_three_with_x_torch():
 
 
 @pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
-def test_sum_three_with_x_y_torch():
+def test_kwargs_sum_xyz_with_x_y_torch():
     x = np.array([1.0, 1.0, 1.0])
     y = torch.tensor([5.0, 5.0, 5.0])
     result = sum_xyz(x, y=y)
     expected_result = np.array([9.0, 9.0, 9.0])
+    assert np.allclose(result, expected_result)
+
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_kwargs_sum_xyz_with_x_y_z_torch():
+    x = np.array([1.0, 1.0, 1.0])
+    y = torch.tensor([5.0, 5.0, 5.0])
+    z = torch.tensor([10.0, 10.0, 10.0])
+    result = sum_xyz(x, y=y, z=z)
+    expected_result = np.array([16.0, 16.0, 16.0])
     assert np.allclose(result, expected_result)
