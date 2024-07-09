@@ -262,6 +262,30 @@ def tensor_to_auto_backend(func, force_backend=None):
        higher precedence.
     """
 
+    # Pre-compute the function signature and type hints
+    # This is called per function declaration and not per function call
+    sig = inspect.signature(func)
+    arg_names = [
+        param.name
+        for param in sig.parameters.values()
+        if param.kind
+        in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            inspect.Parameter.KEYWORD_ONLY,
+        )
+    ]
+    arg_name_to_hint = {
+        name: hint
+        for name, hint in typing.get_type_hints(func).items()
+        if name in arg_names
+    }
+    tensor_names = [
+        name
+        for name, hint in arg_name_to_hint.items()
+        if inspect.isclass(hint) and issubclass(hint, jaxtyping.AbstractArray)
+    ]
+
     def _collect_tensors(args: List[Any]) -> List[Any]:
         """
         Recursively collects np.ndarray and torch.Tensor objects. Other types
@@ -282,21 +306,13 @@ def tensor_to_auto_backend(func, force_backend=None):
 
     def _determine_backend(
         arg_name_to_arg: Dict[str, Any],
-        arg_name_to_hint: Dict[str, Any],
+        tensor_names: List[str],
     ) -> str:
         """
         Also throws an error if the tensors are not from the same backend.
         """
-        tensor_annotated_args = []
-        for arg_name, hint in arg_name_to_hint.items():
-            if (
-                arg_name in arg_name_to_arg
-                and inspect.isclass(hint)
-                and issubclass(hint, jaxtyping.AbstractArray)
-            ):
-                arg = arg_name_to_arg[arg_name]
-                tensor_annotated_args.append(arg)
-        tensors = _collect_tensors(tensor_annotated_args)
+        tensor_args = [arg_name_to_arg[tensor_name] for tensor_name in tensor_names]
+        tensors = _collect_tensors(tensor_args)
 
         if not tensors:
             return "numpy"
@@ -340,19 +356,10 @@ def tensor_to_auto_backend(func, force_backend=None):
         else:
             raise ValueError(f"Unsupported backend {backend}.")
 
-    # Pre-compute the function signature and type hints
-    # This is called per function declaration and not per function call
-    sig = inspect.signature(func)
-    arg_name_to_hint = typing.get_type_hints(func)
-    tensor_arg_name_to_hint = {
-        name: hint
-        for name, hint in arg_name_to_hint.items()
-        if inspect.isclass(hint) and issubclass(hint, jaxtyping.AbstractArray)
-    }
-
     @wraps(func)
     def wrapper(*args, **kwargs):
-        arg_names = [param.name for param in sig.parameters.values()]
+        # Bind args and kwargs
+        # This is faster than sig.bind() but less flexible
         arg_name_to_arg = dict(zip(arg_names, args))
         arg_name_to_arg.update(kwargs)
 
@@ -363,31 +370,30 @@ def tensor_to_auto_backend(func, force_backend=None):
 
         # Determine backend
         if force_backend is None:
-            backend = _determine_backend(arg_name_to_arg, tensor_arg_name_to_hint)
+            backend = _determine_backend(arg_name_to_arg, tensor_names)
         elif force_backend in ("numpy", "torch"):
             backend = force_backend
         else:
             raise ValueError(f"Unsupported forced backend {force_backend}.")
 
         # Convert tensors to the appropriate backend
-        for arg_name in tensor_arg_name_to_hint:
-            if arg_name in arg_name_to_arg:
-                arg_name_to_arg[arg_name] = _convert_tensor_to_backend(
-                    arg_name_to_arg[arg_name], backend
-                )
+        for tensor_name in tensor_names:
+            arg_name_to_arg[tensor_name] = _convert_tensor_to_backend(
+                arg_name_to_arg[tensor_name], backend
+            )
 
         # Check tensor dtype and shape if enabled
         if is_tensor_check_enabled():
-            for arg_name, arg in arg_name_to_arg.items():
-                if arg_name in tensor_arg_name_to_hint:
-                    hint = tensor_arg_name_to_hint[arg_name]
-                    if isinstance(arg, _get_valid_array_types()):
-                        _assert_tensor_hint(
-                            hint=hint,
-                            arg_shape=arg.shape,
-                            arg_dtype=arg.dtype,
-                            arg_name=arg_name,
-                        )
+            for tensor_name in tensor_names:
+                hint = arg_name_to_hint[tensor_name]
+                arg = arg_name_to_arg[tensor_name]
+                if isinstance(arg, _get_valid_array_types()):
+                    _assert_tensor_hint(
+                        hint=hint,
+                        arg_shape=arg.shape,
+                        arg_dtype=arg.dtype,
+                        arg_name=tensor_name,
+                    )
 
         # Call the original function with updated arguments
         result = func(**arg_name_to_arg)
