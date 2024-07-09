@@ -297,7 +297,7 @@ def tensor_to_auto_backend(func, force_backend=None):
                 return arg
             elif is_torch_available() and isinstance(arg, torch.Tensor):
                 return arg.detach().cpu().numpy()
-            elif isinstance(arg, list):
+            elif isinstance(arg, (list, tuple)):
                 return np.array(arg)
             else:
                 raise ValueError(
@@ -310,7 +310,7 @@ def tensor_to_auto_backend(func, force_backend=None):
                 return arg
             elif isinstance(arg, np.ndarray):
                 return torch.from_numpy(arg)
-            elif isinstance(arg, list):
+            elif isinstance(arg, (list, tuple)):
                 return torch.tensor(arg)
             else:
                 raise ValueError(

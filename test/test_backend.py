@@ -416,3 +416,47 @@ def test_concat_tensors_with_torch():
     assert torch.allclose(
         result_mixed_torch_list, torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
     )
+
+
+@ct.backend.tensor_to_numpy_backend
+def sum_xyz(
+    x: Float[Tensor, "3"],
+    y: Float[Tensor, "3"] = (2.0, 2.0, 2.0),
+    z: Float[Tensor, "3"] = (3.0, 3.0, 3.0),
+):
+    assert isinstance(x, np.ndarray)
+    assert isinstance(y, np.ndarray)
+    assert isinstance(z, np.ndarray)
+    return x + y + z
+
+
+def test_sum_three_with_x():
+    x = np.array([1.0, 1.0, 1.0])
+    result = sum_xyz(x)
+    expected_result = np.array([6.0, 6.0, 6.0])
+    assert np.allclose(result, expected_result)
+
+
+def test_sum_three_with_x_y():
+    x = np.array([1.0, 1.0, 1.0])
+    y = np.array([5.0, 5.0, 5.0])
+    result = sum_xyz(x, y=y)
+    expected_result = np.array([9.0, 9.0, 9.0])
+    assert np.allclose(result, expected_result)
+
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_sum_three_with_x_torch():
+    x = torch.tensor([1.0, 1.0, 1.0])
+    result = sum_xyz(x)
+    expected_result = np.array([6.0, 6.0, 6.0])
+    assert np.allclose(result, expected_result)
+
+
+@pytest.mark.skipif(not is_torch_available(), reason="Torch is not available")
+def test_sum_three_with_x_y_torch():
+    x = np.array([1.0, 1.0, 1.0])
+    y = torch.tensor([5.0, 5.0, 5.0])
+    result = sum_xyz(x, y=y)
+    expected_result = np.array([9.0, 9.0, 9.0])
+    assert np.allclose(result, expected_result)
