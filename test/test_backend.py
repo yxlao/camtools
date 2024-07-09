@@ -479,3 +479,28 @@ def test_kwargs_sum_xyz_with_x_y_z_torch():
     result = sum_xyz(x, y=y, z=z)
     expected_result = np.array([16.0, 16.0, 16.0])
     assert np.allclose(result, expected_result)
+
+
+def test_disable_tensor_check():
+    """
+    Test behavior when tensor type checks are disabled.
+    """
+    # Wrong shape
+    ct.backend.disable_tensor_check()
+    x = np.array([1.0, 1.0, 1.0], dtype=np.float32)
+    y = np.array(5.0, dtype=np.float32)
+    result = sum_xyz(x, y=y)
+    assert np.allclose(result, np.array([9.0, 9.0, 9.0]))
+    ct.backend.enable_tensor_check()
+    with pytest.raises(TypeError, match=r".*but got shape.*"):
+        sum_xyz(x, y=y)
+
+    # Wrong dtype
+    ct.backend.disable_tensor_check()
+    x = np.array([1.0, 1.0, 1.0], dtype=np.float32)
+    y = np.array([5, 5, 5], dtype=np.int32)
+    result = sum_xyz(x, y=y)
+    assert np.allclose(result, np.array([9.0, 9.0, 9.0]))
+    ct.backend.enable_tensor_check()
+    with pytest.raises(TypeError, match=r".*but got dtype.*"):
+        sum_xyz(x, y=y)

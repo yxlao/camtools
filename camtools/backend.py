@@ -2,7 +2,7 @@ import inspect
 import typing
 import warnings
 from functools import lru_cache, wraps
-from typing import Any, Literal, Tuple, Union, Dict, List
+from typing import Any, Tuple, Union
 
 import jaxtyping
 import numpy as np
@@ -203,23 +203,35 @@ def _get_valid_array_types():
     return valid_array_types
 
 
-# Global flag to enable or disable tensor type check
+# Global variable to keep track of the tensor type check status
 _tensor_check_enabled = True
 
 
-def enable_tensor_check(enabled: bool):
+def enable_tensor_check():
     """
-    Enable or disable the tensor type check globally. This is useful for
-    debugging purposes to disable the type check without removing the
-    decorator. By default, the tensor type check is enabled.
+    Enable the tensor type check globally. This function activates type checking
+    for tensors, which is useful for ensuring that tensor operations are
+    performed correctly, especially during debugging and development.
     """
     global _tensor_check_enabled
-    _tensor_check_enabled = enabled
+    _tensor_check_enabled = True
 
 
-def is_tensor_check_enabled() -> bool:
+def disable_tensor_check():
     """
-    Returns True if tensor type check is enabled, otherwise False.
+    Disable the tensor type check globally. This function deactivates type checking
+    for tensors, which can be useful for performance optimizations or when
+    type checks are known to be unnecessary or problematic.
+    """
+    global _tensor_check_enabled
+    _tensor_check_enabled = False
+
+
+def is_tensor_check_enabled():
+    """
+    Returns True if the tensor dtype and shape check is enabled, and False
+    otherwise. This will be used when @tensor_to_auto_backend,
+    @tensor_to_numpy_backend, or @tensor_to_torch_backend is called.
     """
     return _tensor_check_enabled
 
