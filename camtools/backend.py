@@ -286,43 +286,6 @@ def tensor_to_auto_backend(func, force_backend=None):
         if inspect.isclass(hint) and issubclass(hint, jaxtyping.AbstractArray)
     ]
 
-    def _collect_tensors(args: List[Any]) -> List[Any]:
-        """
-        Recursively collects np.ndarray and torch.Tensor objects. Other types
-        including lists are ignored. Processing lists can be slow, as we need
-        to check each element for tensors.
-        """
-        if is_torch_available():
-            tensor_types = (np.ndarray, torch.Tensor)
-        else:
-            tensor_types = (np.ndarray,)
-
-        tensors = []
-        for arg in args:
-            if isinstance(arg, tensor_types):
-                tensors.append(arg)
-
-        return tensors
-
-    def _determine_backend(
-        arg_name_to_arg: Dict[str, Any],
-        tensor_names: List[str],
-    ) -> str:
-        """
-        Also throws an error if the tensors are not from the same backend.
-        """
-        tensor_args = [arg_name_to_arg[tensor_name] for tensor_name in tensor_names]
-        tensors = _collect_tensors(tensor_args)
-
-        if not tensors:
-            return "numpy"
-        elif all(isinstance(t, np.ndarray) for t in tensors):
-            return "numpy"
-        elif is_torch_available() and all(isinstance(t, torch.Tensor) for t in tensors):
-            return "torch"
-        else:
-            raise TypeError("All tensors must be from the same backend.")
-
     def _convert_tensor_to_backend(arg, backend):
         """
         Convert the tensor to the specified backend. It shall already be checked
@@ -341,7 +304,7 @@ def tensor_to_auto_backend(func, force_backend=None):
                     f"Unsupported type {type(arg)} for conversion to numpy."
                 )
         elif backend == "torch":
-            if not is_torch_available:
+            if not is_torch_available():
                 raise ValueError("Torch is not available.")
             elif isinstance(arg, torch.Tensor):
                 return arg
@@ -370,7 +333,32 @@ def tensor_to_auto_backend(func, force_backend=None):
 
         # Determine backend
         if force_backend is None:
-            backend = _determine_backend(arg_name_to_arg, tensor_names)
+            # Recursively collect np.ndarray and torch.Tensor objects
+            # Other types including lists are ignored
+            if is_torch_available():
+                tensor_types = (np.ndarray, torch.Tensor)
+            else:
+                tensor_types = (np.ndarray,)
+            tensors = [
+                arg_name_to_arg[tensor_name]
+                for tensor_name in tensor_names
+                if isinstance(arg_name_to_arg[tensor_name], tensor_types)
+            ]
+
+            # Determine the backend based on tensor types present
+            if not tensors:
+                backend = "numpy"
+            else:
+                tensor_types_used = {type(t) for t in tensors}
+                if tensor_types_used == {np.ndarray}:
+                    backend = "numpy"
+                elif is_torch_available() and tensor_types_used == {torch.Tensor}:
+                    backend = "torch"
+                else:
+                    raise TypeError(
+                        f"All tensors must be from the same backend, "
+                        f"but got {tensor_types_used}."
+                    )
         elif force_backend in ("numpy", "torch"):
             backend = force_backend
         else:
@@ -386,12 +374,12 @@ def tensor_to_auto_backend(func, force_backend=None):
         if is_tensor_check_enabled():
             for tensor_name in tensor_names:
                 hint = arg_name_to_hint[tensor_name]
-                arg = arg_name_to_arg[tensor_name]
-                if isinstance(arg, _get_valid_array_types()):
+                tensor_arg = arg_name_to_arg[tensor_name]
+                if isinstance(tensor_arg, _get_valid_array_types()):
                     _assert_tensor_hint(
                         hint=hint,
-                        arg_shape=arg.shape,
-                        arg_dtype=arg.dtype,
+                        arg_shape=tensor_arg.shape,
+                        arg_dtype=tensor_arg.dtype,
                         arg_name=tensor_name,
                     )
 
