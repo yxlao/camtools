@@ -34,18 +34,68 @@ def pad_0001(
     Returns:
         NumPy or Torch array of shape (4, 4) or (N, 4, 4).
     """
-    dtype = array.dtype
     backend = get_tensor_backend(array)
-    bottom = create_array([0, 0, 0, 1], dtype=dtype, backend=backend)
+    if backend == "numpy":
+        bottom = np.array([0, 0, 0, 1], dtype=array.dtype)
+        if array.ndim == 2:
+            return np.concatenate([array, bottom[None, :]], axis=0)
+        elif array.ndim == 3:
+            bottom = np.broadcast_to(bottom, (array.shape[0], 1, 4))
+            return np.concatenate([array, bottom], axis=-2)
+        else:
+            raise ValueError("Should not reach here.")
+    elif backend == "torch":
+        bottom = torch.tensor([0, 0, 0, 1], dtype=array.dtype, device=array.device)
+        if array.ndim == 2:
+            return torch.cat([array, bottom[None, :]], dim=0)
+        elif array.ndim == 3:
+            bottom = bottom.expand(array.shape[0], 1, 4)
+            return torch.cat([array, bottom], dim=-2)
+        else:
+            raise ValueError("Should not reach here.")
 
+
+def pad_0001_classic(array):
+    """
+    Pad [0, 0, 0, 1] to the bottom row.
+
+    Args:
+        array: (3, 4) or (N, 3, 4).
+
+    Returns:
+        Array of shape (4, 4) or (N, 4, 4).
+    """
     if array.ndim == 2:
-        return ivy.concat([array, ivy.expand_dims(bottom, axis=0)], axis=0)
+        if not array.shape == (3, 4):
+            raise ValueError(f"Expected array of shape (3, 4), but got {array.shape}.")
     elif array.ndim == 3:
-        bottom = ivy.expand_dims(bottom, axis=0)
-        bottom = ivy.broadcast_to(bottom, (array.shape[0], 1, 4))
-        return ivy.concat([array, bottom], axis=1)
+        if not array.shape[-2:] == (3, 4):
+            raise ValueError(
+                f"Expected array of shape (N, 3, 4), but got {array.shape}."
+            )
     else:
-        raise ValueError("Input array must be 2D or 3D.")
+        raise ValueError(
+            f"Expected array of shape (3, 4) or (N, 3, 4), but got {array.shape}."
+        )
+    backend = get_tensor_backend(array)
+    if backend == "numpy":
+        bottom = np.array([0, 0, 0, 1], dtype=array.dtype)
+        if array.ndim == 2:
+            return np.concatenate([array, bottom[None, :]], axis=0)
+        elif array.ndim == 3:
+            bottom = np.broadcast_to(bottom, (array.shape[0], 1, 4))
+            return np.concatenate([array, bottom], axis=-2)
+        else:
+            raise ValueError("Should not reach here.")
+    elif backend == "torch":
+        bottom = torch.tensor([0, 0, 0, 1], dtype=array.dtype, device=array.device)
+        if array.ndim == 2:
+            return torch.cat([array, bottom[None, :]], dim=0)
+        elif array.ndim == 3:
+            bottom = bottom.expand(array.shape[0], 1, 4)
+            return torch.cat([array, bottom], dim=-2)
+        else:
+            raise ValueError("Should not reach here.")
 
 
 @tensor_backend_auto
