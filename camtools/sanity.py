@@ -1,12 +1,6 @@
 import numpy as np
 
 
-def assert_numpy(x, name=None):
-    if not isinstance(x, np.ndarray):
-        maybe_name = f" {name}" if name is not None else ""
-        raise ValueError(f"Expected{maybe_name} to be numpy array, but got {type(x)}.")
-
-
 def assert_K(K):
     if K.shape != (3, 3):
         raise ValueError(f"K must has shape (3, 3), but got {K} of shape {K.shape}.")

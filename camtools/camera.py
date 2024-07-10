@@ -1,30 +1,36 @@
 import open3d as o3d
 import numpy as np
+
 from . import convert
 from . import sanity
 from . import solver
 
+from .backend import Tensor, tensor_backend_numpy
+from jaxtyping import Float
+from typing import List, Tuple, Dict
 
+
+@tensor_backend_numpy
 def create_camera_frustums(
-    Ks,
-    Ts,
-    image_whs=None,
-    size=0.1,
-    color=(0, 0, 1),
-    highlight_color_map=None,
-    center_line=True,
-    center_line_color=(1, 0, 0),
-    up_triangle=True,
-    center_ray=False,
+    Ks: Float[Tensor, "n 3 3"],
+    Ts: Float[Tensor, "n 4 4"],
+    image_whs: List[Tuple[int, int]] = None,
+    size: float = 0.1,
+    color: Float[Tensor, "3"] = (0.0, 0.0, 1.0),
+    highlight_color_map: Dict[int, Float[Tensor, "3"]] = None,
+    center_line: bool = True,
+    center_line_color: Float[Tensor, "3"] = (1.0, 0.0, 0.0),
+    up_triangle: bool = True,
+    center_ray: bool = False,
 ):
     """
     Create camera frustums in lineset.
 
     Args:
-        Ks: List of 3x3 camera intrinsics matrices. You can set Ks to None if
-            the intrinsics are not available. In this case, a dummy intrinsics
+        Ks: List of 3x3 camera intrinsics. You can set Ks to None if the
+            intrinsics are not available. In this case, a dummy intrinsics
             matrix will be used.
-        Ts: List of 4x4 camera extrinsics matrices.
+        Ts: List of 4x4 camera camera extrinsics.
         image_whs: List of image width and height. If None, the image width and
             height are determined from the camera intrinsics by assuming that
             the camera offset is exactly at the center of the image.
@@ -33,8 +39,8 @@ def create_camera_frustums(
         highlight_color_map: A map of camera_index to color, specifying the
             colors of the highlighted cameras. Index wrapping is supported.
             For example, to highlight the start and stop cameras, use:
-            highlight_color_map = {0: [0, 1, 0], -1: [1, 0, 0]}. If None, no
-            camera is highlighted.
+            highlight_color_map = {0: [0.0, 1.0, 0.0], -1: [1.0, 0.0, 0.0]}.
+            If None, no camera is highlighted.
         center_line: If True, the camera center line will be drawn.
         center_line_color: Color of the camera center line.
         up_triangle: If True, the up triangle will be drawn.
@@ -116,18 +122,37 @@ def create_camera_frustums(
 
 
 def create_camera_frustum_with_Ts(
-    Ts,
-    image_whs=None,
-    size=0.1,
-    color=(0, 0, 1),
-    highlight_color_map=None,
-    center_line=True,
-    center_line_color=(1, 0, 0),
-    up_triangle=True,
-    center_ray=False,
+    Ts: Float[Tensor, "n 4 4"],
+    image_whs: List[Tuple[int, int]] = None,
+    size: float = 0.1,
+    color: Float[Tensor, "3"] = (0.0, 0.0, 1.0),
+    highlight_color_map: Dict[int, Float[Tensor, "3"]] = None,
+    center_line: bool = True,
+    center_line_color: Float[Tensor, "3"] = (1.0, 0.0, 0.0),
+    up_triangle: bool = True,
+    center_ray: bool = False,
 ):
     """
-    Returns ct.camera.create_camera_frustums(Ks=None, Ts, ...).
+    Create camera frustums in lineset. Returns
+    ct.camera.create_camera_frustums(Ks=None, Ts, ...).
+
+    Args:
+        Ts: List of 4x4 camera camera extrinsics.
+        image_whs: List of image width and height. If None, the image width and
+            height are determined from the camera intrinsics by assuming that
+            the camera offset is exactly at the center of the image.
+        size: Distance from the camera center to image plane in world coordinates.
+        color: Color of the camera frustums.
+        highlight_color_map: A map of camera_index to color, specifying the
+            colors of the highlighted cameras. Index wrapping is supported.
+            For example, to highlight the start and stop cameras, use:
+            highlight_color_map = {0: [0.0, 1.0, 0.0], -1: [1.0, 0.0, 0.0]}.
+            If None, no camera is highlighted.
+        center_line: If True, the camera center line will be drawn.
+        center_line_color: Color of the camera center line.
+        up_triangle: If True, the up triangle will be drawn.
+        center_ray: If True, the ray from camera center to the center pixel in
+            the image plane will be drawn.
     """
     return create_camera_frustums(
         Ks=None,
@@ -143,7 +168,21 @@ def create_camera_frustum_with_Ts(
     )
 
 
-def create_camera_center_line(Ts, color=np.array([1, 0, 0])):
+@tensor_backend_numpy
+def create_camera_center_line(
+    Ts: Float[Tensor, "n 4 4"],
+    color: Float[Tensor, "3"] = (1.0, 0.0, 0.0),
+):
+    """
+    Create camera center lines in lineset.
+
+    Args:
+        Ts: List of 4x4 camera camera extrinsics.
+        color: Color of the camera center lines.
+
+    Return:
+        An Open3D lineset containing all the camera center lines.
+    """
     num_nodes = len(Ts)
     camera_centers = [convert.T_to_C(T) for T in Ts]
 
@@ -158,22 +197,14 @@ def create_camera_center_line(Ts, color=np.array([1, 0, 0])):
 
 
 def _create_camera_frustum(
-    K,
-    T,
-    image_wh,
-    size,
-    color,
-    up_triangle,
-    center_ray,
+    K: Float[Tensor, "3 3"],
+    T: Float[Tensor, "4 4"],
+    image_wh: Tuple[int, int],
+    size: float,
+    color: Float[Tensor, "3"],
+    up_triangle: bool,
+    center_ray: bool,
 ):
-    """
-    K: (3, 3)
-    T: (4, 4)
-    image:_wh: (2,)
-    size: float
-    up_triangle: bool
-    center_ray: bool
-    """
     T, K, color = np.asarray(T), np.asarray(K), np.asarray(color)
     sanity.assert_T(T)
     sanity.assert_K(K)
@@ -280,7 +311,22 @@ def _create_camera_frustum(
     return ls
 
 
-def _wrap_dim(dim: int, max_dim: int, inclusive: bool = False) -> int:
+def _wrap_dim(
+    dim: int,
+    max_dim: int,
+    inclusive: bool = False,
+) -> int:
+    """
+    Wrap the dimension index to the range [0, max_dim) or [0, max_dim].
+
+    Args:
+        dim: The input dimension index.
+        max_dim: The maximum dimension index.
+        inclusive: If True, the maximum dimension index is inclusive.
+
+    Return:
+        The wrapped dimension index.
+    """
     if max_dim <= 0:
         raise ValueError(f"max_dim {max_dim} must be > 0.")
     min = -max_dim
