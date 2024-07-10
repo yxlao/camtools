@@ -1,8 +1,347 @@
 import numpy as np
 import camtools as ct
 import pytest
+from camtools.backend import is_torch_available, torch
+import pytest
+import warnings
 
 np.set_printoptions(formatter={"float": "{: 0.2f}".format})
+
+
+@pytest.fixture(autouse=True)
+def ignore_ivy_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        message=".*Compositional function.*array_mode is set to False.*",
+        category=UserWarning,
+    )
+    yield
+
+
+def test_pad_0001():
+    # Define numpy arrays for testing
+    in_val_2d = np.array(
+        [
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+        ],
+        dtype=np.float64,
+    )
+    gt_out_val_2d = np.array(
+        [
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [0, 0, 0, 1],
+        ],
+        dtype=np.float64,
+    )
+    in_val_3d = np.array(
+        [
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12],
+            ],
+            [
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24],
+            ],
+        ],
+        dtype=np.float64,
+    )
+    gt_out_val_3d = np.array(
+        [
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12],
+                [0, 0, 0, 1],
+            ],
+            [
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24],
+                [0, 0, 0, 1],
+            ],
+        ],
+        dtype=np.float64,
+    )
+    wrong_in_val = np.array(
+        [
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+        ],
+        dtype=np.float64,
+    )
+
+    # Test numpy operations
+    out_val_2d = ct.convert.pad_0001(in_val_2d)
+    assert isinstance(out_val_2d, np.ndarray)
+    np.testing.assert_array_equal(out_val_2d, gt_out_val_2d)
+
+    out_val_3d = ct.convert.pad_0001(in_val_3d)
+    assert isinstance(out_val_3d, np.ndarray)
+    np.testing.assert_array_equal(out_val_3d, gt_out_val_3d)
+
+    with pytest.raises(ValueError, match=".*got shape.*"):
+        ct.convert.pad_0001(wrong_in_val)
+
+    # Test torch operations
+    if not is_torch_available():
+        return
+
+    out_val_2d = ct.convert.pad_0001(torch.from_numpy(in_val_2d))
+    assert isinstance(out_val_2d, torch.Tensor)
+    assert torch.equal(out_val_2d, torch.from_numpy(gt_out_val_2d))
+
+    out_val_3d = ct.convert.pad_0001(torch.from_numpy(in_val_3d))
+    assert isinstance(out_val_3d, torch.Tensor)
+    assert torch.equal(out_val_3d, torch.from_numpy(gt_out_val_3d))
+
+    with pytest.raises(ValueError, match=".*got shape.*"):
+        ct.convert.pad_0001(torch.from_numpy(wrong_in_val))
+
+
+def test_rm_pad_0001():
+    # Create padded inputs and ground truth outputs for 2D and 3D cases
+    in_val_2d = np.array(
+        [
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [0, 0, 0, 1],
+        ],
+        dtype=np.float64,
+    )
+    gt_out_val_2d = np.array(
+        [
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+        ],
+        dtype=np.float64,
+    )
+    in_val_3d = np.array(
+        [
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12],
+                [0, 0, 0, 1],
+            ],
+            [
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24],
+                [0, 0, 0, 1],
+            ],
+        ],
+        dtype=np.float64,
+    )
+    gt_out_val_3d = np.array(
+        [
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12],
+            ],
+            [
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24],
+            ],
+        ],
+        dtype=np.float64,
+    )
+
+    # Test numpy operations
+    out_val_2d = ct.convert.rm_pad_0001(in_val_2d)
+    assert isinstance(out_val_2d, np.ndarray)
+    np.testing.assert_array_equal(out_val_2d, gt_out_val_2d)
+
+    out_val_3d = ct.convert.rm_pad_0001(in_val_3d)
+    assert isinstance(out_val_3d, np.ndarray)
+    np.testing.assert_array_equal(out_val_3d, gt_out_val_3d)
+
+    # Test cases with incorrect bottom row
+    in_val_2d_wrong = np.copy(in_val_2d)
+    in_val_2d_wrong[-1, :] = [1, 1, 1, 1]
+    with pytest.raises(ValueError, match="Expected bottom row to be .*"):
+        ct.convert.rm_pad_0001(in_val_2d_wrong, check_vals=True)
+
+    # Test torch operations if available
+    if not is_torch_available():
+        return
+    out_val_2d = ct.convert.rm_pad_0001(torch.from_numpy(in_val_2d))
+    assert isinstance(out_val_2d, torch.Tensor)
+    assert torch.equal(out_val_2d, torch.from_numpy(gt_out_val_2d))
+
+    out_val_3d = ct.convert.rm_pad_0001(torch.from_numpy(in_val_3d))
+    assert isinstance(out_val_3d, torch.Tensor)
+    assert torch.equal(out_val_3d, torch.from_numpy(gt_out_val_3d))
+
+    in_val_2d_wrong = torch.from_numpy(in_val_2d_wrong)
+    with pytest.raises(ValueError, match="Expected bottom row to be .*"):
+        ct.convert.rm_pad_0001(in_val_2d_wrong, check_vals=True)
+
+
+def test_to_homo():
+    # Test with a numpy array
+    in_val = np.array(
+        [
+            [2, 3],
+            [4, 5],
+            [6, 7],
+        ],
+        dtype=np.float32,
+    )
+    gt_out_val = np.array(
+        [
+            [2, 3, 1],
+            [4, 5, 1],
+            [6, 7, 1],
+        ],
+        dtype=np.float32,
+    )
+    out_val = ct.convert.to_homo(in_val)
+    assert isinstance(out_val, np.ndarray)
+    np.testing.assert_array_equal(out_val, gt_out_val)
+
+    incorrect_shape_input = np.array([1, 2, 3])
+    with pytest.raises(ValueError, match=".*got shape.*"):
+        ct.convert.to_homo(incorrect_shape_input)
+
+    # Test with a torch tensor
+    if not is_torch_available():
+        return
+    in_val = torch.from_numpy(in_val)
+    gt_out_val = torch.from_numpy(gt_out_val)
+    out_val = ct.convert.to_homo(in_val)
+    assert isinstance(out_val, torch.Tensor)
+    assert torch.equal(out_val, gt_out_val)
+
+    incorrect_shape_input = torch.from_numpy(incorrect_shape_input)
+    with pytest.raises(ValueError, match=".*got shape.*"):
+        ct.convert.to_homo(incorrect_shape_input)
+
+
+def test_from_homo():
+    # Test with a numpy array
+    in_val = np.array(
+        [
+            [2, 3, 1],
+            [4, 6, 2],
+            [6, 9, 3],
+        ],
+        dtype=np.float32,
+    )
+    gt_out_val = np.array(
+        [
+            [2, 3],
+            [2, 3],
+            [2, 3],
+        ],
+        dtype=np.float32,
+    )
+
+    # Regular case
+    out_val = ct.convert.from_homo(in_val)
+    assert isinstance(out_val, np.ndarray)
+    np.testing.assert_array_almost_equal(out_val, gt_out_val)
+
+    # Not a 2D array
+    incorrect_in_val_a = np.array([1, 2, 3], dtype=np.float32)
+    with pytest.raises(ValueError, match=".*got shape.*"):
+        ct.convert.from_homo(incorrect_in_val_a)
+
+    # 2D but only one column
+    incorrect_in_val_b = np.array([[1]], dtype=np.float32)
+    with pytest.raises(ValueError, match=".*got shape.*"):
+        ct.convert.from_homo(incorrect_in_val_b)
+
+    # Test with a torch tensor
+    if not is_torch_available():
+        return
+    in_val = torch.from_numpy(in_val)
+    gt_out_val = torch.from_numpy(gt_out_val)
+
+    # Regular case
+    out_val = ct.convert.from_homo(in_val)
+    assert isinstance(out_val, torch.Tensor)
+    assert torch.equal(out_val, gt_out_val)
+
+    # Not a 2D array
+    incorrect_in_val_a = torch.from_numpy(incorrect_in_val_a)
+    with pytest.raises(ValueError, match=".*got shape.*"):
+        ct.convert.from_homo(incorrect_in_val_a)
+
+    # 2D but only one column
+    incorrect_in_val_b = torch.from_numpy(incorrect_in_val_b)
+    with pytest.raises(ValueError, match=".*got shape.*"):
+        ct.convert.from_homo(incorrect_in_val_b)
+
+
+def test_R_to_quat():
+    theta = np.pi / 2
+    R_x = np.array(
+        [
+            [1, 0, 0],
+            [0, np.cos(theta), -np.sin(theta)],
+            [0, np.sin(theta), np.cos(theta)],
+        ]
+    )
+    R_y = np.array(
+        [
+            [np.cos(theta), 0, np.sin(theta)],
+            [0, 1, 0],
+            [-np.sin(theta), 0, np.cos(theta)],
+        ]
+    )
+    R_z = np.array(
+        [
+            [np.cos(theta), -np.sin(theta), 0],
+            [np.sin(theta), np.cos(theta), 0],
+            [0, 0, 1],
+        ]
+    )
+    R_batch = np.array([R_x, R_y, R_z])
+
+    # Expected quaternions
+    gt_quat_x = np.array([np.cos(theta / 2), np.sin(theta / 2), 0, 0])
+    gt_quat_y = np.array([np.cos(theta / 2), 0, np.sin(theta / 2), 0])
+    gt_quat_z = np.array([np.cos(theta / 2), 0, 0, np.sin(theta / 2)])
+    gt_quat_batch = np.array([gt_quat_x, gt_quat_y, gt_quat_z])
+
+    # Test numpy backend
+    output_x = ct.convert.R_to_quat(R_x)
+    output_y = ct.convert.R_to_quat(R_y)
+    output_z = ct.convert.R_to_quat(R_z)
+    output_batch = ct.convert.R_to_quat(R_batch)
+    np.testing.assert_allclose(output_x, gt_quat_x, atol=1e-5)
+    np.testing.assert_allclose(output_y, gt_quat_y, atol=1e-5)
+    np.testing.assert_allclose(output_z, gt_quat_z, atol=1e-5)
+    np.testing.assert_allclose(output_batch, gt_quat_batch, atol=1e-5)
+
+    # Test torch backend
+    if not is_torch_available():
+        return
+    R_x_torch = torch.from_numpy(R_x)
+    R_y_torch = torch.from_numpy(R_y)
+    R_z_torch = torch.from_numpy(R_z)
+    R_batch_torch = torch.from_numpy(R_batch)
+    output_x_torch = ct.convert.R_to_quat(R_x_torch)
+    output_y_torch = ct.convert.R_to_quat(R_y_torch)
+    output_z_torch = ct.convert.R_to_quat(R_z_torch)
+    output_batch_torch = ct.convert.R_to_quat(R_batch_torch)
+    assert torch.allclose(output_x_torch, torch.from_numpy(gt_quat_x), atol=1e-5)
+    assert torch.allclose(output_y_torch, torch.from_numpy(gt_quat_y), atol=1e-5)
+    assert torch.allclose(output_z_torch, torch.from_numpy(gt_quat_z), atol=1e-5)
+    assert torch.allclose(
+        output_batch_torch, torch.from_numpy(gt_quat_batch), atol=1e-5
+    )
 
 
 def test_R_t_to_cameracenter():
@@ -19,7 +358,10 @@ def test_R_t_to_cameracenter():
     expected_camera_center = [-10.7635, 11.8896, 1.348]
     camera_center = ct.convert.R_t_to_C(R, t)
     np.testing.assert_allclose(
-        expected_camera_center, camera_center, rtol=1e-5, atol=1e-5
+        expected_camera_center,
+        camera_center,
+        rtol=1e-5,
+        atol=1e-5,
     )
 
 
@@ -235,53 +577,3 @@ def test_convert_T_opencv_to_opengl():
             rtol=1e-5,
             atol=1e-5,
         )
-
-
-def test_to_homo():
-    # Regular case
-    src = np.array(
-        [
-            [1, 2],
-            [3, 4],
-        ]
-    )
-    dst_gt = np.array(
-        [
-            [1, 2, 1],
-            [3, 4, 1],
-        ]
-    )
-    dst = ct.convert.to_homo(src)
-    np.testing.assert_array_equal(dst, dst_gt)
-
-    # Exception case
-    with pytest.raises(ValueError) as _:
-        src = np.array([1, 2, 3])
-        ct.convert.to_homo(src)
-
-
-def test_from_homo():
-    src = np.array(
-        [
-            [2, 4, 2],
-            [6, 8, 1],
-        ]
-    )
-    dst_gt = np.array(
-        [
-            [1, 2],
-            [6, 8],
-        ]
-    )
-    dst = ct.convert.from_homo(src)
-    np.testing.assert_array_equal(dst, dst_gt)
-
-    # Exception case for non-2D input
-    with pytest.raises(ValueError) as _:
-        src = np.array([1, 2, 3])
-        ct.convert.from_homo(src)
-
-    # Exception case for insufficient columns
-    with pytest.raises(ValueError) as _:
-        src = np.array([[1]])
-        ct.convert.from_homo(src)

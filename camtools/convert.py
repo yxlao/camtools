@@ -4,42 +4,55 @@ import numpy as np
 from . import sanity
 from . import convert
 
+from .backend import (
+    Tensor,
+    tensor_backend_numpy,
+    tensor_backend_auto,
+    is_torch_available,
+    ivy,
+    torch,
+    create_array,
+    create_ones,
+    create_empty,
+    get_tensor_backend,
+)
+from jaxtyping import Float
+from typing import List, Tuple, Dict, Union
+from matplotlib import pyplot as plt
 
-def pad_0001(array):
+
+@tensor_backend_auto
+def pad_0001(
+    array: Union[Float[Tensor, "3 4"], Float[Tensor, "N 3 4"]]
+) -> Union[Float[Tensor, "4 4"], Float[Tensor, "N 4 4"]]:
     """
     Pad [0, 0, 0, 1] to the bottom row.
 
     Args:
-        array: (3, 4) or (N, 3, 4).
+        array: NumPy or Torch array of shape (3, 4) or (N, 3, 4).
 
     Returns:
-        Array of shape (4, 4) or (N, 4, 4).
+        NumPy or Torch array of shape (4, 4) or (N, 4, 4).
     """
-    if array.ndim == 2:
-        if not array.shape == (3, 4):
-            raise ValueError(f"Expected array of shape (3, 4), but got {array.shape}.")
-    elif array.ndim == 3:
-        if not array.shape[-2:] == (3, 4):
-            raise ValueError(
-                f"Expected array of shape (N, 3, 4), but got {array.shape}."
-            )
-    else:
-        raise ValueError(
-            f"Expected array of shape (3, 4) or (N, 3, 4), but got {array.shape}."
-        )
+    dtype = array.dtype
+    backend = get_tensor_backend(array)
+    bottom = create_array([0, 0, 0, 1], dtype=dtype, backend=backend)
 
     if array.ndim == 2:
-        bottom = np.array([0, 0, 0, 1], dtype=array.dtype)
-        return np.concatenate([array, bottom[None, :]], axis=0)
+        return ivy.concat([array, ivy.expand_dims(bottom, axis=0)], axis=0)
     elif array.ndim == 3:
-        bottom_single = np.array([0, 0, 0, 1], dtype=array.dtype)
-        bottom = np.broadcast_to(bottom_single, (array.shape[0], 1, 4))
-        return np.concatenate([array, bottom], axis=-2)
+        bottom = ivy.expand_dims(bottom, axis=0)
+        bottom = ivy.broadcast_to(bottom, (array.shape[0], 1, 4))
+        return ivy.concat([array, bottom], axis=1)
     else:
-        raise ValueError("Should not reach here.")
+        raise ValueError("Input array must be 2D or 3D.")
 
 
-def rm_pad_0001(array, check_vals=False):
+@tensor_backend_auto
+def rm_pad_0001(
+    array: Union[Float[Tensor, "4 4"], Float[Tensor, "N 4 4"]],
+    check_vals: bool = False,
+) -> Union[Float[Tensor, "3 4"], Float[Tensor, "N 3 4"]]:
     """
     Remove the bottom row of [0, 0, 0, 1].
 
@@ -50,42 +63,29 @@ def rm_pad_0001(array, check_vals=False):
     Returns:
         Array of shape (3, 4) or (N, 3, 4).
     """
-    # Check shapes.
-    if array.ndim == 2:
-        if not array.shape == (4, 4):
-            raise ValueError(f"Expected array of shape (4, 4), but got {array.shape}.")
-    elif array.ndim == 3:
-        if not array.shape[-2:] == (4, 4):
-            raise ValueError(
-                f"Expected array of shape (N, 4, 4), but got {array.shape}."
-            )
-    else:
-        raise ValueError(
-            f"Expected array of shape (4, 4) or (N, 4, 4), but got {array.shape}."
-        )
-
     # Check vals.
     if check_vals:
+        backend = get_tensor_backend(array)
+        dtype = array.dtype
+        gt_bottom = create_array([0, 0, 0, 1], dtype=dtype, backend=backend)
+
         if array.ndim == 2:
             bottom = array[3, :]
-            if not np.allclose(bottom, [0, 0, 0, 1]):
-                raise ValueError(
-                    f"Expected bottom row to be [0, 0, 0, 1], but got {bottom}."
-                )
         elif array.ndim == 3:
             bottom = array[:, 3:4, :]
-            expected_bottom = np.broadcast_to([0, 0, 0, 1], (array.shape[0], 1, 4))
-            if not np.allclose(bottom, expected_bottom):
-                raise ValueError(
-                    f"Expected bottom row to be {expected_bottom}, but got {bottom}."
-                )
         else:
-            raise ValueError("Should not reach here.")
+            raise ValueError(f"Invalid array shape {array.shape}.")
+
+        if not ivy.allclose(bottom, gt_bottom):
+            raise ValueError(
+                f"Expected bottom row to be {gt_bottom}, but got {bottom}."
+            )
 
     return array[..., :3, :]
 
 
-def to_homo(array):
+@tensor_backend_auto
+def to_homo(array: Float[Tensor, "n m"]) -> Float[Tensor, "n m+1"]:
     """
     Convert a 2D array to homogeneous coordinates by appending a column of ones.
 
@@ -95,48 +95,68 @@ def to_homo(array):
     Returns:
         A numpy array of shape (N, M+1) with a column of ones appended.
     """
-    if not isinstance(array, np.ndarray) or array.ndim != 2:
-        raise ValueError(f"Input must be a 2D numpy array, but got {array.shape}.")
-
-    ones = np.ones((array.shape[0], 1), dtype=array.dtype)
-    return np.hstack((array, ones))
+    backend = get_tensor_backend(array)
+    ones = create_ones((array.shape[0], 1), dtype=array.dtype, backend=backend)
+    return ivy.concat([array, ones], axis=1)
 
 
-def from_homo(array):
+@tensor_backend_auto
+def from_homo(array: Float[Tensor, "n m"]) -> Float[Tensor, "n m-1"]:
     """
     Convert an array from homogeneous to Cartesian coordinates by dividing by the
     last column and removing it.
 
     Args:
-        array: A 2D numpy array of shape (N, M) in homogeneous coordinates.
+        array: A 2D array of shape (N, M) in homogeneous coordinates, where M >= 2.
 
     Returns:
-        A numpy array of shape (N, M-1) in Cartesian coordinates.
+        An array of shape (N, M-1) in Cartesian coordinates.
     """
-    if not isinstance(array, np.ndarray) or array.ndim != 2:
-        raise ValueError(f"Input must be a 2D numpy array, but got {array.shape}.")
     if array.shape[1] < 2:
         raise ValueError(
-            f"Input array must have at least two columns for removing "
-            f"homogeneous coordinate, but got shape {array.shape}."
+            f"Input array must have at least two columns, "
+            f"but got shape {array.shape}."
         )
 
-    return array[:, :-1] / array[:, -1, np.newaxis]
+    return array[:, :-1] / array[:, -1:]
 
 
-def R_to_quat(R):
-    # https://github.com/isl-org/StableViewSynthesis/tree/main/co
-    R = R.reshape(-1, 3, 3)
-    q = np.empty((R.shape[0], 4), dtype=R.dtype)
-    q[:, 0] = np.sqrt(np.maximum(0, 1 + R[:, 0, 0] + R[:, 1, 1] + R[:, 2, 2]))
-    q[:, 1] = np.sqrt(np.maximum(0, 1 + R[:, 0, 0] - R[:, 1, 1] - R[:, 2, 2]))
-    q[:, 2] = np.sqrt(np.maximum(0, 1 - R[:, 0, 0] + R[:, 1, 1] - R[:, 2, 2]))
-    q[:, 3] = np.sqrt(np.maximum(0, 1 - R[:, 0, 0] - R[:, 1, 1] + R[:, 2, 2]))
+@tensor_backend_auto
+def R_to_quat(
+    R: Union[Float[Tensor, "n 3 3"], Float[Tensor, "3 3"]]
+) -> Union[Float[Tensor, "n 4"], Float[Tensor, "4"]]:
+    """
+    Convert a batch of rotation matrices or a single rotation matrix from
+    rotation matrix form to quaternion form.
+
+    Args:
+        R: A tensor containing either a single (3, 3) rotation matrix or a batch
+           of (n, 3, 3) rotation matrices.
+
+    Returns:
+        A tensor of quaternions. If the input is (3, 3), the output will be (4,),
+        and if the input is (n, 3, 3), the output will be (n, 4).
+
+    Ref:
+        https://github.com/isl-org/StableViewSynthesis/tree/main/co
+    """
+    orig_shape = R.shape
+    R = ivy.reshape(R, (-1, 3, 3))
+    q = create_empty((R.shape[0], 4), dtype=R.dtype, backend=get_tensor_backend(R))
+    q[:, 0] = ivy.sqrt(ivy.maximum(0, 1 + R[:, 0, 0] + R[:, 1, 1] + R[:, 2, 2]))
+    q[:, 1] = ivy.sqrt(ivy.maximum(0, 1 + R[:, 0, 0] - R[:, 1, 1] - R[:, 2, 2]))
+    q[:, 2] = ivy.sqrt(ivy.maximum(0, 1 - R[:, 0, 0] + R[:, 1, 1] - R[:, 2, 2]))
+    q[:, 3] = ivy.sqrt(ivy.maximum(0, 1 - R[:, 0, 0] - R[:, 1, 1] + R[:, 2, 2]))
     q[:, 1] *= 2 * (R[:, 2, 1] > R[:, 1, 2]) - 1
     q[:, 2] *= 2 * (R[:, 0, 2] > R[:, 2, 0]) - 1
     q[:, 3] *= 2 * (R[:, 1, 0] > R[:, 0, 1]) - 1
-    q /= np.linalg.norm(q, axis=1, keepdims=True)
-    return q.squeeze()
+    q = q / ivy.vector_norm(q, axis=1, keepdims=True)
+
+    # Handle different input shapes for squeezing
+    if orig_shape == (3, 3):
+        return ivy.squeeze(q)
+    else:
+        return q
 
 
 def T_to_C(T):
@@ -287,7 +307,6 @@ def R_t_to_C(R, t):
     # C = - R.T @ t
     # C = - np.linalg.inv(R) @ t
     # C = pose[:3, 3] = np.linalg.inv(R_t_to_T(R, t))[:3, 3]
-
     t = t.reshape(-1, 3, 1)
     R = R.reshape(-1, 3, 3)
     C = -R.transpose(0, 2, 1) @ t

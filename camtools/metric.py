@@ -272,9 +272,12 @@ def _check_inputs(
     im_mask: np.ndarray = None,
 ) -> None:
     # Instance type.
-    sanity.assert_numpy(im_pd, name="im_pd")
-    sanity.assert_numpy(im_gt, name="im_gt")
-    sanity.assert_numpy(im_mask, name="im_mask")
+    if not isinstance(im_pd, np.ndarray):
+        raise ValueError(f"im_pd must be numpy array, but got {type(im_pd)}")
+    if not isinstance(im_gt, np.ndarray):
+        raise ValueError(f"im_gt must be numpy array, but got {type(im_gt)}")
+    if im_mask is not None and not isinstance(im_mask, np.ndarray):
+        raise ValueError(f"im_mask must be numpy array, but got {type(im_mask)}")
 
     # Dtype.
     if im_pd.dtype != np.float32:
