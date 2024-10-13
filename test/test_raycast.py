@@ -76,7 +76,7 @@ def test_mesh_to_depth():
     im_depth = distance_to_depth(im_distance, K).astype(np.float32)
 
     # z-depth -> points
-    points = ct.project.depth_to_point_cloud(im_depth, K, T)
+    points = ct.project.im_depth_to_point_cloud(im_depth, K, T)
 
     # Compute distances
     distances = point_to_mesh_distance(points, mesh)
