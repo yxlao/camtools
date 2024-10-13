@@ -578,3 +578,40 @@ def im_distance_to_im_depth(
     im_depth = im_depth.astype(dtype)
 
     return im_depth
+
+
+def im_depth_to_im_distance(
+    im_depth: Float[np.ndarray, "h w"],
+    K: Float[np.ndarray, "3 3"],
+) -> Float[np.ndarray, "h w"]:
+    """
+    Convert depth image to distance image.
+
+    Args:
+        im_depth: Depth image (H, W), float.
+        K: Camera intrinsic matrix (3, 3).
+
+    Returns:
+        Distance image (H, W), float.
+    """
+    if not im_depth.ndim == 2:
+        raise ValueError(
+            f"Expected im_depth of shape (H, W), but got {im_depth.shape}."
+        )
+    sanity.assert_K(K)
+    height, width = im_depth.shape
+    fx, fy = K[0, 0], K[1, 1]
+    cx, cy = K[0, 2], K[1, 2]
+    dtype = im_depth.dtype
+
+    u = np.arange(width)
+    v = np.arange(height)
+    u_grid, v_grid = np.meshgrid(u, v)
+
+    u_norm = (u_grid - cx) / fx
+    v_norm = (v_grid - cy) / fy
+    norm_square = u_norm**2 + v_norm**2
+    im_distance = im_depth * np.sqrt(norm_square + 1)
+    im_distance = im_distance.astype(dtype)
+
+    return im_distance

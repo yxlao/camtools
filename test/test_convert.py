@@ -1,6 +1,7 @@
 import numpy as np
 import camtools as ct
 import pytest
+import open3d as o3d
 
 np.set_printoptions(formatter={"float": "{: 0.2f}".format})
 
@@ -285,3 +286,31 @@ def test_from_homo():
     with pytest.raises(ValueError) as _:
         src = np.array([[1]])
         ct.convert.from_homo(src)
+
+
+def test_im_depth_im_distance_convert():
+    # Geometries
+    sphere = o3d.geometry.TriangleMesh.create_sphere(radius=1.0)
+    sphere = sphere.translate([0, 0, 4])
+    box = o3d.geometry.TriangleMesh.create_box(width=1.5, height=1.5, depth=1.5)
+    box = box.translate([0, 0, 4])
+    mesh = sphere + box
+
+    # Camera
+    width, height = 640, 480
+    fx, fy = 500, 500
+    cx, cy = width / 2, height / 2
+    K = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
+    T = np.eye(4)
+
+    # Generate depth image
+    im_depth = ct.raycast.mesh_to_im_depth(mesh, K, T, height, width)
+
+    # Convert depth to distance
+    im_distance = ct.convert.im_depth_to_im_distance(im_depth, K)
+
+    # Convert distance back to depth
+    im_depth_reconstructed = ct.convert.im_distance_to_im_depth(im_distance, K)
+
+    # Assert that the reconstructed depth is close to the original
+    np.testing.assert_allclose(im_depth, im_depth_reconstructed, rtol=1e-5, atol=1e-5)
