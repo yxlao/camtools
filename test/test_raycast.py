@@ -98,8 +98,3 @@ def test_mesh_to_depth():
     # plt.xlabel("Pixel X")
     # plt.ylabel("Pixel Y")
     # plt.show()
-
-
-# Run the test function if this script is executed directly
-if __name__ == "__main__":
-    test_mesh_to_depth()

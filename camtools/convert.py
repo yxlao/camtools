@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import open3d as o3d
+from jaxtyping import Float
+from typing import Optional
 
 from . import sanity
 from . import convert
@@ -508,7 +510,10 @@ def spherical_to_T_towards_origin(radius, theta, phi):
     return T
 
 
-def mesh_to_lineset(mesh: o3d.geometry.TriangleMesh) -> o3d.geometry.LineSet:
+def mesh_to_lineset(
+    mesh: o3d.geometry.TriangleMesh,
+    color: Optional[Float[np.ndarray, "3"]] = None,
+) -> o3d.geometry.LineSet:
     """
     Convert Open3D mesh to Open3D lineset.
     """
@@ -529,5 +534,10 @@ def mesh_to_lineset(mesh: o3d.geometry.TriangleMesh) -> o3d.geometry.LineSet:
     lineset = o3d.geometry.LineSet()
     lineset.points = o3d.utility.Vector3dVector(vertices)
     lineset.lines = o3d.utility.Vector2iVector(edges)
+
+    if color is not None:
+        if len(color) != 3:
+            raise ValueError(f"Expected color of shape (3,), but got {color.shape}.")
+        lineset.paint_uniform_color(color)
 
     return lineset
