@@ -4,29 +4,29 @@ import matplotlib.pyplot as plt
 import camtools as ct
 
 
-def distance_to_z_depth(distance_depth, K):
+def distance_to_depth(im_distance, K):
     """
     Convert distance depth to z-depth.
 
     Args:
-        distance_depth (np.ndarray): Distance depth image.
+        im_distance (np.ndarray): Distance image.
         K (np.ndarray): Camera intrinsic matrix.
 
     Returns:
         np.ndarray: Z-depth image.
     """
     # Create a mask for valid depth values
-    valid_mask = distance_depth > 0
+    valid_mask = im_distance > 0
 
     # Initialize z_depth with the same shape as distance_depth
-    z_depth = np.zeros_like(distance_depth)
+    z_depth = np.zeros_like(im_distance)
 
     # Extract focal lengths and principal points from K
     fx, fy = K[0, 0], K[1, 1]
     cx, cy = K[0, 2], K[1, 2]
 
     # Calculate pixel coordinates
-    height, width = distance_depth.shape
+    height, width = im_distance.shape
     y, x = np.mgrid[0:height, 0:width]
 
     # Calculate normalized pixel coordinates
@@ -34,7 +34,7 @@ def distance_to_z_depth(distance_depth, K):
     y_norm = (y - cy) / fy
 
     # Calculate z-depth for valid pixels
-    z_depth[valid_mask] = distance_depth[valid_mask] / np.sqrt(
+    z_depth[valid_mask] = im_distance[valid_mask] / np.sqrt(
         1 + x_norm[valid_mask] ** 2 + y_norm[valid_mask] ** 2
     )
 
@@ -91,7 +91,7 @@ def test_mesh_to_depth():
     im_distance = ct.raycast.mesh_to_distance(mesh, K, T, height, width)
 
     # Convert distance depth to z-depth
-    im_depth = distance_to_z_depth(im_distance, K)
+    im_depth = distance_to_depth(im_distance, K)
 
     # z-depth -> points
     points = ct.project.depth_to_point_cloud(im_depth, K, T)
