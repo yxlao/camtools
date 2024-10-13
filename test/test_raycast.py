@@ -62,18 +62,18 @@ def distance_to_depth_v1(im_distance, K):
 @Timer(name="distance_to_depth_v2")
 def distance_to_depth_v2(im_distance, K):
     height, width = im_distance.shape
+    fx, fy = K[0, 0], K[1, 1]
+    cx, cy = K[0, 2], K[1, 2]
+
     u = np.arange(width)
     v = np.arange(height)
     u_grid, v_grid = np.meshgrid(u, v)
 
-    fx = K[0, 0]
-    fy = K[1, 1]
-    cx = K[0, 2]
-    cy = K[1, 2]
     u_norm = (u_grid - cx) / fx
     v_norm = (v_grid - cy) / fy
     norm_square = u_norm**2 + v_norm**2
     z_depth = im_distance / np.sqrt(norm_square + 1)
+
     return z_depth
 
 
