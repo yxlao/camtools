@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import open3d as o3d
 
 from . import sanity
 from . import convert
@@ -505,3 +506,28 @@ def spherical_to_T_towards_origin(radius, theta, phi):
     T = pose_to_T(pose)
 
     return T
+
+
+def mesh_to_lineset(mesh: o3d.geometry.TriangleMesh) -> o3d.geometry.LineSet:
+    """
+    Convert Open3D mesh to Open3D lineset.
+    """
+    if not isinstance(mesh, o3d.geometry.TriangleMesh):
+        raise ValueError(f"Expected Open3D mesh, but got {type(mesh)}.")
+
+    vertices = np.asarray(mesh.vertices)
+    triangles = np.asarray(mesh.triangles)
+
+    edges = set()
+    for triangle in triangles:
+        edges.add(tuple(sorted([triangle[0], triangle[1]])))
+        edges.add(tuple(sorted([triangle[1], triangle[2]])))
+        edges.add(tuple(sorted([triangle[2], triangle[0]])))
+
+    edges = np.array(list(edges))
+
+    lineset = o3d.geometry.LineSet()
+    lineset.points = o3d.utility.Vector3dVector(vertices)
+    lineset.lines = o3d.utility.Vector2iVector(edges)
+
+    return lineset
