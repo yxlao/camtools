@@ -10,7 +10,11 @@ from typing import Union, Tuple, Optional
 from . import convert, image, sanity
 
 
-def point_cloud_to_pixel(points, K, T):
+def points_to_pixels(
+    points: Float[np.ndarray, "N 3"],
+    K: Float[np.ndarray, "3 3"],
+    T: Float[np.ndarray, "4 4"],
+) -> Float[np.ndarray, "N 2"]:
     """
     Project points in world coordinates to pixel coordinates.
 

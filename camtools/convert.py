@@ -541,3 +541,40 @@ def mesh_to_lineset(
         lineset.paint_uniform_color(color)
 
     return lineset
+
+
+def im_distance_to_im_depth(
+    im_distance: Float[np.ndarray, "H W"],
+    K: Float[np.ndarray, "3 3"],
+) -> Float[np.ndarray, "H W"]:
+    """
+    Convert distance image to depth image.
+
+    Args:
+        im_distance: Distance image (H, W), float.
+        K: Camera intrinsic matrix (3, 3).
+
+    Returns:
+        Depth image (H, W), float.
+    """
+    if not im_distance.ndim == 2:
+        raise ValueError(
+            f"Expected im_distance of shape (H, W), but got {im_distance.shape}."
+        )
+    sanity.assert_K(K)
+    height, width = im_distance.shape
+    fx, fy = K[0, 0], K[1, 1]
+    cx, cy = K[0, 2], K[1, 2]
+    dtype = im_distance.dtype
+
+    u = np.arange(width)
+    v = np.arange(height)
+    u_grid, v_grid = np.meshgrid(u, v)
+
+    u_norm = (u_grid - cx) / fx
+    v_norm = (v_grid - cy) / fy
+    norm_square = u_norm**2 + v_norm**2
+    im_depth = im_distance / np.sqrt(norm_square + 1)
+    im_depth = im_depth.astype(dtype)
+
+    return im_depth

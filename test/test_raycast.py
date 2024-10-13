@@ -33,23 +33,6 @@ def point_to_mesh_distance(points, mesh):
     return distances.numpy()
 
 
-def distance_to_depth(im_distance, K):
-    height, width = im_distance.shape
-    fx, fy = K[0, 0], K[1, 1]
-    cx, cy = K[0, 2], K[1, 2]
-
-    u = np.arange(width)
-    v = np.arange(height)
-    u_grid, v_grid = np.meshgrid(u, v)
-
-    u_norm = (u_grid - cx) / fx
-    v_norm = (v_grid - cy) / fy
-    norm_square = u_norm**2 + v_norm**2
-    z_depth = im_distance / np.sqrt(norm_square + 1)
-
-    return z_depth
-
-
 def test_mesh_to_depth():
     # Geometries
     sphere = o3d.geometry.TriangleMesh.create_sphere(radius=1.0)
@@ -73,7 +56,7 @@ def test_mesh_to_depth():
     im_distance = ct.raycast.mesh_to_im_distance(mesh, K, T, height, width)
 
     # Convert distance to depth
-    im_depth = distance_to_depth(im_distance, K).astype(np.float32)
+    im_depth = ct.convert.im_distance_to_im_depth(im_distance, K).astype(np.float32)
 
     # z-depth -> points
     points = ct.project.im_depth_to_point_cloud(im_depth, K, T)
