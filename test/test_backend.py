@@ -513,8 +513,8 @@ def test_union_of_hints():
     def identity(
         arr: Union[
             Float[Tensor, "3 4"],
-            Float[Tensor, "N 3 4"],
-            Int[Tensor, "N 3 4"],
+            Float[Tensor, "n 3 4"],
+            Int[Tensor, "n 3 4"],
         ]
     ):
         return arr

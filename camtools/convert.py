@@ -1,5 +1,8 @@
 import cv2
 import numpy as np
+import open3d as o3d
+from jaxtyping import Float
+from typing import Optional
 
 from . import sanity
 from . import convert
@@ -505,3 +508,110 @@ def spherical_to_T_towards_origin(radius, theta, phi):
     T = pose_to_T(pose)
 
     return T
+
+
+def mesh_to_lineset(
+    mesh: o3d.geometry.TriangleMesh,
+    color: Optional[Float[np.ndarray, "3"]] = None,
+) -> o3d.geometry.LineSet:
+    """
+    Convert Open3D mesh to Open3D lineset.
+    """
+    if not isinstance(mesh, o3d.geometry.TriangleMesh):
+        raise ValueError(f"Expected Open3D mesh, but got {type(mesh)}.")
+
+    vertices = np.asarray(mesh.vertices)
+    triangles = np.asarray(mesh.triangles)
+
+    edges = set()
+    for triangle in triangles:
+        edges.add(tuple(sorted([triangle[0], triangle[1]])))
+        edges.add(tuple(sorted([triangle[1], triangle[2]])))
+        edges.add(tuple(sorted([triangle[2], triangle[0]])))
+
+    edges = np.array(list(edges))
+
+    lineset = o3d.geometry.LineSet()
+    lineset.points = o3d.utility.Vector3dVector(vertices)
+    lineset.lines = o3d.utility.Vector2iVector(edges)
+
+    if color is not None:
+        if len(color) != 3:
+            raise ValueError(f"Expected color of shape (3,), but got {color.shape}.")
+        lineset.paint_uniform_color(color)
+
+    return lineset
+
+
+def im_distance_to_im_depth(
+    im_distance: Float[np.ndarray, "h w"],
+    K: Float[np.ndarray, "3 3"],
+) -> Float[np.ndarray, "h w"]:
+    """
+    Convert distance image to depth image.
+
+    Args:
+        im_distance: Distance image (H, W), float.
+        K: Camera intrinsic matrix (3, 3).
+
+    Returns:
+        Depth image (H, W), float.
+    """
+    if not im_distance.ndim == 2:
+        raise ValueError(
+            f"Expected im_distance of shape (H, W), but got {im_distance.shape}."
+        )
+    sanity.assert_K(K)
+    height, width = im_distance.shape
+    fx, fy = K[0, 0], K[1, 1]
+    cx, cy = K[0, 2], K[1, 2]
+    dtype = im_distance.dtype
+
+    u = np.arange(width)
+    v = np.arange(height)
+    u_grid, v_grid = np.meshgrid(u, v)
+
+    u_norm = (u_grid - cx) / fx
+    v_norm = (v_grid - cy) / fy
+    norm_square = u_norm**2 + v_norm**2
+    im_depth = im_distance / np.sqrt(norm_square + 1)
+    im_depth = im_depth.astype(dtype)
+
+    return im_depth
+
+
+def im_depth_to_im_distance(
+    im_depth: Float[np.ndarray, "h w"],
+    K: Float[np.ndarray, "3 3"],
+) -> Float[np.ndarray, "h w"]:
+    """
+    Convert depth image to distance image.
+
+    Args:
+        im_depth: Depth image (H, W), float.
+        K: Camera intrinsic matrix (3, 3).
+
+    Returns:
+        Distance image (H, W), float.
+    """
+    if not im_depth.ndim == 2:
+        raise ValueError(
+            f"Expected im_depth of shape (H, W), but got {im_depth.shape}."
+        )
+    sanity.assert_K(K)
+    height, width = im_depth.shape
+    fx, fy = K[0, 0], K[1, 1]
+    cx, cy = K[0, 2], K[1, 2]
+    dtype = im_depth.dtype
+
+    u = np.arange(width)
+    v = np.arange(height)
+    u_grid, v_grid = np.meshgrid(u, v)
+
+    u_norm = (u_grid - cx) / fx
+    v_norm = (v_grid - cy) / fy
+    norm_square = u_norm**2 + v_norm**2
+    im_distance = im_depth * np.sqrt(norm_square + 1)
+    im_distance = im_distance.astype(dtype)
+
+    return im_distance

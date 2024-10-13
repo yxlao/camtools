@@ -50,23 +50,3 @@ def normalize(array, vmin=0.0, vmax=1.0, clip=False):
         array = (array - amin) / (amax - amin) * (vmax - vmin) + vmin
 
     return array
-
-
-def main():
-    """
-    Test create color map image.
-    """
-    height = 200
-    width = 1600
-
-    colors = query(np.linspace(0, 1, num=width))
-    im = np.zeros((height, width, 3), dtype=np.float32)
-    for i in range(width):
-        im[:, i : i + 1, :] = colors[i]
-
-    im_path = "colormap.png"
-    io.imwrite(im_path, im)
-
-
-if __name__ == "__main__":
-    main()

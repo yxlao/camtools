@@ -4,11 +4,17 @@ Functions for projecting 2D->3D or 3D->2D.
 
 import cv2
 import numpy as np
+from jaxtyping import Float
+from typing import Union, Tuple, Optional
 
 from . import convert, image, sanity
 
 
-def point_cloud_to_pixel(points, K, T):
+def points_to_pixels(
+    points: Float[np.ndarray, "n 3"],
+    K: Float[np.ndarray, "3 3"],
+    T: Float[np.ndarray, "4 4"],
+) -> Float[np.ndarray, "N 2"]:
     """
     Project points in world coordinates to pixel coordinates.
 
@@ -52,22 +58,27 @@ def point_cloud_to_pixel(points, K, T):
     return pixels
 
 
-def depth_to_point_cloud(
-    im_depth: np.ndarray,
-    K: np.ndarray,
-    T: np.ndarray,
-    im_color: np.ndarray = None,
+def im_depth_to_point_cloud(
+    im_depth: Float[np.ndarray, "h w"],
+    K: Float[np.ndarray, "3 3"],
+    T: Float[np.ndarray, "4 4"],
+    im_color: Optional[Float[np.ndarray, "h w 3"]] = None,
     to_image: bool = False,
     ignore_invalid: bool = True,
     scale_factor: float = 1.0,
-):
+) -> Union[
+    Float[np.ndarray, "n 3"],
+    Float[np.ndarray, "h w 3"],
+    Tuple[Float[np.ndarray, "n 3"], Float[np.ndarray, "n 3"]],
+    Tuple[Float[np.ndarray, "h w 3"], Float[np.ndarray, "h w 3"]],
+]:
     """
     Convert a depth image to a point cloud, optionally including color information.
     Can return either a sparse (N, 3) point cloud or a dense one with the image
     shape (H, W, 3).
 
     Args:
-        im_depth: Depth image (H, W), float32, in world scale.
+        im_depth: Depth image (H, W), float32 or float64, in world scale.
         K: Intrinsics matrix (3, 3).
         T: Extrinsics matrix (4, 4).
         im_color: Color image (H, W, 3), float32/float64, range [0, 1].
@@ -95,8 +106,8 @@ def depth_to_point_cloud(
     sanity.assert_T(T)
     if not isinstance(im_depth, np.ndarray):
         raise TypeError("im_depth must be a numpy array")
-    if im_depth.dtype != np.float32:
-        raise TypeError("im_depth must be of type float32")
+    if im_depth.dtype not in [np.float32, np.float64]:
+        raise TypeError("im_depth must be of type float32 or float64")
     if im_depth.ndim != 2:
         raise ValueError("im_depth must be a 2D array")
     if im_color is not None:

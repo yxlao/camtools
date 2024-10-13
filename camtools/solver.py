@@ -1,6 +1,8 @@
 import numpy as np
 
 from camtools import sanity
+from jaxtyping import Float
+import open3d as o3d
 
 
 def line_intersection_3d(src_points=None, dst_points=None):
@@ -173,3 +175,27 @@ def point_plane_distance_three_points(point, plane_points):
     # Ref: https://mathworld.wolfram.com/Point-PlaneDistance.html
     distance = np.abs(np.dot(plane_n, point - plane_a))
     return distance
+
+
+def points_to_mesh_distances(
+    points: Float[np.ndarray, "n 3"],
+    mesh: o3d.geometry.TriangleMesh,
+) -> Float[np.ndarray, "n"]:
+    """
+    Compute the distance from points to a mesh surface.
+
+    Args:
+        points (np.ndarray): Array of points with shape (N, 3).
+        mesh (o3d.geometry.TriangleMesh): The input mesh.
+
+    Returns:
+        np.ndarray: Array of distances with shape (N,).
+    """
+    if not points.ndim == 2 or points.shape[1] != 3:
+        raise ValueError(f"Expected points of shape (N, 3), but got {points.shape}.")
+    mesh_t = o3d.t.geometry.TriangleMesh.from_legacy(mesh)
+    scene = o3d.t.geometry.RaycastingScene()
+    _ = scene.add_triangles(mesh_t)
+    points_tensor = o3d.core.Tensor(points, dtype=o3d.core.Dtype.Float32)
+    distances = scene.compute_distance(points_tensor)
+    return distances.numpy()
