@@ -41,6 +41,34 @@ def distance_to_z_depth(distance_depth, K):
     return z_depth
 
 
+def compute_point_to_mesh_distance(points, mesh):
+    """
+    Compute the distance from points to a mesh surface.
+
+    Args:
+        points (np.ndarray): Array of points with shape (N, 3).
+        mesh (o3d.geometry.TriangleMesh): The input mesh.
+
+    Returns:
+        np.ndarray: Array of distances with shape (N,).
+    """
+    # Convert the legacy mesh to o3d.t.geometry.TriangleMesh
+    mesh_t = o3d.t.geometry.TriangleMesh.from_legacy(mesh)
+
+    # Create a RaycastingScene and add the triangle mesh
+    scene = o3d.t.geometry.RaycastingScene()
+    _ = scene.add_triangles(mesh_t)
+
+    # Convert points to o3d.core.Tensor
+    points_tensor = o3d.core.Tensor(points, dtype=o3d.core.Dtype.Float32)
+
+    # Compute the unsigned distance from the points to the mesh surface
+    distances = scene.compute_distance(points_tensor)
+
+    # Convert distances to numpy array
+    return distances.numpy()
+
+
 def test_mesh_to_depth():
     # Geometries
     sphere = o3d.geometry.TriangleMesh.create_sphere(radius=1.0)
@@ -68,11 +96,20 @@ def test_mesh_to_depth():
     # z-depth -> points
     points = ct.project.depth_to_point_cloud(im_depth, K, T)
 
-    # Visualize
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points)
-    axes = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.5)
-    o3d.visualization.draw_geometries([pcd, mesh, camera_frustum, axes])
+    # Compute distances
+    distances = compute_point_to_mesh_distance(points, mesh)
+
+    # Assert that all points are close to the mesh surface
+    threshold = 1e-3  # 1 mm threshold, adjust as needed
+    assert np.all(
+        distances < threshold
+    ), f"Some points are not on the mesh surface. Max distance: {np.max(distances)}"
+
+    # # Visualize
+    # pcd = o3d.geometry.PointCloud()
+    # pcd.points = o3d.utility.Vector3dVector(points)
+    # axes = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.5)
+    # o3d.visualization.draw_geometries([pcd, mesh, camera_frustum, axes])
 
     # # Plot the depth image (optional, you can keep or remove this part)
     # plt.figure(figsize=(10, 7.5))
