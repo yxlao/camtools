@@ -544,9 +544,9 @@ def mesh_to_lineset(
 
 
 def im_distance_to_im_depth(
-    im_distance: Float[np.ndarray, "H W"],
+    im_distance: Float[np.ndarray, "h w"],
     K: Float[np.ndarray, "3 3"],
-) -> Float[np.ndarray, "H W"]:
+) -> Float[np.ndarray, "h w"]:
     """
     Convert distance image to depth image.
 

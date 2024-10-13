@@ -26,12 +26,7 @@ def test_mesh_to_depth():
     camera_frustum = ct.camera.create_camera_frustums([K], [T], size=2)
 
     # mesh -> depth
-    im_distance = ct.raycast.mesh_to_im_distance(mesh, K, T, height, width)
-
-    # Convert distance to depth
-    im_depth = ct.convert.im_distance_to_im_depth(im_distance, K).astype(np.float32)
-
-    # z-depth -> points
+    im_depth = ct.raycast.mesh_to_im_depth(mesh, K, T, height, width)
     points = ct.project.im_depth_to_point_cloud(im_depth, K, T)
 
     # Compute distances

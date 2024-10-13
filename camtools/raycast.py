@@ -132,6 +132,68 @@ def mesh_to_im_distances(
     return im_distances
 
 
+def mesh_to_im_depth(
+    mesh: o3d.geometry.TriangleMesh,
+    K: Float[np.ndarray, "3 3"],
+    T: Float[np.ndarray, "4 4"],
+    height: int,
+    width: int,
+) -> Float[np.ndarray, "h w"]:
+    """
+    Cast mesh to a depth image given camera parameters and image dimensions.
+    Each pixel contains the depth (z-coordinate) of the mesh surface in the
+    camera frame. Invalid depths are set to np.inf.
+
+    Args:
+        mesh: Open3D mesh.
+        K: (3, 3) array, camera intrinsic matrix.
+        T: (4, 4) array, camera extrinsic matrix.
+        height: int, image height.
+        width: int, image width.
+
+    Return:
+        (height, width) array, float32, representing the depth image.
+        Invalid depths are set to np.inf.
+    """
+    im_distance = mesh_to_im_distance(mesh, K, T, height, width)
+    im_depth = convert.im_distance_to_im_depth(im_distance, K)
+    return im_depth
+
+
+def mesh_to_im_depths(
+    mesh: o3d.geometry.TriangleMesh,
+    Ks: Float[np.ndarray, "n 3 3"],
+    Ts: Float[np.ndarray, "n 4 4"],
+    height: int,
+    width: int,
+) -> Float[np.ndarray, "n h w"]:
+    """
+    Cast mesh to depth images given multiple camera parameters and image
+    dimensions. Each depth image contains the depth (z-coordinate) of the mesh
+    surface in the camera frame. Invalid depths are set to np.inf.
+
+    Args:
+        mesh: Open3D mesh.
+        Ks: (N, 3, 3) array, camera intrinsic matrices.
+        Ts: (N, 4, 4) array, camera extrinsic matrices.
+        height: int, image height.
+        width: int, image width.
+
+    Return:
+        (N, height, width) array, float32, representing the depth images.
+        Invalid depths are set to np.inf.
+    """
+    im_distances = mesh_to_im_distances(mesh, Ks, Ts, height, width)
+    im_depths = np.stack(
+        [
+            convert.im_distance_to_im_depth(im_distance, K)
+            for im_distance, K in zip(im_distances, Ks)
+        ],
+        axis=0,
+    )
+    return im_depths
+
+
 def mesh_to_mask(mesh, K, T, height, width):
     """
     Cast mesh to mask image given camera parameters and image dimensions.

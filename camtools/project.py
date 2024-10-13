@@ -59,18 +59,18 @@ def points_to_pixels(
 
 
 def im_depth_to_point_cloud(
-    im_depth: Float[np.ndarray, "H W"],
+    im_depth: Float[np.ndarray, "h w"],
     K: Float[np.ndarray, "3 3"],
     T: Float[np.ndarray, "4 4"],
-    im_color: Optional[Float[np.ndarray, "H W 3"]] = None,
+    im_color: Optional[Float[np.ndarray, "h w 3"]] = None,
     to_image: bool = False,
     ignore_invalid: bool = True,
     scale_factor: float = 1.0,
 ) -> Union[
     Float[np.ndarray, "N 3"],
-    Float[np.ndarray, "H W 3"],
+    Float[np.ndarray, "h w 3"],
     Tuple[Float[np.ndarray, "N 3"], Float[np.ndarray, "N 3"]],
-    Tuple[Float[np.ndarray, "H W 3"], Float[np.ndarray, "H W 3"]],
+    Tuple[Float[np.ndarray, "h w 3"], Float[np.ndarray, "h w 3"]],
 ]:
     """
     Convert a depth image to a point cloud, optionally including color information.
