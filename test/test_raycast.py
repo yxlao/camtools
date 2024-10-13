@@ -70,7 +70,7 @@ def test_mesh_to_depth():
     camera_frustum = ct.camera.create_camera_frustums([K], [T], size=2)
 
     # mesh -> depth
-    im_distance = ct.raycast.mesh_to_distance(mesh, K, T, height, width)
+    im_distance = ct.raycast.mesh_to_im_distance(mesh, K, T, height, width)
 
     # Convert distance to depth
     im_depth = distance_to_depth(im_distance, K).astype(np.float32)
@@ -80,12 +80,14 @@ def test_mesh_to_depth():
 
     # Compute distances
     distances = point_to_mesh_distance(points, mesh)
+    assert np.max(distances) < 5e-3
+    assert np.mean(distances) < 1e-3
     print(f"distances: max {np.max(distances)}, avg {np.mean(distances)}")
 
     # Visualize
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(points)
-    axes = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.5)
+    axes = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1)
     o3d.visualization.draw_geometries([pcd, lineset, camera_frustum, axes])
 
     # # Plot the depth image (optional, you can keep or remove this part)

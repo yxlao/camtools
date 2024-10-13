@@ -1,5 +1,6 @@
 import numpy as np
 import open3d as o3d
+from jaxtyping import Float, Int
 
 from . import sanity
 from . import convert
@@ -39,7 +40,13 @@ def gen_rays(K, T, pixels):
     return centers, dirs
 
 
-def mesh_to_distance(mesh, K, T, height, width):
+def mesh_to_im_distance(
+    mesh: o3d.geometry.TriangleMesh,
+    K: Float[np.ndarray, "3 3"],
+    T: Float[np.ndarray, "4 4"],
+    height: int,
+    width: int,
+):
     """
     Cast mesh to distance image given camera parameters and image dimensions.
 
@@ -55,35 +62,28 @@ def mesh_to_distance(mesh, K, T, height, width):
         distance is the distance between camera center to the mesh surface.
         Invalid distances are set to np.inf.
 
-    Note: this is not meant to be used repeatedly with the same mesh. If you
-    need to perform ray casting of the same mesh multiple times, you should
-    create the scene object manually to perform ray casting.
+    Note: to cast the same mesh to multiple set of camera parameters, use
+    mesh_to_im_distances for higher efficiency.
     """
-    sanity.assert_K(K)
-    sanity.assert_T(T)
-
-    t_mesh = o3d.t.geometry.TriangleMesh(
-        vertex_positions=np.asarray(mesh.vertices).astype(np.float32),
-        triangle_indices=np.asarray(mesh.triangles),
+    im_distances = mesh_to_im_distances(
+        mesh=mesh,
+        Ks=[K],
+        Ts=[T],
+        height=height,
+        width=width,
     )
-    scene = o3d.t.geometry.RaycastingScene()
-    scene.add_triangles(t_mesh)
-
-    rays = o3d.t.geometry.RaycastingScene.create_rays_pinhole(
-        intrinsic_matrix=K,
-        extrinsic_matrix=T,
-        width_px=width,
-        height_px=height,
-    )
-    ray_lengths = np.linalg.norm(rays[:, :, 3:].numpy(), axis=2)
-
-    ans = scene.cast_rays(rays)
-    im_distance = ans["t_hit"].numpy() * ray_lengths
+    im_distance = im_distances[0]
 
     return im_distance
 
 
-def mesh_to_distances(mesh, Ks, Ts, height, width):
+def mesh_to_im_distances(
+    mesh: o3d.geometry.TriangleMesh,
+    Ks: Float[np.ndarray, "n 3 3"],
+    Ts: Float[np.ndarray, "n 4 4"],
+    height: int,
+    width: int,
+):
     """
     Cast mesh to distance images given multiple camera parameters and image
     dimensions. Same as mesh_to_distance, but for multiple cameras.
@@ -148,7 +148,7 @@ def mesh_to_mask(mesh, K, T, height, width):
     need to perform ray casting of the same mesh multiple times, you should
     create the scene object manually to perform ray casting.
     """
-    im_depth = mesh_to_distance(mesh, K, T, height, width)
+    im_depth = mesh_to_im_distance(mesh, K, T, height, width)
     im_mask = (im_depth != np.inf).astype(np.float32)
 
     return im_mask
