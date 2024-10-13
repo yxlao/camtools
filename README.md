@@ -61,7 +61,7 @@ clear and easy-to-use APIs.
    points = ct.project.im_depth_to_points(im_depth, K, T)
 
    # Ray cast a triangle mesh to depth image.
-   im_depth = ct.raycast.mesh_to_depths(mesh, Ks, Ts, height, width)
+   im_depth = ct.raycast.mesh_to_distances(mesh, Ks, Ts, height, width)
 
    # And more...
    ```

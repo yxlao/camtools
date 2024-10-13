@@ -60,13 +60,13 @@ def test_mesh_to_depth():
     camera_frustum = ct.camera.create_camera_frustums([K], [T], size=2)
 
     # mesh -> depth
-    im_distance_depth = ct.raycast.mesh_to_depth(mesh, K, T, height, width)
+    im_distance = ct.raycast.mesh_to_distance(mesh, K, T, height, width)
 
     # Convert distance depth to z-depth
-    im_z_depth = distance_to_z_depth(im_distance_depth, K)
+    im_depth = distance_to_z_depth(im_distance, K)
 
     # z-depth -> points
-    points = ct.project.depth_to_point_cloud(im_z_depth, K, T)
+    points = ct.project.depth_to_point_cloud(im_depth, K, T)
 
     # Visualize
     pcd = o3d.geometry.PointCloud()
