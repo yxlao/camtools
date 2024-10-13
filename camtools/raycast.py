@@ -1,6 +1,6 @@
 import numpy as np
 import open3d as o3d
-from jaxtyping import Float, Int
+from jaxtyping import Float
 
 from . import sanity
 from . import convert
@@ -213,7 +213,7 @@ def mesh_to_mask(mesh, K, T, height, width):
     need to perform ray casting of the same mesh multiple times, you should
     create the scene object manually to perform ray casting.
     """
-    im_depth = mesh_to_im_distance(mesh, K, T, height, width)
-    im_mask = (im_depth != np.inf).astype(np.float32)
+    im_distance = mesh_to_im_distance(mesh, K, T, height, width)
+    im_mask = (im_distance != np.inf).astype(np.float32)
 
     return im_mask
