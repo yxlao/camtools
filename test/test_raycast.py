@@ -2,35 +2,8 @@ import numpy as np
 import open3d as o3d
 import matplotlib.pyplot as plt
 import camtools as ct
-from codetiming import Timer
 
-
-def point_to_mesh_distance(points, mesh):
-    """
-    Compute the distance from points to a mesh surface.
-
-    Args:
-        points (np.ndarray): Array of points with shape (N, 3).
-        mesh (o3d.geometry.TriangleMesh): The input mesh.
-
-    Returns:
-        np.ndarray: Array of distances with shape (N,).
-    """
-    # Convert the legacy mesh to o3d.t.geometry.TriangleMesh
-    mesh_t = o3d.t.geometry.TriangleMesh.from_legacy(mesh)
-
-    # Create a RaycastingScene and add the triangle mesh
-    scene = o3d.t.geometry.RaycastingScene()
-    _ = scene.add_triangles(mesh_t)
-
-    # Convert points to o3d.core.Tensor
-    points_tensor = o3d.core.Tensor(points, dtype=o3d.core.Dtype.Float32)
-
-    # Compute the unsigned distance from the points to the mesh surface
-    distances = scene.compute_distance(points_tensor)
-
-    # Convert distances to numpy array
-    return distances.numpy()
+from jaxtyping import Float
 
 
 def test_mesh_to_depth():
@@ -62,7 +35,7 @@ def test_mesh_to_depth():
     points = ct.project.im_depth_to_point_cloud(im_depth, K, T)
 
     # Compute distances
-    distances = point_to_mesh_distance(points, mesh)
+    distances = ct.solver.points_to_mesh_distances(points, mesh)
     assert np.max(distances) < 5e-3
     assert np.mean(distances) < 1e-3
     print(f"distances: max {np.max(distances)}, avg {np.mean(distances)}")

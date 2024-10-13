@@ -48,7 +48,9 @@ def mesh_to_im_distance(
     width: int,
 ):
     """
-    Cast mesh to distance image given camera parameters and image dimensions.
+    Cast mesh to a distance image given camera parameters and image dimensions.
+    Each pixel contains the distance between camera center to the mesh surface.
+    Invalid distances are set to np.inf.
 
     Args:
         mesh: Open3D mesh.
@@ -86,7 +88,8 @@ def mesh_to_im_distances(
 ):
     """
     Cast mesh to distance images given multiple camera parameters and image
-    dimensions. Same as mesh_to_distance, but for multiple cameras.
+    dimensions. Each distance image contains the distance between camera center
+    to the mesh surface. Invalid distances are set to np.inf.
 
     Args:
         mesh: Open3D mesh.
