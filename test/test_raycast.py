@@ -2,6 +2,8 @@ import numpy as np
 import open3d as o3d
 import matplotlib.pyplot as plt
 import camtools as ct
+from codetiming import Timer
+import timeit
 
 
 def mesh_to_lineset(mesh: o3d.geometry.TriangleMesh) -> o3d.geometry.LineSet:
@@ -27,6 +29,7 @@ def mesh_to_lineset(mesh: o3d.geometry.TriangleMesh) -> o3d.geometry.LineSet:
     return line_set
 
 
+@Timer(name="distance_to_depth_v1")
 def distance_to_depth_v1(im_distance, K):
     """
     Convert distance depth to z-depth.
@@ -38,12 +41,6 @@ def distance_to_depth_v1(im_distance, K):
     Returns:
         np.ndarray: Z-depth image.
     """
-    # Create a mask for valid depth values
-    valid_mask = im_distance > 0
-
-    # Initialize z_depth with the same shape as distance_depth
-    z_depth = np.zeros_like(im_distance)
-
     # Extract focal lengths and principal points from K
     fx, fy = K[0, 0], K[1, 1]
     cx, cy = K[0, 2], K[1, 2]
@@ -56,19 +53,19 @@ def distance_to_depth_v1(im_distance, K):
     x_norm = (x - cx) / fx
     y_norm = (y - cy) / fy
 
-    # Calculate z-depth for valid pixels
-    z_depth[valid_mask] = im_distance[valid_mask] / np.sqrt(
-        1 + x_norm[valid_mask] ** 2 + y_norm[valid_mask] ** 2
-    )
+    # Calculate z-depth
+    z_depth = im_distance / np.sqrt(1 + x_norm**2 + y_norm**2)
 
     return z_depth
 
 
+@Timer(name="distance_to_depth_v2")
 def distance_to_depth_v2(im_distance, K):
     height, width = im_distance.shape
     u = np.arange(width)
     v = np.arange(height)
     u_grid, v_grid = np.meshgrid(u, v)
+
     fx = K[0, 0]
     fy = K[1, 1]
     cx = K[0, 2]
@@ -80,6 +77,7 @@ def distance_to_depth_v2(im_distance, K):
     return z_depth
 
 
+@Timer(name="distance_to_depth_v3")
 def distance_to_depth_v3(im_distance, K):
     """
     from marigold
@@ -159,14 +157,25 @@ def test_mesh_to_depth():
     # mesh -> depth
     im_distance = ct.raycast.mesh_to_distance(mesh, K, T, height, width)
 
-    # Convert distance depth to z-depth
+    # Benchmark the functions
+    print("Benchmarking distance_to_depth functions:")
+
+    # Using Timer decorator
     im_depth_v1 = distance_to_depth_v1(im_distance, K).astype(np.float32)
     im_depth_v2 = distance_to_depth_v2(im_distance, K).astype(np.float32)
     im_depth_v3 = distance_to_depth_v3(im_distance, K).astype(np.float32)
 
-    print(f"im_depth_v1: {im_depth_v1.shape}, {im_depth_v1.dtype}")
-    print(f"im_depth_v2: {im_depth_v2.shape}, {im_depth_v2.dtype}")
-    print(f"im_depth_v3: {im_depth_v3.shape}, {im_depth_v3.dtype}")
+    # Using timeit module for more precise measurements
+    number = 100  # number of executions for each test
+
+    time_v1 = timeit.timeit(lambda: distance_to_depth_v1(im_distance, K), number=number)
+    time_v2 = timeit.timeit(lambda: distance_to_depth_v2(im_distance, K), number=number)
+    time_v3 = timeit.timeit(lambda: distance_to_depth_v3(im_distance, K), number=number)
+
+    print(f"timeit results (average over {number} runs):")
+    print(f"distance_to_depth_v1: {time_v1/number:.6f} seconds")
+    print(f"distance_to_depth_v2: {time_v2/number:.6f} seconds")
+    print(f"distance_to_depth_v3: {time_v3/number:.6f} seconds")
 
     # z-depth -> points
     points_v1 = ct.project.depth_to_point_cloud(im_depth_v1, K, T)
@@ -193,9 +202,9 @@ def test_mesh_to_depth():
     pcd_v3.points = o3d.utility.Vector3dVector(points_v3)
     pcd_v3.paint_uniform_color([0, 0, 1])
     axes = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.5)
-    o3d.visualization.draw_geometries(
-        [pcd_v1, pcd_v2, pcd_v3, lineset, camera_frustum, axes]
-    )
+    # o3d.visualization.draw_geometries(
+    #     [pcd_v1, pcd_v2, pcd_v3, lineset, camera_frustum, axes]
+    # )
 
     # # Plot the depth image (optional, you can keep or remove this part)
     # plt.figure(figsize=(10, 7.5))
@@ -205,3 +214,8 @@ def test_mesh_to_depth():
     # plt.xlabel("Pixel X")
     # plt.ylabel("Pixel Y")
     # plt.show()
+
+
+# Run the test function if this script is executed directly
+if __name__ == "__main__":
+    test_mesh_to_depth()
