@@ -3,7 +3,6 @@ import open3d as o3d
 import matplotlib.pyplot as plt
 import camtools as ct
 from codetiming import Timer
-import timeit
 
 
 def mesh_to_lineset(mesh: o3d.geometry.TriangleMesh) -> o3d.geometry.LineSet:
@@ -135,6 +134,23 @@ def compute_point_to_mesh_distance(points, mesh):
     return distances.numpy()
 
 
+def distance_to_depth(im_distance, K):
+    height, width = im_distance.shape
+    fx, fy = K[0, 0], K[1, 1]
+    cx, cy = K[0, 2], K[1, 2]
+
+    u = np.arange(width)
+    v = np.arange(height)
+    u_grid, v_grid = np.meshgrid(u, v)
+
+    u_norm = (u_grid - cx) / fx
+    v_norm = (v_grid - cy) / fy
+    norm_square = u_norm**2 + v_norm**2
+    z_depth = im_distance / np.sqrt(norm_square + 1)
+
+    return z_depth
+
+
 def test_mesh_to_depth():
     # Geometries
     sphere = o3d.geometry.TriangleMesh.create_sphere(radius=1.0)
@@ -157,54 +173,21 @@ def test_mesh_to_depth():
     # mesh -> depth
     im_distance = ct.raycast.mesh_to_distance(mesh, K, T, height, width)
 
-    # Benchmark the functions
-    print("Benchmarking distance_to_depth functions:")
-
-    # Using Timer decorator
-    im_depth_v1 = distance_to_depth_v1(im_distance, K).astype(np.float32)
-    im_depth_v2 = distance_to_depth_v2(im_distance, K).astype(np.float32)
-    im_depth_v3 = distance_to_depth_v3(im_distance, K).astype(np.float32)
-
-    # Using timeit module for more precise measurements
-    number = 100  # number of executions for each test
-
-    time_v1 = timeit.timeit(lambda: distance_to_depth_v1(im_distance, K), number=number)
-    time_v2 = timeit.timeit(lambda: distance_to_depth_v2(im_distance, K), number=number)
-    time_v3 = timeit.timeit(lambda: distance_to_depth_v3(im_distance, K), number=number)
-
-    print(f"timeit results (average over {number} runs):")
-    print(f"distance_to_depth_v1: {time_v1/number:.6f} seconds")
-    print(f"distance_to_depth_v2: {time_v2/number:.6f} seconds")
-    print(f"distance_to_depth_v3: {time_v3/number:.6f} seconds")
+    # Convert distance to depth
+    im_depth = distance_to_depth(im_distance, K).astype(np.float32)
 
     # z-depth -> points
-    points_v1 = ct.project.depth_to_point_cloud(im_depth_v1, K, T)
-    points_v2 = ct.project.depth_to_point_cloud(im_depth_v2, K, T)
-    points_v3 = ct.project.depth_to_point_cloud(im_depth_v3, K, T)
+    points = ct.project.depth_to_point_cloud(im_depth, K, T)
 
     # Compute distances
-    distances_v1 = compute_point_to_mesh_distance(points_v1, mesh)
-    distances_v2 = compute_point_to_mesh_distance(points_v2, mesh)
-    distances_v3 = compute_point_to_mesh_distance(points_v3, mesh)
-
-    print(f"distances_v1: max {np.max(distances_v1)}, avg {np.mean(distances_v1)}")
-    print(f"distances_v2: max {np.max(distances_v2)}, avg {np.mean(distances_v2)}")
-    print(f"distances_v3: max {np.max(distances_v3)}, avg {np.mean(distances_v3)}")
+    distances = compute_point_to_mesh_distance(points, mesh)
+    print(f"distances: max {np.max(distances)}, avg {np.mean(distances)}")
 
     # Visualize
-    pcd_v1 = o3d.geometry.PointCloud()
-    pcd_v1.points = o3d.utility.Vector3dVector(points_v1)
-    pcd_v1.paint_uniform_color([1, 0, 0])
-    pcd_v2 = o3d.geometry.PointCloud()
-    pcd_v2.points = o3d.utility.Vector3dVector(points_v2)
-    pcd_v2.paint_uniform_color([0, 1, 0])
-    pcd_v3 = o3d.geometry.PointCloud()
-    pcd_v3.points = o3d.utility.Vector3dVector(points_v3)
-    pcd_v3.paint_uniform_color([0, 0, 1])
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(points)
     axes = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.5)
-    # o3d.visualization.draw_geometries(
-    #     [pcd_v1, pcd_v2, pcd_v3, lineset, camera_frustum, axes]
-    # )
+    o3d.visualization.draw_geometries([pcd, lineset, camera_frustum, axes])
 
     # # Plot the depth image (optional, you can keep or remove this part)
     # plt.figure(figsize=(10, 7.5))
