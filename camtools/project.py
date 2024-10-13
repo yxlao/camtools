@@ -11,7 +11,7 @@ from . import convert, image, sanity
 
 
 def points_to_pixels(
-    points: Float[np.ndarray, "N 3"],
+    points: Float[np.ndarray, "n 3"],
     K: Float[np.ndarray, "3 3"],
     T: Float[np.ndarray, "4 4"],
 ) -> Float[np.ndarray, "N 2"]:
@@ -67,9 +67,9 @@ def im_depth_to_point_cloud(
     ignore_invalid: bool = True,
     scale_factor: float = 1.0,
 ) -> Union[
-    Float[np.ndarray, "N 3"],
+    Float[np.ndarray, "n 3"],
     Float[np.ndarray, "h w 3"],
-    Tuple[Float[np.ndarray, "N 3"], Float[np.ndarray, "N 3"]],
+    Tuple[Float[np.ndarray, "n 3"], Float[np.ndarray, "n 3"]],
     Tuple[Float[np.ndarray, "h w 3"], Float[np.ndarray, "h w 3"]],
 ]:
     """

@@ -178,9 +178,9 @@ def point_plane_distance_three_points(point, plane_points):
 
 
 def points_to_mesh_distances(
-    points: Float[np.ndarray, "N 3"],
+    points: Float[np.ndarray, "n 3"],
     mesh: o3d.geometry.TriangleMesh,
-) -> Float[np.ndarray, "N"]:
+) -> Float[np.ndarray, "n"]:
     """
     Compute the distance from points to a mesh surface.
 
