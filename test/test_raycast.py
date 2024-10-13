@@ -173,16 +173,14 @@ def test_mesh_to_depth():
     points_v2 = ct.project.depth_to_point_cloud(im_depth_v2, K, T)
     points_v3 = ct.project.depth_to_point_cloud(im_depth_v3, K, T)
 
-    # # Compute distances
-    # distances_v1 = compute_point_to_mesh_distance(points_v1, mesh)
-    # distances_v2 = compute_point_to_mesh_distance(points_v2, mesh)
-    # distances_v3 = compute_point_to_mesh_distance(points_v3, mesh)
+    # Compute distances
+    distances_v1 = compute_point_to_mesh_distance(points_v1, mesh)
+    distances_v2 = compute_point_to_mesh_distance(points_v2, mesh)
+    distances_v3 = compute_point_to_mesh_distance(points_v3, mesh)
 
-    # # Assert that all points are close to the mesh surface
-    # threshold = 1e-3  # 1 mm threshold, adjust as needed
-    # assert np.all(
-    #     distances < threshold
-    # ), f"Some points are not on the mesh surface. Max distance: {np.max(distances)}"
+    print(f"distances_v1: max {np.max(distances_v1)}, avg {np.mean(distances_v1)}")
+    print(f"distances_v2: max {np.max(distances_v2)}, avg {np.mean(distances_v2)}")
+    print(f"distances_v3: max {np.max(distances_v3)}, avg {np.mean(distances_v3)}")
 
     # Visualize
     pcd_v1 = o3d.geometry.PointCloud()
