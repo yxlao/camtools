@@ -1,6 +1,7 @@
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from typing import Any, Callable, Iterable
 
+from functools import lru_cache
 from tqdm import tqdm
 
 
@@ -117,3 +118,34 @@ def query_yes_no(question, default=None):
             return response_to_bool[choice]
         else:
             print('Please respond with "yes" or "no" (or "y" or "n").')
+
+
+@lru_cache(maxsize=1)
+def _safely_import_torch():
+    """
+    Open3D has an issue where it must be imported before torch. If Open3D is
+    installed, this function will import Open3D before torch. Otherwise, it
+    will return simply import and return torch.
+
+    Use this function to import torch within camtools to handle the Open3D
+    import order issue. That is, within camtools, we shall avoid `import torch`,
+    and instead use `from camtools.backend import torch`. As torch is an
+    optional dependency for camtools, this function will return None if torch
+    is not available.
+
+    Returns:
+        module: The torch module if available, otherwise None.
+    """
+    try:
+        __import__("open3d")
+    except ImportError:
+        pass
+
+    try:
+        _torch = __import__("torch")
+        return _torch
+    except ImportError:
+        return None
+
+
+_safe_torch = _safely_import_torch()
