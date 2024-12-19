@@ -9,7 +9,7 @@ from typing import Tuple
 from . import image
 from . import io
 from . import sanity
-from .backend import torch
+from .util import _safe_torch as torch
 
 
 def image_psnr(

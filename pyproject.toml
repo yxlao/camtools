@@ -16,7 +16,6 @@ dependencies = [
   "matplotlib>=3.3.4",
   "scikit-image>=0.16.2",
   "tqdm>=4.60.0",
-  "ivy>=0.0.8.0",
   "jaxtyping>=0.2.12",
 ]
 description = "CamTools: Camera Tools for Computer Vision."
