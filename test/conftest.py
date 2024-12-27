@@ -9,12 +9,18 @@ def pytest_configure(config):
 
 
 @pytest.fixture
-def has_display():
-    """F
-    Fixture to check if display is available for Open3D visualization.
+def has_o3d_display():
+    """
+    Fixture to check if Open3D visualization display is available.
     """
     try:
+        # Create window with minimal size and hidden
         vis = o3d.visualization.Visualizer()
+        vis.create_window(width=1, height=1, visible=False)
+        # Check if view control is available
+        if vis.get_view_control() is None:
+            vis.destroy_window()
+            return False
         vis.destroy_window()
         return True
     except Exception:
@@ -22,14 +28,14 @@ def has_display():
 
 
 @pytest.fixture(autouse=True)
-def skip_no_display(request, has_display):
+def skip_no_o3d_display(request, has_o3d_display):
     """
-    Automatically skip tests marked with skip_no_display when display isn't
-    available.
+    Automatically skip tests marked with skip_no_display when Open3D visualization
+    isn't available.
     """
     if request.node.get_closest_marker("skip_no_display"):
-        if not has_display:
-            pytest.skip("Test skipped: no display available")
+        if not has_o3d_display:
+            pytest.skip("Test skipped: no Open3D display available")
 
 
 @pytest.fixture
