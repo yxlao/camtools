@@ -1,7 +1,7 @@
 import numpy as np
 import open3d as o3d
-from typing import Optional, Union, List, Tuple
-from jaxtyping import Float, Int
+from typing import Tuple
+from jaxtyping import Float
 
 from . import sanity
 from . import convert

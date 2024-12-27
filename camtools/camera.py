@@ -1,10 +1,10 @@
-from typing import Optional, Union, Dict
+from typing import Optional, Dict
 import open3d as o3d
 import numpy as np
 from . import convert
 from . import sanity
 from . import solver
-from jaxtyping import Float, Int, Bool
+from jaxtyping import Float, Int
 
 
 def create_camera_frustums(

@@ -1,5 +1,4 @@
 import numpy as np
-from typing import Tuple
 from jaxtyping import Float
 
 
