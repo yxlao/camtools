@@ -2,15 +2,15 @@ import cv2
 import numpy as np
 import open3d as o3d
 from jaxtyping import Float
-from typing import Optional
+from typing import Optional, Union
 
 from . import sanity
 from . import convert
 
 
 def pad_0001(
-    array: Float[np.ndarray, "3 4"] | Float[np.ndarray, "n 3 4"]
-) -> Float[np.ndarray, "4 4"] | Float[np.ndarray, "n 4 4"]:
+    array: Union[Float[np.ndarray, "3 4"], Float[np.ndarray, "n 3 4"]]
+) -> Union[Float[np.ndarray, "4 4"], Float[np.ndarray, "n 4 4"]]:
     """
     Pad [0, 0, 0, 1] to the bottom row.
 
@@ -48,9 +48,9 @@ def pad_0001(
 
 
 def rm_pad_0001(
-    array: Float[np.ndarray, "4 4"] | Float[np.ndarray, "n 4 4"],
+    array: Union[Float[np.ndarray, "4 4"], Float[np.ndarray, "n 4 4"]],
     check_vals: bool = False,
-) -> Float[np.ndarray, "3 4"] | Float[np.ndarray, "n 3 4"]:
+) -> Union[Float[np.ndarray, "3 4"], Float[np.ndarray, "n 3 4"]]:
     """
     Remove the bottom row of [0, 0, 0, 1].
 
@@ -144,8 +144,8 @@ def from_homo(array: Float[np.ndarray, "n m"]) -> Float[np.ndarray, "n m-1"]:
 
 
 def R_to_quat(
-    R: Float[np.ndarray, "3 3"] | Float[np.ndarray, "n 3 3"]
-) -> Float[np.ndarray, "4"] | Float[np.ndarray, "n 4"]:
+    R: Union[Float[np.ndarray, "3 3"], Float[np.ndarray, "n 3 3"]]
+) -> Union[Float[np.ndarray, "4"], Float[np.ndarray, "n 4"]]:
     """
     Convert rotation matrix to quaternion.
 
@@ -305,9 +305,9 @@ def pose_opencv_to_opengl(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "
 
 
 def R_t_to_C(
-    R: Float[np.ndarray, "3 3"] | Float[np.ndarray, "n 3 3"],
-    t: Float[np.ndarray, "3"] | Float[np.ndarray, "n 3"],
-) -> Float[np.ndarray, "3"] | Float[np.ndarray, "n 3"]:
+    R: Union[Float[np.ndarray, "3 3"], Float[np.ndarray, "n 3 3"]],
+    t: Union[Float[np.ndarray, "3"], Float[np.ndarray, "n 3"]],
+) -> Union[Float[np.ndarray, "3"], Float[np.ndarray, "n 3"]]:
     """
     Convert rotation and translation to camera center.
 
@@ -330,9 +330,9 @@ def R_t_to_C(
 
 
 def R_C_to_t(
-    R: Float[np.ndarray, "3 3"] | Float[np.ndarray, "n 3 3"],
-    C: Float[np.ndarray, "3"] | Float[np.ndarray, "n 3"],
-) -> Float[np.ndarray, "3"] | Float[np.ndarray, "n 3"]:
+    R: Union[Float[np.ndarray, "3 3"], Float[np.ndarray, "n 3 3"]],
+    C: Union[Float[np.ndarray, "3"], Float[np.ndarray, "n 3"]],
+) -> Union[Float[np.ndarray, "3"], Float[np.ndarray, "n 3"]]:
     """
     Convert rotation and camera center to translation.
 

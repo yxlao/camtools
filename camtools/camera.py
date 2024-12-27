@@ -1,3 +1,4 @@
+from typing import Optional, Union
 import open3d as o3d
 import numpy as np
 from . import convert
@@ -7,12 +8,12 @@ from jaxtyping import Float, Int, Bool
 
 
 def create_camera_frustums(
-    Ks: Float[np.ndarray, "n 3 3"] | None,
+    Ks: Optional[Float[np.ndarray, "n 3 3"]],
     Ts: Float[np.ndarray, "n 4 4"],
-    image_whs: Int[np.ndarray, "n 2"] | None = None,
+    image_whs: Optional[Int[np.ndarray, "n 2"]] = None,
     size: float = 0.1,
     color: Float[np.ndarray, "3"] = (0, 0, 1),
-    highlight_color_map: dict[int, Float[np.ndarray, "3"]] | None = None,
+    highlight_color_map: Optional[dict[int, Float[np.ndarray, "3"]]] = None,
     center_line: bool = True,
     center_line_color: Float[np.ndarray, "3"] = (1, 0, 0),
     up_triangle: bool = True,
@@ -118,10 +119,10 @@ def create_camera_frustums(
 
 def create_camera_frustum_with_Ts(
     Ts: Float[np.ndarray, "n 4 4"],
-    image_whs: Int[np.ndarray, "n 2"] | None = None,
+    image_whs: Optional[Int[np.ndarray, "n 2"]] = None,
     size: float = 0.1,
     color: Float[np.ndarray, "3"] = (0, 0, 1),
-    highlight_color_map: dict[int, Float[np.ndarray, "3"]] | None = None,
+    highlight_color_map: Optional[dict[int, Float[np.ndarray, "3"]]] = None,
     center_line: bool = True,
     center_line_color: Float[np.ndarray, "3"] = (1, 0, 0),
     up_triangle: bool = True,
