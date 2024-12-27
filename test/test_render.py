@@ -118,29 +118,29 @@ def test_render_geometries(visualize=True):
         # RGB and depth images
         plt.subplot(1, 6, 1)
         plt.imshow(im_render_rgb)
-        plt.title("im_render_rgb")
+        plt.title("Rendered RGB")
 
         plt.subplot(1, 6, 2)
         plt.imshow(im_render_depth, cmap="viridis")
-        plt.title("im_render_depth")
+        plt.title("Rendered Depth")
 
         plt.subplot(1, 6, 3)
         plt.imshow(im_raycast_depth, cmap="viridis")
-        plt.title("im_raycast_depth")
+        plt.title("Raycast Depth")
 
         # Mask comparisons
         plt.subplot(1, 6, 4)
         plt.imshow(im_mask_diff_rgb_vs_render, cmap="gray")
-        plt.title("im_mask_diff_rgb_vs_render")
+        plt.title("Mask: Rendered RGB vs Rendered Depth")
 
         plt.subplot(1, 6, 5)
         plt.imshow(im_mask_diff_raycast_vs_render, cmap="gray")
-        plt.title("Render vs Raycast Depth Mask Diff")
+        plt.title("Mask: Raycast Depth vs Rendered Depth")
 
         # Depth value comparison
         plt.subplot(1, 6, 6)
         plt.imshow(im_depth_diff_methods, cmap="viridis")
-        plt.title("Depth Difference (L1 Norm)")
+        plt.title("Rendered Depth vs Raycast Depth (L1 Norm)")
 
         plt.tight_layout()
         plt.show()
