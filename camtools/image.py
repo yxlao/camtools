@@ -8,7 +8,7 @@ from jaxtyping import Float, UInt8, UInt16, Int
 
 def crop_white_boarders(
     im: Float[np.ndarray, "h w 3"], padding: Tuple[int, int, int, int] = (0, 0, 0, 0)
-) -> Float[np.ndarray, "h' w' 3"]:
+) -> Float[np.ndarray, "h_cropped w_cropped 3"]:
     """
     Crop white boarders from an image.
 
@@ -138,7 +138,7 @@ def apply_cropping_padding(
     im_src: Float[np.ndarray, "h w 3"],
     cropping: Tuple[int, int, int, int],
     padding: Tuple[int, int, int, int],
-) -> Float[np.ndarray, "h' w' 3"]:
+) -> Float[np.ndarray, "h_cropped w_cropped 3"]:
     """
     Apply cropping and padding to an image.
 
@@ -176,7 +176,7 @@ def apply_croppings_paddings(
     src_ims: List[Float[np.ndarray, "h w 3"]],
     croppings: List[Tuple[int, int, int, int]],
     paddings: List[Tuple[int, int, int, int]],
-) -> List[Float[np.ndarray, "h' w' 3"]]:
+) -> List[Float[np.ndarray, "h_cropped w_cropped 3"]]:
     """
     Apply cropping and padding to a list of images.
 
@@ -339,7 +339,7 @@ def ndc_coords_to_pixels(
 
 def rotate(
     im: Float[np.ndarray, "h w c"], ccw_degrees: int
-) -> Float[np.ndarray, "h' w' c"]:
+) -> Float[np.ndarray, "h_rotated w_rotated c"]:
     """
     Rotate an image counter-clockwise by a given angle.
 
@@ -630,7 +630,7 @@ def make_corres_image(
     point_size: int = 1,
     line_width: int = 1,
     sample_ratio: Optional[float] = None,
-) -> Float[np.ndarray, "h w' 3"]:
+) -> Float[np.ndarray, "h 2*w 3"]:
     """
     Make correspondence image.
 
@@ -655,7 +655,7 @@ def make_corres_image(
         sample_ratio: Float value from 0-1. If None, all points are drawn.
 
     Returns:
-        Correspondence image with shape (h, w', 3) where w' = 2*w.
+        Correspondence image with shape (h, 2*w, 3).
     """
     assert im_src.shape == im_dst.shape
     assert im_src.ndim == 3 and im_src.shape[2] == 3
@@ -844,7 +844,7 @@ def vstack_images(
     ims: List[Float[np.ndarray, "h w 3"]],
     alignment: str = "left",
     background_color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
-) -> Float[np.ndarray, "h' w' 3"]:
+) -> Float[np.ndarray, "h_stacked w_stacked 3"]:
     """
     Vertically stacks images, aligning them to "left", "center", or "right",
     with a specified background color.

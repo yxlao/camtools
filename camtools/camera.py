@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, Dict
 import open3d as o3d
 import numpy as np
 from . import convert
@@ -13,7 +13,7 @@ def create_camera_frustums(
     image_whs: Optional[Int[np.ndarray, "n 2"]] = None,
     size: float = 0.1,
     color: Float[np.ndarray, "3"] = (0, 0, 1),
-    highlight_color_map: Optional[dict[int, Float[np.ndarray, "3"]]] = None,
+    highlight_color_map: Optional[Dict[int, Float[np.ndarray, "3"]]] = None,
     center_line: bool = True,
     center_line_color: Float[np.ndarray, "3"] = (1, 0, 0),
     up_triangle: bool = True,
@@ -122,7 +122,7 @@ def create_camera_frustum_with_Ts(
     image_whs: Optional[Int[np.ndarray, "n 2"]] = None,
     size: float = 0.1,
     color: Float[np.ndarray, "3"] = (0, 0, 1),
-    highlight_color_map: Optional[dict[int, Float[np.ndarray, "3"]]] = None,
+    highlight_color_map: Optional[Dict[int, Float[np.ndarray, "3"]]] = None,
     center_line: bool = True,
     center_line_color: Float[np.ndarray, "3"] = (1, 0, 0),
     up_triangle: bool = True,

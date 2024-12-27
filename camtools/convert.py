@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import open3d as o3d
 from jaxtyping import Float
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 
 from . import sanity
 from . import convert
@@ -410,7 +410,7 @@ def R_t_to_T(
 
 def T_to_R_t(
     T: Float[np.ndarray, "4 4"]
-) -> tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "3"]]:
+) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "3"]]:
     """
     Extract rotation and translation from transformation matrix.
 
@@ -428,7 +428,7 @@ def T_to_R_t(
 
 def P_to_K_R_t(
     P: Float[np.ndarray, "3 4"]
-) -> tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "3 3"], Float[np.ndarray, "3"]]:
+) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "3 3"], Float[np.ndarray, "3"]]:
     """
     Decompose projection matrix into intrinsic, rotation and translation.
 
@@ -458,7 +458,7 @@ def P_to_K_R_t(
 
 def P_to_K_T(
     P: Float[np.ndarray, "3 4"]
-) -> tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "4 4"]]:
+) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "4 4"]]:
     """
     Decompose projection matrix into intrinsic and transformation matrices.
 
@@ -597,7 +597,7 @@ def fx_fy_cx_cy_to_K(
     return K
 
 
-def K_to_fx_fy_cx_cy(K: Float[np.ndarray, "3 3"]) -> tuple[float, float, float, float]:
+def K_to_fx_fy_cx_cy(K: Float[np.ndarray, "3 3"]) -> Tuple[float, float, float, float]:
     """
     Extract focal lengths and principal point from intrinsic matrix.
 
