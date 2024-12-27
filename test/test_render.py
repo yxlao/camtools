@@ -1,3 +1,4 @@
+import pytest
 from pathlib import Path
 import numpy as np
 import open3d as o3d
@@ -5,7 +6,16 @@ import camtools as ct
 import matplotlib.pyplot as plt
 
 
-def test_render_geometries(visualize=True):
+def test_render_geometries(visualize):
+    """
+    Test rendering of 3D geometries (sphere and box) using Open3D.
+
+    Example usage:
+        pytest -s test/test_render.py
+        pytest -s test/test_render.py --visualize
+
+    See conftest.py for more information on the visualize fixture.
+    """
     # Setup geometries: sphere (red), box (blue)
     sphere = o3d.geometry.TriangleMesh.create_sphere(radius=1.0, resolution=100)
     sphere = sphere.translate([0, 0, 4])
