@@ -5,7 +5,7 @@ Functions for projecting 2D->3D or 3D->2D.
 import cv2
 import numpy as np
 from typing import Optional, Tuple, Union
-from jaxtyping import Float
+from jaxtyping import Float, Int, UInt8
 from . import convert, image, sanity
 
 

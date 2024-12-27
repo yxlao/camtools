@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 import camtools as ct
 import argparse
 

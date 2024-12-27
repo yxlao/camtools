@@ -1,6 +1,7 @@
 import matplotlib
 import numpy as np
 from jaxtyping import Float
+from . import io
 
 
 def query(
