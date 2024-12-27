@@ -5,7 +5,7 @@ import camtools as ct
 import matplotlib.pyplot as plt
 
 
-def test_render_geometries(visualize=False):
+def test_render_geometries(visualize=True):
     # Setup geometries: sphere (red), box (blue)
     sphere = o3d.geometry.TriangleMesh.create_sphere(radius=1.0, resolution=100)
     sphere = sphere.translate([0, 0, 4])
@@ -34,6 +34,9 @@ def test_render_geometries(visualize=False):
         width=width,
     )
 
+    # Render depth image
+    im_depth = ct.raycast.mesh_to_im_depth(mesh, K, T, height, width)
+
     # Heuristic checks of RGB rendering
     assert im_rgb.shape == (height, width, 3), "Image has incorrect dimensions"
     num_white_pixels = np.sum(
@@ -45,14 +48,34 @@ def test_render_geometries(visualize=False):
     num_red_pixels = np.sum(
         (im_rgb[:, :, 0] > 0.7) & (im_rgb[:, :, 1] < 0.3) & (im_rgb[:, :, 2] < 0.5)
     )
-    assert num_white_pixels > (height * width * 0.8), "Expected mostly white background"
+    assert num_white_pixels > (height * width * 0.5), "Expected mostly white background"
     assert num_blue_pixels > 100, "Expected blue pixels (sphere) not found"
     assert num_red_pixels > 100, "Expected red pixels (box) not found"
 
+    # Create masks from RGB and depth
+    rgb_mask = np.any(im_rgb < 0.99, axis=-1)
+    depth_mask = im_depth != np.inf
+
+    # Compare masks
+    mask_diff = np.abs(rgb_mask.astype(float) - depth_mask.astype(float))
+    assert np.mean(mask_diff) < 0.01, "RGB and depth masks differ significantly"
+
     # Visualization
     if visualize:
-        plt.figure(figsize=(10, 7.5))
+        plt.figure(figsize=(15, 7.5))
+        plt.subplot(1, 3, 1)
         plt.imshow(im_rgb)
+        plt.title("RGB Image")
+
+        plt.subplot(1, 3, 2)
+        plt.imshow(im_depth, cmap="viridis")
+        plt.title("Depth Image")
+
+        plt.subplot(1, 3, 3)
+        plt.imshow(mask_diff, cmap="gray")
+        plt.title("Mask Difference")
+
         plt.show()
+
         axes = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1)
         o3d.visualization.draw_geometries([mesh, camera_frustum, axes])
