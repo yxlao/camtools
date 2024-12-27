@@ -26,73 +26,104 @@ def test_render_geometries(visualize=True):
     camera_frustum = ct.camera.create_camera_frustums([K], [T], size=1)
 
     # Test render
-    im_rgb = ct.render.render_geometries(
+    im_render_rgb = ct.render.render_geometries(
         geometries=[mesh],
         K=K,
         T=T,
         height=height,
         width=width,
     )
-
-    # Render depth images using both methods
-    im_raycast_depth = ct.raycast.mesh_to_im_depth(mesh, K, T, height, width)
     im_render_depth = ct.render.render_geometries(
-        geometries=[mesh], K=K, T=T, height=height, width=width, to_depth=True
+        geometries=[mesh],
+        K=K,
+        T=T,
+        height=height,
+        width=width,
+        to_depth=True,
+    )
+    im_raycast_depth = ct.raycast.mesh_to_im_depth(
+        mesh=mesh,
+        K=K,
+        T=T,
+        height=height,
+        width=width,
     )
 
     # Heuristic checks of RGB rendering
-    assert im_rgb.shape == (height, width, 3), "Image has incorrect dimensions"
+    assert im_render_rgb.shape == (height, width, 3), "Image has incorrect dimensions"
     num_white_pixels = np.sum(
-        (im_rgb[:, :, 0] > 0.9) & (im_rgb[:, :, 1] > 0.9) & (im_rgb[:, :, 2] > 0.9)
+        (im_render_rgb[:, :, 0] > 0.9)
+        & (im_render_rgb[:, :, 1] > 0.9)
+        & (im_render_rgb[:, :, 2] > 0.9)
     )
     num_blue_pixels = np.sum(
-        (im_rgb[:, :, 2] > 0.7) & (im_rgb[:, :, 0] < 0.3) & (im_rgb[:, :, 1] < 0.5)
+        (im_render_rgb[:, :, 2] > 0.7)
+        & (im_render_rgb[:, :, 0] < 0.3)
+        & (im_render_rgb[:, :, 1] < 0.5)
     )
     num_red_pixels = np.sum(
-        (im_rgb[:, :, 0] > 0.7) & (im_rgb[:, :, 1] < 0.3) & (im_rgb[:, :, 2] < 0.5)
+        (im_render_rgb[:, :, 0] > 0.7)
+        & (im_render_rgb[:, :, 1] < 0.3)
+        & (im_render_rgb[:, :, 2] < 0.5)
     )
     assert num_white_pixels > (height * width * 0.5), "Expected mostly white background"
     assert num_blue_pixels > 100, "Expected blue pixels (sphere) not found"
     assert num_red_pixels > 100, "Expected red pixels (box) not found"
 
     # Create masks from RGB and depth
-    rgb_mask = np.any(im_rgb < 0.99, axis=-1)  # Any channel < 0.99 is foreground
-    raycast_mask = im_raycast_depth != np.inf  # Invalid depth is set to inf
-    render_mask = im_render_depth > 0  # Invalid depth is set to 0
+    im_rgb_mask = np.any(im_render_rgb < 0.99, axis=-1)
+    im_raycast_mask = im_raycast_depth != np.inf  # Invalid depth is set to inf
+    im_render_mask = im_render_depth > 0  # Invalid depth is set to 0
 
     # Compare masks
-    mask_diff_raycast = np.abs(rgb_mask.astype(float) - raycast_mask.astype(float))
-    mask_diff_render = np.abs(rgb_mask.astype(float) - render_mask.astype(float))
-    mask_diff_methods = np.abs(raycast_mask.astype(float) - render_mask.astype(float))
-
+    im_mask_diff_raycast = np.abs(
+        im_rgb_mask.astype(float) - im_raycast_mask.astype(float)
+    )
+    im_mask_diff_render = np.abs(
+        im_rgb_mask.astype(float) - im_render_mask.astype(float)
+    )
+    im_mask_diff_methods = np.abs(
+        im_raycast_mask.astype(float) - im_render_mask.astype(float)
+    )
     assert (
-        np.mean(mask_diff_raycast) < 0.01
+        np.mean(im_mask_diff_raycast) < 0.01
     ), "RGB and raycast depth masks differ significantly"
     assert (
-        np.mean(mask_diff_render) < 0.01
+        np.mean(im_mask_diff_render) < 0.01
     ), "RGB and render depth masks differ significantly"
     assert (
-        np.mean(mask_diff_methods) < 0.01
+        np.mean(im_mask_diff_methods) < 0.01
     ), "Raycast and render depth masks differ significantly"
 
     # Visualization
     if visualize:
-        plt.figure(figsize=(20, 7.5))
-        plt.subplot(1, 4, 1)
-        plt.imshow(im_rgb)
-        plt.title("RGB Image")
+        plt.figure(figsize=(25, 7.5))
 
-        plt.subplot(1, 4, 2)
-        plt.imshow(im_raycast_depth, cmap="viridis")
-        plt.title("Raycast Depth")
+        # RGB and depth images
+        plt.subplot(1, 5, 1)
+        plt.imshow(im_render_rgb)
+        plt.title("Render RGB")
 
-        plt.subplot(1, 4, 3)
+        plt.subplot(1, 5, 2)
         plt.imshow(im_render_depth, cmap="viridis")
+        plt.colorbar(label="Depth")
         plt.title("Render Depth")
 
-        plt.subplot(1, 4, 4)
-        plt.imshow(mask_diff_methods, cmap="gray")
-        plt.title("Depth Methods Difference")
+        plt.subplot(1, 5, 3)
+        plt.imshow(im_raycast_depth, cmap="viridis")
+        plt.colorbar(label="Depth")
+        plt.title("Raycast Depth")
+
+        # Mask comparisons
+        plt.subplot(1, 5, 4)
+        plt.imshow(im_mask_diff_render, cmap="gray")
+        plt.title("RGB vs Render Depth Mask Diff")
+
+        plt.subplot(1, 5, 5)
+        plt.imshow(im_mask_diff_methods, cmap="gray")
+        plt.title("Render vs Raycast Depth Mask Diff")
+
+        plt.tight_layout()
         plt.show()
 
         axes = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1)
