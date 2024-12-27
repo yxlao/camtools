@@ -75,6 +75,10 @@ def test_render_geometries(visualize=True):
     im_raycast_mask = im_raycast_depth != np.inf  # Invalid depth is set to inf
     im_render_mask = im_render_depth > 0  # Invalid depth is set to 0
 
+    # For raycast depth, the invalid depth is inf. For render depth, the invalid
+    # depth is 0, so we set it to inf for visualization consistency.
+    im_render_depth[im_render_depth == 0] = np.inf
+
     # Compare masks
     im_mask_diff_raycast = np.abs(
         im_rgb_mask.astype(float) - im_raycast_mask.astype(float)
