@@ -14,10 +14,8 @@ def has_o3d_display():
     Fixture to check if Open3D visualization display is available.
     """
     try:
-        # Create window with minimal size and hidden
         vis = o3d.visualization.Visualizer()
         vis.create_window(width=1, height=1, visible=False)
-        # Check if view control is available
         if vis.get_view_control() is None:
             vis.destroy_window()
             return False
