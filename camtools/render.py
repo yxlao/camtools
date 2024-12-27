@@ -1,24 +1,25 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import numpy as np
 import open3d as o3d
 from PIL import Image, ImageDraw, ImageFont
+from jaxtyping import Float
 
 from . import artifact, image, sanity
 
 
 def render_geometries(
     geometries: List[o3d.geometry.Geometry3D],
-    K: np.ndarray = None,
-    T: np.ndarray = None,
-    view_status_str: str = None,
+    K: Optional[Float[np.ndarray, "3 3"]] = None,
+    T: Optional[Float[np.ndarray, "4 4"]] = None,
+    view_status_str: Optional[str] = None,
     height: int = 720,
     width: int = 1280,
     point_size: float = 1.0,
-    line_radius: float = None,
-    to_depth=False,
+    line_radius: Optional[float] = None,
+    to_depth: bool = False,
     visible: bool = False,
-) -> None:
+) -> Float[np.ndarray, "h w 3"]:
     """
     Render Open3D geometries to an image. This function may require a display.
 
@@ -116,8 +117,8 @@ def render_geometries(
 
 def get_render_view_status_str(
     geometries: List[o3d.geometry.Geometry3D],
-    K: np.ndarray = None,
-    T: np.ndarray = None,
+    K: Optional[Float[np.ndarray, "3 3"]] = None,
+    T: Optional[Float[np.ndarray, "4 4"]] = None,
     height: int = 720,
     width: int = 1280,
 ) -> str:
@@ -193,10 +194,10 @@ def get_render_view_status_str(
 
 def get_render_K_T(
     geometries: List[o3d.geometry.Geometry3D],
-    view_status_str: str = None,
+    view_status_str: Optional[str] = None,
     height: int = 720,
     width: int = 1280,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "4 4"]]:
     """
     Get the rendering camera intrinsic (K) and extrinsic (T) matrices set by Open3D.
 
