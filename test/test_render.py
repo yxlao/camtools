@@ -6,8 +6,7 @@ import camtools as ct
 import matplotlib.pyplot as plt
 
 
-@pytest.fixture
-def has_display():
+def _has_display():
     """Check if display is available for Open3D visualization."""
     try:
         # Try to create a visualizer to check if display is available
@@ -18,7 +17,7 @@ def has_display():
         return False
 
 
-@pytest.mark.skipif(not has_display(), reason="No display available for Open3D")
+@pytest.mark.skipif(not _has_display(), reason="No display available for Open3D")
 def test_render_geometries(visualize: bool):
     """
     Test rendering of 3D geometries (sphere and box) using Open3D.
