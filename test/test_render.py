@@ -49,6 +49,10 @@ def test_render_geometries(visualize=True):
         width=width,
     )
 
+    # For raycast depth, the invalid depth is inf. For render depth, the invalid
+    # depth is 0. We set both invalid depths to 0 for visualization consistency.
+    im_raycast_depth[im_raycast_depth == np.inf] = 0
+
     # Heuristic checks of RGB rendering
     assert im_render_rgb.shape == (height, width, 3), "Image has incorrect dimensions"
     num_white_pixels = np.sum(
@@ -71,39 +75,35 @@ def test_render_geometries(visualize=True):
     assert num_red_pixels > 100, "Expected red pixels (box) not found"
 
     # Create masks from RGB and depth
-    im_rgb_mask = np.any(im_render_rgb < 0.99, axis=-1)
-    im_raycast_mask = im_raycast_depth != np.inf  # Invalid depth is set to inf
-    im_render_mask = im_render_depth > 0  # Invalid depth is set to 0
+    im_render_rgb_mask = np.any(im_render_rgb < 0.99, axis=-1)
+    im_render_depth_mask = im_render_depth > 0
+    im_raycast_depth_mask = im_raycast_depth > 0
 
-    # For raycast depth, the invalid depth is inf. For render depth, the invalid
-    # depth is 0, so we set it to inf for visualization consistency.
-    im_render_depth[im_render_depth == 0] = np.inf
-
-    # Compare masks
-    im_mask_diff_raycast = np.abs(
-        im_rgb_mask.astype(float) - im_raycast_mask.astype(float)
+    # Compare masks - renamed to be more explicit about what's being compared
+    im_mask_diff_rgb_vs_raycast = np.abs(
+        im_render_rgb_mask.astype(float) - im_raycast_depth_mask.astype(float)
     )
-    im_mask_diff_render = np.abs(
-        im_rgb_mask.astype(float) - im_render_mask.astype(float)
+    im_mask_diff_rgb_vs_render = np.abs(
+        im_render_rgb_mask.astype(float) - im_render_depth_mask.astype(float)
     )
-    im_mask_diff_methods = np.abs(
-        im_raycast_mask.astype(float) - im_render_mask.astype(float)
+    im_mask_diff_raycast_vs_render = np.abs(
+        im_raycast_depth_mask.astype(float) - im_render_depth_mask.astype(float)
     )
     assert (
-        np.mean(im_mask_diff_raycast) < 0.01
+        np.mean(im_mask_diff_rgb_vs_raycast) < 0.01
     ), "RGB and raycast depth masks differ significantly"
     assert (
-        np.mean(im_mask_diff_render) < 0.01
+        np.mean(im_mask_diff_rgb_vs_render) < 0.01
     ), "RGB and render depth masks differ significantly"
     assert (
-        np.mean(im_mask_diff_methods) < 0.01
+        np.mean(im_mask_diff_raycast_vs_render) < 0.01
     ), "Raycast and render depth masks differ significantly"
 
     # Calculate depth differences for visualization
     im_depth_diff_methods = np.abs(im_render_depth - im_raycast_depth)
 
     # Get mask where both depth maps have valid values
-    im_depth_valid_overlap = (im_render_depth != np.inf) & (im_raycast_depth != np.inf)
+    im_depth_valid_overlap = (im_render_depth > 0) & (im_raycast_depth > 0)
     assert np.allclose(
         im_render_depth[im_depth_valid_overlap],
         im_raycast_depth[im_depth_valid_overlap],
@@ -118,32 +118,29 @@ def test_render_geometries(visualize=True):
         # RGB and depth images
         plt.subplot(1, 6, 1)
         plt.imshow(im_render_rgb)
-        plt.title("Render RGB")
+        plt.title("im_render_rgb")
 
         plt.subplot(1, 6, 2)
         plt.imshow(im_render_depth, cmap="viridis")
-        plt.colorbar(label="Depth")
-        plt.title("Render Depth")
+        plt.title("im_render_depth")
 
         plt.subplot(1, 6, 3)
         plt.imshow(im_raycast_depth, cmap="viridis")
-        plt.colorbar(label="Depth")
-        plt.title("Raycast Depth")
+        plt.title("im_raycast_depth")
 
         # Mask comparisons
         plt.subplot(1, 6, 4)
-        plt.imshow(im_mask_diff_render, cmap="gray")
-        plt.title("RGB vs Render Depth Mask Diff")
+        plt.imshow(im_mask_diff_rgb_vs_render, cmap="gray")
+        plt.title("im_mask_diff_rgb_vs_render")
 
         plt.subplot(1, 6, 5)
-        plt.imshow(im_mask_diff_methods, cmap="gray")
+        plt.imshow(im_mask_diff_raycast_vs_render, cmap="gray")
         plt.title("Render vs Raycast Depth Mask Diff")
 
         # Depth value comparison
         plt.subplot(1, 6, 6)
         plt.imshow(im_depth_diff_methods, cmap="viridis")
-        plt.colorbar(label="Depth Difference")
-        plt.title("Depth Difference (Norm")
+        plt.title("Depth Difference (L1 Norm)")
 
         plt.tight_layout()
         plt.show()
