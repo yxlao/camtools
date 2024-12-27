@@ -5,7 +5,7 @@ import open3d as o3d
 from PIL import Image, ImageDraw, ImageFont
 from jaxtyping import Float
 
-from . import artifact, image, sanity
+from . import artifact, sanity
 
 
 def render_geometries(

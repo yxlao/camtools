@@ -1,5 +1,4 @@
 import cv2
-from cv2 import CV_32F
 import numpy as np
 from pathlib import Path
 from typing import Union, Optional
