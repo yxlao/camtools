@@ -1,4 +1,17 @@
 import pytest
+import open3d as o3d
+
+
+@pytest.fixture
+def has_display():
+    """Check if display is available for Open3D visualization."""
+    try:
+        # Try to create a visualizer to check if display is available
+        vis = o3d.visualization.Visualizer()
+        vis.destroy_window()
+        return True
+    except Exception:
+        return False
 
 
 @pytest.fixture
