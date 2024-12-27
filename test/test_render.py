@@ -34,8 +34,11 @@ def test_render_geometries(visualize=True):
         width=width,
     )
 
-    # Render depth image
-    im_depth = ct.raycast.mesh_to_im_depth(mesh, K, T, height, width)
+    # Render depth images using both methods
+    im_raycast_depth = ct.raycast.mesh_to_im_depth(mesh, K, T, height, width)
+    im_render_depth = ct.render.render_geometries(
+        geometries=[mesh], K=K, T=T, height=height, width=width, to_depth=True
+    )
 
     # Heuristic checks of RGB rendering
     assert im_rgb.shape == (height, width, 3), "Image has incorrect dimensions"
@@ -53,28 +56,43 @@ def test_render_geometries(visualize=True):
     assert num_red_pixels > 100, "Expected red pixels (box) not found"
 
     # Create masks from RGB and depth
-    rgb_mask = np.any(im_rgb < 0.99, axis=-1)
-    depth_mask = im_depth != np.inf
+    rgb_mask = np.any(im_rgb < 0.99, axis=-1)  # Any channel < 0.99 is foreground
+    raycast_mask = im_raycast_depth != np.inf  # Invalid depth is set to inf
+    render_mask = im_render_depth > 0  # Invalid depth is set to 0
 
     # Compare masks
-    mask_diff = np.abs(rgb_mask.astype(float) - depth_mask.astype(float))
-    assert np.mean(mask_diff) < 0.01, "RGB and depth masks differ significantly"
+    mask_diff_raycast = np.abs(rgb_mask.astype(float) - raycast_mask.astype(float))
+    mask_diff_render = np.abs(rgb_mask.astype(float) - render_mask.astype(float))
+    mask_diff_methods = np.abs(raycast_mask.astype(float) - render_mask.astype(float))
+
+    assert (
+        np.mean(mask_diff_raycast) < 0.01
+    ), "RGB and raycast depth masks differ significantly"
+    assert (
+        np.mean(mask_diff_render) < 0.01
+    ), "RGB and render depth masks differ significantly"
+    assert (
+        np.mean(mask_diff_methods) < 0.01
+    ), "Raycast and render depth masks differ significantly"
 
     # Visualization
     if visualize:
-        plt.figure(figsize=(15, 7.5))
-        plt.subplot(1, 3, 1)
+        plt.figure(figsize=(20, 7.5))
+        plt.subplot(1, 4, 1)
         plt.imshow(im_rgb)
         plt.title("RGB Image")
 
-        plt.subplot(1, 3, 2)
-        plt.imshow(im_depth, cmap="viridis")
-        plt.title("Depth Image")
+        plt.subplot(1, 4, 2)
+        plt.imshow(im_raycast_depth, cmap="viridis")
+        plt.title("Raycast Depth")
 
-        plt.subplot(1, 3, 3)
-        plt.imshow(mask_diff, cmap="gray")
-        plt.title("Mask Difference")
+        plt.subplot(1, 4, 3)
+        plt.imshow(im_render_depth, cmap="viridis")
+        plt.title("Render Depth")
 
+        plt.subplot(1, 4, 4)
+        plt.imshow(mask_diff_methods, cmap="gray")
+        plt.title("Depth Methods Difference")
         plt.show()
 
         axes = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1)
