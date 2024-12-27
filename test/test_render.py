@@ -6,7 +6,7 @@ import camtools as ct
 import matplotlib.pyplot as plt
 
 
-def test_render_geometries(visualize):
+def test_render_geometries(visualize: bool):
     """
     Test rendering of 3D geometries (sphere and box) using Open3D.
 
