@@ -1,22 +1,24 @@
 import open3d as o3d
 import numpy as np
+from typing import List, Optional, Dict, Tuple
+from jaxtyping import Float
 from . import convert
 from . import sanity
 from . import solver
 
 
 def create_camera_frustums(
-    Ks,
-    Ts,
-    image_whs=None,
-    size=0.1,
-    color=(0, 0, 1),
-    highlight_color_map=None,
-    center_line=True,
-    center_line_color=(1, 0, 0),
-    up_triangle=True,
-    center_ray=False,
-):
+    Ks: Optional[List[Float[np.ndarray, "3 3"]]],
+    Ts: List[Float[np.ndarray, "4 4"]],
+    image_whs: Optional[List[List[int]]] = None,
+    size: float = 0.1,
+    color: Tuple[float, float, float] = (0, 0, 1),
+    highlight_color_map: Optional[Dict[int, Tuple[float, float, float]]] = None,
+    center_line: bool = True,
+    center_line_color: Tuple[float, float, float] = (1, 0, 0),
+    up_triangle: bool = True,
+    center_ray: bool = False,
+) -> o3d.geometry.LineSet:
     """
     Create camera frustums in lineset.
 
@@ -116,16 +118,16 @@ def create_camera_frustums(
 
 
 def create_camera_frustum_with_Ts(
-    Ts,
-    image_whs=None,
-    size=0.1,
-    color=(0, 0, 1),
-    highlight_color_map=None,
-    center_line=True,
-    center_line_color=(1, 0, 0),
-    up_triangle=True,
-    center_ray=False,
-):
+    Ts: List[Float[np.ndarray, "4 4"]],
+    image_whs: Optional[List[List[int]]] = None,
+    size: float = 0.1,
+    color: Tuple[float, float, float] = (0, 0, 1),
+    highlight_color_map: Optional[Dict[int, Tuple[float, float, float]]] = None,
+    center_line: bool = True,
+    center_line_color: Tuple[float, float, float] = (1, 0, 0),
+    up_triangle: bool = True,
+    center_ray: bool = False,
+) -> o3d.geometry.LineSet:
     """
     Returns ct.camera.create_camera_frustums(Ks=None, Ts, ...).
     """
@@ -143,7 +145,10 @@ def create_camera_frustum_with_Ts(
     )
 
 
-def create_camera_center_line(Ts, color=np.array([1, 0, 0])):
+def create_camera_center_line(
+    Ts: List[Float[np.ndarray, "4 4"]],
+    color: Tuple[float, float, float] = (1, 0, 0),
+) -> o3d.geometry.LineSet:
     num_nodes = len(Ts)
     camera_centers = [convert.T_to_C(T) for T in Ts]
 
@@ -158,14 +163,14 @@ def create_camera_center_line(Ts, color=np.array([1, 0, 0])):
 
 
 def _create_camera_frustum(
-    K,
-    T,
-    image_wh,
-    size,
-    color,
-    up_triangle,
-    center_ray,
-):
+    K: Float[np.ndarray, "3 3"],
+    T: Float[np.ndarray, "4 4"],
+    image_wh: List[int],
+    size: float,
+    color: Tuple[float, float, float],
+    up_triangle: bool,
+    center_ray: bool,
+) -> o3d.geometry.LineSet:
     """
     K: (3, 3)
     T: (4, 4)
@@ -280,7 +285,11 @@ def _create_camera_frustum(
     return ls
 
 
-def _wrap_dim(dim: int, max_dim: int, inclusive: bool = False) -> int:
+def _wrap_dim(
+    dim: int,
+    max_dim: int,
+    inclusive: bool = False,
+) -> int:
     if max_dim <= 0:
         raise ValueError(f"max_dim {max_dim} must be > 0.")
     min = -max_dim

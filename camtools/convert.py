@@ -2,26 +2,21 @@ import cv2
 import numpy as np
 import open3d as o3d
 from jaxtyping import Float
-from typing import Optional, Union, Tuple
+from typing import Optional
 
 from . import sanity
 from . import convert
 
 
-def pad_0001(
-    array: Union[Float[np.ndarray, "3 4"], Float[np.ndarray, "n 3 4"]]
-) -> Union[Float[np.ndarray, "4 4"], Float[np.ndarray, "n 4 4"]]:
+def pad_0001(array):
     """
     Pad [0, 0, 0, 1] to the bottom row.
 
     Args:
-        array: Input array to pad.
+        array: (3, 4) or (N, 3, 4).
 
     Returns:
-        Padded array with bottom row [0, 0, 0, 1].
-
-    Raises:
-        ValueError: If input array has invalid shape.
+        Array of shape (4, 4) or (N, 4, 4).
     """
     if array.ndim == 2:
         if not array.shape == (3, 4):
@@ -47,22 +42,16 @@ def pad_0001(
         raise ValueError("Should not reach here.")
 
 
-def rm_pad_0001(
-    array: Union[Float[np.ndarray, "4 4"], Float[np.ndarray, "n 4 4"]],
-    check_vals: bool = False,
-) -> Union[Float[np.ndarray, "3 4"], Float[np.ndarray, "n 3 4"]]:
+def rm_pad_0001(array, check_vals=False):
     """
     Remove the bottom row of [0, 0, 0, 1].
 
     Args:
-        array: Input array to remove padding from.
-        check_vals: If True, verify bottom row is [0, 0, 0, 1].
+        array: (4, 4) or (N, 4, 4).
+        check_vals (bool): If True, check that the bottom row is [0, 0, 0, 1].
 
     Returns:
-        Array with bottom row removed.
-
-    Raises:
-        ValueError: If input array has invalid shape or values.
+        Array of shape (3, 4) or (N, 3, 4).
     """
     # Check shapes.
     if array.ndim == 2:
@@ -99,18 +88,15 @@ def rm_pad_0001(
     return array[..., :3, :]
 
 
-def to_homo(array: Float[np.ndarray, "n m"]) -> Float[np.ndarray, "n m+1"]:
+def to_homo(array):
     """
-    Convert array to homogeneous coordinates.
+    Convert a 2D array to homogeneous coordinates by appending a column of ones.
 
     Args:
-        array: Input array to convert.
+        array: A 2D numpy array of shape (N, M).
 
     Returns:
-        Array in homogeneous coordinates.
-
-    Raises:
-        ValueError: If input is not a 2D numpy array.
+        A numpy array of shape (N, M+1) with a column of ones appended.
     """
     if not isinstance(array, np.ndarray) or array.ndim != 2:
         raise ValueError(f"Input must be a 2D numpy array, but got {array.shape}.")
@@ -119,18 +105,16 @@ def to_homo(array: Float[np.ndarray, "n m"]) -> Float[np.ndarray, "n m+1"]:
     return np.hstack((array, ones))
 
 
-def from_homo(array: Float[np.ndarray, "n m"]) -> Float[np.ndarray, "n m-1"]:
+def from_homo(array):
     """
-    Convert array from homogeneous to Cartesian coordinates.
+    Convert an array from homogeneous to Cartesian coordinates by dividing by the
+    last column and removing it.
 
     Args:
-        array: Input array in homogeneous coordinates.
+        array: A 2D numpy array of shape (N, M) in homogeneous coordinates.
 
     Returns:
-        Array in Cartesian coordinates.
-
-    Raises:
-        ValueError: If input is not a 2D numpy array or has insufficient columns.
+        A numpy array of shape (N, M-1) in Cartesian coordinates.
     """
     if not isinstance(array, np.ndarray) or array.ndim != 2:
         raise ValueError(f"Input must be a 2D numpy array, but got {array.shape}.")
@@ -143,18 +127,8 @@ def from_homo(array: Float[np.ndarray, "n m"]) -> Float[np.ndarray, "n m-1"]:
     return array[:, :-1] / array[:, -1, np.newaxis]
 
 
-def R_to_quat(
-    R: Union[Float[np.ndarray, "3 3"], Float[np.ndarray, "n 3 3"]]
-) -> Union[Float[np.ndarray, "4"], Float[np.ndarray, "n 4"]]:
-    """
-    Convert rotation matrix to quaternion.
-
-    Args:
-        R: Rotation matrix or batch of matrices.
-
-    Returns:
-        Quaternion or batch of quaternions.
-    """
+def R_to_quat(R):
+    # https://github.com/isl-org/StableViewSynthesis/tree/main/co
     R = R.reshape(-1, 3, 3)
     q = np.empty((R.shape[0], 4), dtype=R.dtype)
     q[:, 0] = np.sqrt(np.maximum(0, 1 + R[:, 0, 0] + R[:, 1, 1] + R[:, 2, 2]))
@@ -168,73 +142,56 @@ def R_to_quat(
     return q.squeeze()
 
 
-def T_to_C(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "3"]:
+def T_to_C(T):
     """
-    Convert transformation matrix to camera center.
-
-    Args:
-        T: Transformation matrix.
-
-    Returns:
-        Camera center coordinates.
+    Convert T to camera center.
     """
     sanity.assert_T(T)
     R, t = T[:3, :3], T[:3, 3]
     return R_t_to_C(R, t)
 
 
-def pose_to_C(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "3"]:
+def pose_to_C(pose):
     """
     Convert pose to camera center.
-
-    Args:
-        pose: Camera pose matrix.
-
-    Returns:
-        Camera center coordinates.
     """
     sanity.assert_pose(pose)
     C = pose[:3, 3]
     return C
 
 
-def T_to_pose(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
+def T_to_pose(T):
     """
-    Convert transformation matrix to pose.
-
-    Args:
-        T: Transformation matrix.
-
-    Returns:
-        Camera pose matrix.
+    Convert T to pose.
     """
     sanity.assert_T(T)
     return np.linalg.inv(T)
 
 
-def pose_to_T(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
+def pose_to_T(pose):
     """
-    Convert pose to transformation matrix.
-
-    Args:
-        pose: Camera pose matrix.
-
-    Returns:
-        Transformation matrix.
+    Convert pose to T.
     """
     sanity.assert_T(pose)
     return np.linalg.inv(pose)
 
 
-def T_opengl_to_opencv(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
+def T_opengl_to_opencv(T):
     """
-    Convert transformation matrix from OpenGL to OpenCV convention.
+    Convert T from OpenGL convention to OpenCV convention.
 
-    Args:
-        T: Transformation matrix in OpenGL convention.
-
-    Returns:
-        Transformation matrix in OpenCV convention.
+    - OpenCV
+        - +X: Right
+        - +Y: Down
+        - +Z: The view direction, pointing forward and away from the camera
+        - Used in: OpenCV, COLMAP, camtools default
+    - OpenGL
+        - +X: Right
+        - +Y: Up
+        - +Z: The negative view direction, pointing back and away from the camera
+        - -Z: The view direction
+        - Used in: OpenGL, Blender, Nerfstudio
+          https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
     """
     sanity.assert_T(T)
     # pose = T_to_pose(T)
@@ -247,15 +204,22 @@ def T_opengl_to_opencv(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
     return T
 
 
-def T_opencv_to_opengl(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
+def T_opencv_to_opengl(T):
     """
-    Convert transformation matrix from OpenCV to OpenGL convention.
+    Convert T from OpenCV convention to OpenGL convention.
 
-    Args:
-        T: Transformation matrix in OpenCV convention.
-
-    Returns:
-        Transformation matrix in OpenGL convention.
+    - OpenCV
+        - +X: Right
+        - +Y: Down
+        - +Z: The view direction, pointing forward and away from the camera
+        - Used in: OpenCV, COLMAP, camtools default
+    - OpenGL
+        - +X: Right
+        - +Y: Up
+        - +Z: The negative view direction, pointing back and away from the camera
+        - -Z: The view direction
+        - Used in: OpenGL, Blender, Nerfstudio
+          https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
     """
     sanity.assert_T(T)
     # pose = T_to_pose(T)
@@ -268,15 +232,22 @@ def T_opencv_to_opengl(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
     return T
 
 
-def pose_opengl_to_opencv(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
+def pose_opengl_to_opencv(pose):
     """
-    Convert pose from OpenGL to OpenCV convention.
+    Convert pose from OpenGL convention to OpenCV convention.
 
-    Args:
-        pose: Pose matrix in OpenGL convention.
-
-    Returns:
-        Pose matrix in OpenCV convention.
+    - OpenCV
+        - +X: Right
+        - +Y: Down
+        - +Z: The view direction, pointing forward and away from the camera
+        - Used in: OpenCV, COLMAP, camtools default
+    - OpenGL
+        - +X: Right
+        - +Y: Up
+        - +Z: The negative view direction, pointing back and away from the camera
+        - -Z: The view direction
+        - Used in: OpenGL, Blender, Nerfstudio
+          https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
     """
     sanity.assert_pose(pose)
     pose = np.copy(pose)
@@ -286,15 +257,22 @@ def pose_opengl_to_opencv(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "
     return pose
 
 
-def pose_opencv_to_opengl(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
+def pose_opencv_to_opengl(pose):
     """
-    Convert pose from OpenCV to OpenGL convention.
+    Convert pose from OpenCV convention to OpenGL convention.
 
-    Args:
-        pose: Pose matrix in OpenCV convention.
-
-    Returns:
-        Pose matrix in OpenGL convention.
+    - OpenCV
+        - +X: Right
+        - +Y: Down
+        - +Z: The view direction, pointing forward and away from the camera
+        - Used in: OpenCV, COLMAP, camtools default
+    - OpenGL
+        - +X: Right
+        - +Y: Up
+        - +Z: The negative view direction, pointing back and away from the camera
+        - -Z: The view direction
+        - Used in: OpenGL, Blender, Nerfstudio
+          https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
     """
     sanity.assert_pose(pose)
     pose = np.copy(pose)
@@ -304,19 +282,9 @@ def pose_opencv_to_opengl(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "
     return pose
 
 
-def R_t_to_C(
-    R: Union[Float[np.ndarray, "3 3"], Float[np.ndarray, "n 3 3"]],
-    t: Union[Float[np.ndarray, "3"], Float[np.ndarray, "n 3"]],
-) -> Union[Float[np.ndarray, "3"], Float[np.ndarray, "n 3"]]:
+def R_t_to_C(R, t):
     """
-    Convert rotation and translation to camera center.
-
-    Args:
-        R: Rotation matrix or batch of matrices.
-        t: Translation vector or batch of vectors.
-
-    Returns:
-        Camera center coordinates or batch of coordinates.
+    Convert R, t to camera center
     """
     # Equivalently,
     # C = - R.T @ t
@@ -329,20 +297,7 @@ def R_t_to_C(
     return C.squeeze()
 
 
-def R_C_to_t(
-    R: Union[Float[np.ndarray, "3 3"], Float[np.ndarray, "n 3 3"]],
-    C: Union[Float[np.ndarray, "3"], Float[np.ndarray, "n 3"]],
-) -> Union[Float[np.ndarray, "3"], Float[np.ndarray, "n 3"]]:
-    """
-    Convert rotation and camera center to translation.
-
-    Args:
-        R: Rotation matrix or batch of matrices.
-        C: Camera center coordinates or batch of coordinates.
-
-    Returns:
-        Translation vector or batch of vectors.
-    """
+def R_C_to_t(R, C):
     # https://github.com/isl-org/StableViewSynthesis/blob/main/data/create_custom_track.py
     C = C.reshape(-1, 3, 1)
     R = R.reshape(-1, 3, 3)
@@ -350,20 +305,7 @@ def R_C_to_t(
     return t.squeeze()
 
 
-def roll_pitch_yaw_to_R(
-    roll: float, pitch: float, yaw: float
-) -> Float[np.ndarray, "3 3"]:
-    """
-    Convert roll, pitch, yaw angles to rotation matrix.
-
-    Args:
-        roll: Roll angle in radians.
-        pitch: Pitch angle in radians.
-        yaw: Yaw angle in radians.
-
-    Returns:
-        Rotation matrix.
-    """
+def roll_pitch_yaw_to_R(roll, pitch, yaw):
     rx_roll = np.array(
         [
             [1, 0, 0],
@@ -389,55 +331,21 @@ def roll_pitch_yaw_to_R(
     return R
 
 
-def R_t_to_T(
-    R: Float[np.ndarray, "3 3"], t: Float[np.ndarray, "3"]
-) -> Float[np.ndarray, "4 4"]:
-    """
-    Convert rotation and translation to transformation matrix.
-
-    Args:
-        R: Rotation matrix.
-        t: Translation vector.
-
-    Returns:
-        Transformation matrix.
-    """
+def R_t_to_T(R, t):
     T = np.eye(4)
     T[:3, :3] = R
     T[:3, 3] = t
     return T
 
 
-def T_to_R_t(
-    T: Float[np.ndarray, "4 4"]
-) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "3"]]:
-    """
-    Extract rotation and translation from transformation matrix.
-
-    Args:
-        T: Transformation matrix.
-
-    Returns:
-        Tuple of (rotation matrix, translation vector).
-    """
+def T_to_R_t(T):
     sanity.assert_T(T)
     R = T[:3, :3]
     t = T[:3, 3]
     return R, t
 
 
-def P_to_K_R_t(
-    P: Float[np.ndarray, "3 4"]
-) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "3 3"], Float[np.ndarray, "3"]]:
-    """
-    Decompose projection matrix into intrinsic, rotation and translation.
-
-    Args:
-        P: Projection matrix.
-
-    Returns:
-        Tuple of (intrinsic matrix, rotation matrix, translation vector).
-    """
+def P_to_K_R_t(P):
     (
         camera_matrix,
         rot_matrix,
@@ -456,138 +364,45 @@ def P_to_K_R_t(
     return K, R, t.squeeze()
 
 
-def P_to_K_T(
-    P: Float[np.ndarray, "3 4"]
-) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "4 4"]]:
-    """
-    Decompose projection matrix into intrinsic and transformation matrices.
-
-    Args:
-        P: Projection matrix.
-
-    Returns:
-        Tuple of (intrinsic matrix, transformation matrix).
-    """
+def P_to_K_T(P):
     K, R, t = P_to_K_R_t(P)
     T = R_t_to_T(R, t)
     return K, T
 
 
-def K_T_to_P(
-    K: Float[np.ndarray, "3 3"], T: Float[np.ndarray, "4 4"]
-) -> Float[np.ndarray, "3 4"]:
-    """
-    Compose projection matrix from intrinsic and transformation matrices.
-
-    Args:
-        K: Intrinsic matrix.
-        T: Transformation matrix.
-
-    Returns:
-        Projection matrix.
-    """
+def K_T_to_P(K, T):
     return K @ T[:3, :]
 
 
-def K_R_t_to_P(
-    K: Float[np.ndarray, "3 3"], R: Float[np.ndarray, "3 3"], t: Float[np.ndarray, "3"]
-) -> Float[np.ndarray, "3 4"]:
-    """
-    Compose projection matrix from intrinsic, rotation and translation.
-
-    Args:
-        K: Intrinsic matrix.
-        R: Rotation matrix.
-        t: Translation vector.
-
-    Returns:
-        Projection matrix.
-    """
+def K_R_t_to_P(K, R, t):
     T = R_t_to_T(R, t)
-    return K @ T[:3, :]
+    P = K @ T[:3, :]
+    return P
 
 
-def K_R_t_to_W2P(
-    K: Float[np.ndarray, "3 3"], R: Float[np.ndarray, "3 3"], t: Float[np.ndarray, "3"]
-) -> Float[np.ndarray, "4 4"]:
-    """
-    Create world-to-projection matrix from intrinsic, rotation and translation.
-
-    Args:
-        K: Intrinsic matrix.
-        R: Rotation matrix.
-        t: Translation vector.
-
-    Returns:
-        World-to-projection matrix.
-    """
-    T = R_t_to_T(R, t)
-    return K @ T[:3, :]
+def K_R_t_to_W2P(K, R, t):
+    return P_to_W2P(K_R_t_to_P(K, R, t))
 
 
-def K_T_to_W2P(
-    K: Float[np.ndarray, "3 3"], T: Float[np.ndarray, "4 4"]
-) -> Float[np.ndarray, "4 4"]:
-    """
-    Create world-to-projection matrix from intrinsic and transformation matrices.
-
-    Args:
-        K: Intrinsic matrix.
-        T: Transformation matrix.
-
-    Returns:
-        World-to-projection matrix.
-    """
+def K_T_to_W2P(K, T):
     R, t = T_to_R_t(T)
     return K_R_t_to_W2P(K, R, t)
 
 
-def P_to_W2P(P: Float[np.ndarray, "3 4"]) -> Float[np.ndarray, "4 4"]:
-    """
-    Convert projection matrix to world-to-projection matrix.
-
-    Args:
-        P: Projection matrix.
-
-    Returns:
-        World-to-projection matrix.
-    """
+def P_to_W2P(P):
     sanity.assert_shape_3x4(P, name="P")
     W2P = convert.pad_0001(P)
     return W2P
 
 
-def W2P_to_P(W2P: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "3 4"]:
-    """
-    Convert world-to-projection matrix to projection matrix.
-
-    Args:
-        W2P: World-to-projection matrix.
-
-    Returns:
-        Projection matrix.
-    """
+def W2P_to_P(W2P):
     if W2P.shape != (4, 4):
         raise ValueError(f"Expected W2P of shape (4, 4), but got {W2P.shape}.")
     P = convert.rm_pad_0001(W2P, check_vals=True)
     return P
 
 
-def fx_fy_cx_cy_to_K(
-    fx: float, fy: float, cx: float, cy: float
-) -> Float[np.ndarray, "3 3"]:
-    """
-    Create intrinsic matrix from focal lengths and principal point.
-
-    Args:
-        fx: Focal length in x direction.
-        fy: Focal length in y direction.
-        cx: Principal point x coordinate.
-        cy: Principal point y coordinate.
-
-    Returns:
-        Intrinsic matrix.
-    """
+def fx_fy_cx_cy_to_K(fx, fy, cx, cy):
     K = np.zeros((3, 3))
     K[0, 0] = fx
     K[1, 1] = fy
@@ -597,16 +412,7 @@ def fx_fy_cx_cy_to_K(
     return K
 
 
-def K_to_fx_fy_cx_cy(K: Float[np.ndarray, "3 3"]) -> Tuple[float, float, float, float]:
-    """
-    Extract focal lengths and principal point from intrinsic matrix.
-
-    Args:
-        K: Intrinsic matrix.
-
-    Returns:
-        Tuple of (fx, fy, cx, cy).
-    """
+def K_to_fx_fy_cx_cy(K):
     fx = K[0, 0]
     fy = K[1, 1]
     cx = K[0, 2]
@@ -615,17 +421,19 @@ def K_to_fx_fy_cx_cy(K: Float[np.ndarray, "3 3"]) -> Tuple[float, float, float, 
     return float(fx), float(fy), float(cx), float(cy)
 
 
-def euler_to_R(yaw: float, pitch: float, roll: float) -> Float[np.ndarray, "3 3"]:
+def euler_to_R(yaw, pitch, roll):
     """
-    Convert Euler angles to rotation matrix.
+    Convert Euler angles to rotation matrix. Given a unit vector x, R @ x is x
+    rotated by applying yaw, pitch, and roll consecutively. Ref:
+    https://en.wikipedia.org/wiki/Euler_angles
 
     Args:
-        yaw: Rotation around the z-axis (from x-axis to y-axis).
-        pitch: Rotation around the y-axis (from z-axis to x-axis).
-        roll: Rotation around the x-axis (from y-axis to z-axis).
+        yaw (float): Rotation around the z-axis (from x-axis to y-axis).
+        pitch (float): Rotation around the y-axis (from z-axis to x-axis).
+        roll (float): Rotation around the x-axis (from y-axis to z-axis).
 
     Returns:
-        Rotation matrix.
+        Rotation matrix R of shape (3, 3).
     """
     sin_y = np.sin(yaw)
     cos_y = np.cos(yaw)
@@ -655,22 +463,25 @@ def euler_to_R(yaw: float, pitch: float, roll: float) -> Float[np.ndarray, "3 3"
     return R
 
 
-def spherical_to_T_towards_origin(
-    radius: float, theta: float, phi: float
-) -> Float[np.ndarray, "4 4"]:
+def spherical_to_T_towards_origin(radius, theta, phi):
     """
-    Convert spherical coordinates to transformation matrix looking at origin.
+    Convert spherical coordinates (ISO convention) to T, where the cameras looks
+    at the origin from a distance (radius), and the camera up direction alines
+    with the z-axis (the angle between the up direction and the z-axis is
+    smaller than pi/2).
 
     Args:
-        radius: Distance from the origin.
-        theta: Inclination angle (0 to pi).
-        phi: Azimuth angle (0 to 2*pi).
+        radius (float): Distance from the origin.
+        theta (float): Inclination, angle w.r.t. positive polar (+z) axis.
+            Range: [0, pi].
+        phi (float): Azimuth, rotation angle from the initial meridian (x-y)
+            plane. Range: [0, 2*pi].
 
     Returns:
-        Transformation matrix.
+        T of shape (4, 4).
 
-    Raises:
-        ValueError: If theta or phi are outside valid ranges.
+    Ref:
+        https://en.wikipedia.org/wiki/Spherical_coordinate_system
     """
     if not 0 <= theta <= np.pi:
         raise ValueError(f"Expected theta in [0, pi], but got {theta}.")
@@ -700,20 +511,11 @@ def spherical_to_T_towards_origin(
 
 
 def mesh_to_lineset(
-    mesh: o3d.geometry.TriangleMesh, color: Optional[Float[np.ndarray, "3"]] = None
+    mesh: o3d.geometry.TriangleMesh,
+    color: Optional[Float[np.ndarray, "3"]] = None,
 ) -> o3d.geometry.LineSet:
     """
     Convert Open3D mesh to Open3D lineset.
-
-    Args:
-        mesh: Open3D triangle mesh.
-        color: Optional RGB color for lineset.
-
-    Returns:
-        Open3D lineset.
-
-    Raises:
-        ValueError: If input is not an Open3D mesh or color has invalid shape.
     """
     if not isinstance(mesh, o3d.geometry.TriangleMesh):
         raise ValueError(f"Expected Open3D mesh, but got {type(mesh)}.")
@@ -742,20 +544,18 @@ def mesh_to_lineset(
 
 
 def im_distance_to_im_depth(
-    im_distance: Float[np.ndarray, "h w"], K: Float[np.ndarray, "3 3"]
+    im_distance: Float[np.ndarray, "h w"],
+    K: Float[np.ndarray, "3 3"],
 ) -> Float[np.ndarray, "h w"]:
     """
     Convert distance image to depth image.
 
     Args:
-        im_distance: Distance image (H, W).
-        K: Camera intrinsic matrix.
+        im_distance: Distance image (H, W), float.
+        K: Camera intrinsic matrix (3, 3).
 
     Returns:
-        Depth image (H, W).
-
-    Raises:
-        ValueError: If im_distance is not 2D or K has invalid shape.
+        Depth image (H, W), float.
     """
     if not im_distance.ndim == 2:
         raise ValueError(
@@ -781,20 +581,18 @@ def im_distance_to_im_depth(
 
 
 def im_depth_to_im_distance(
-    im_depth: Float[np.ndarray, "h w"], K: Float[np.ndarray, "3 3"]
+    im_depth: Float[np.ndarray, "h w"],
+    K: Float[np.ndarray, "3 3"],
 ) -> Float[np.ndarray, "h w"]:
     """
     Convert depth image to distance image.
 
     Args:
-        im_depth: Depth image (H, W).
-        K: Camera intrinsic matrix.
+        im_depth: Depth image (H, W), float.
+        K: Camera intrinsic matrix (3, 3).
 
     Returns:
-        Distance image (H, W).
-
-    Raises:
-        ValueError: If im_depth is not 2D or K has invalid shape.
+        Distance image (H, W), float.
     """
     if not im_depth.ndim == 2:
         raise ValueError(
