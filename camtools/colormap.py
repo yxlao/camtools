@@ -1,46 +1,58 @@
 import matplotlib
 import numpy as np
+from jaxtyping import Float
 from . import io
 
 
-def query(points, colormap="viridis"):
+def query(
+    values: Float[np.ndarray, "*batch"],
+    colormap: str = "viridis",
+) -> Float[np.ndarray, "*batch 3"]:
     """
     Query matplotlib's color map.
 
     Args:
-        points: Numpy array in float32 or float64. Valid range is [0, 1].
+        values: Scalar values to map to colors. Valid range is [0, 1].
         colormap: Name of matplotlib color map.
 
     Returns:
-        Numpy array of shape (**points.shape, 3) with dtype float32.
-    """
-    assert isinstance(points, np.ndarray)
+        RGB colors corresponding to input values.
 
-    if not points.dtype == np.float32 and not points.dtype == np.float64:
+    Raises:
+        ValueError: If values.dtype is not float32 or float64.
+    """
+    assert isinstance(values, np.ndarray)
+
+    if not values.dtype == np.float32 and not values.dtype == np.float64:
         raise ValueError(
             "Matplotlib's colormap has different behavior for ints and floats. "
             "To unify behavior, we require floats (between 0-1 if valid). "
-            f"However, dtype of {points.dtype} is used."
+            f"However, dtype of {values.dtype} is used."
         )
 
     cmap = matplotlib.cm.get_cmap(colormap)
-    colors = cmap(points)[..., :3]  # Remove alpha.
+    colors = cmap(values)[..., :3]  # Remove alpha.
 
     return colors.astype(np.float32)
 
 
-def normalize(array, vmin=0.0, vmax=1.0, clip=False):
+def normalize(
+    array: Float[np.ndarray, "*batch"],
+    vmin: float = 0.0,
+    vmax: float = 1.0,
+    clip: bool = False,
+) -> Float[np.ndarray, "*batch"]:
     """
     Normalize array to [vmin, vmax].
 
     Args:
-        array: Numpy array.
-        vmin: Minimum value.
-        vmax: Maximum value.
+        array: Input array to normalize.
+        vmin: Minimum value in output range.
+        vmax: Maximum value in output range.
         clip: If True, clip array to [vmin, vmax].
 
     Returns:
-        Normalized array of the same shape as the input array.
+        Normalized array with same shape as input.
     """
     if clip:
         array = np.clip(array, vmin, vmax)
