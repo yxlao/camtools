@@ -40,6 +40,7 @@ def render_geometries(
             The radius is in world metric space, not relative pixel space like
             the point size.
         to_depth: bool whether to render a depth image instead of RGB image.
+            Invalid depth or infinite depth is set to 0.
         visible: bool whether to show the window.
 
     Returns:

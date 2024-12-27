@@ -3,7 +3,17 @@ import open3d as o3d
 import camtools as ct
 
 
-def test_mesh_to_depth():
+def test_mesh_to_depth(visualize: bool):
+    """
+    Test raycasting from a 3D mesh to a depth image, and verify the accuracy by
+    projecting back to 3D points.
+
+    Example usage:
+        pytest -s test/test_raycast.py
+        pytest -s test/test_raycast.py --visualize
+
+    See conftest.py for more information on the visualize fixture.
+    """
     # Geometries
     sphere = o3d.geometry.TriangleMesh.create_sphere(radius=1.0)
     sphere = sphere.translate([0, 0, 4])
@@ -28,7 +38,6 @@ def test_mesh_to_depth():
     points_to_mesh_distances = ct.solver.points_to_mesh_distances(points, mesh)
     assert np.max(points_to_mesh_distances) < 5e-3
 
-    visualize = False
     if visualize:
         import matplotlib.pyplot as plt
 
