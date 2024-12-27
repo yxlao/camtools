@@ -2,25 +2,29 @@ import numpy as np
 import cv2
 from . import sanity
 from . import colormap
-from typing import Tuple, List
+from typing import Tuple, List, Optional, Union
+from jaxtyping import Float, UInt8, UInt16, Int
 
 
-def crop_white_boarders(im: np.array, padding: Tuple[int] = (0, 0, 0, 0)) -> np.array:
+def crop_white_boarders(
+    im: Float[np.ndarray, "h w 3"], padding: Tuple[int, int, int, int] = (0, 0, 0, 0)
+) -> Float[np.ndarray, "h' w' 3"]:
     """
     Crop white boarders from an image.
 
     Args:
-        im: (H, W, 3) image, float32.
+        im: Image, float32.
+        padding: Padding to apply after cropping.
 
     Return:
-        im_dst: (H', W', 3) image, float32.
+        Cropped and padded image.
     """
     tblr = compute_cropping(im)
     im_dst = apply_cropping_padding(im, tblr, padding)
     return im_dst
 
 
-def compute_cropping_v1(im: np.array) -> Tuple[int]:
+def compute_cropping_v1(im: Float[np.ndarray, "h w n"]) -> Tuple[int, int, int, int]:
     """
     Compute top, bottom, left, right white boarder in pixels.
 
@@ -29,7 +33,7 @@ def compute_cropping_v1(im: np.array) -> Tuple[int]:
     - 3-channel images concatenated in the 2nd dimension: (H, W, 3 x num_im)
 
     Args:
-        im: (H, W, N) image, float32.
+        im: Image, float32.
 
     Return: tuple of 4 elements
         crop_t: int, number of white pixels on the top edge.
@@ -77,8 +81,7 @@ def compute_cropping_v1(im: np.array) -> Tuple[int]:
 
 
 def compute_cropping(
-    im: np.ndarray,
-    check_with_v1=False,
+    im: Float[np.ndarray, "h w 3"], check_with_v1: bool = False
 ) -> Tuple[int, int, int, int]:
     """
     Compute top, bottom, left, right white borders in pixels for a 3-channel
@@ -88,12 +91,12 @@ def compute_cropping(
     ranges from 0.0 to 1.0, and white pixels are represented by (1.0, 1.0, 1.0).
 
     Args:
-        im (np.ndarray): Input image as a NumPy array of shape (H, W, 3) and
-            dtype float32.
+        im: Input image as a NumPy array of dtype float32.
+        check_with_v1: If True, verify results against compute_cropping_v1.
 
     Returns:
-        Tuple[int, int, int, int]: A tuple containing the number of white pixels
-            to crop from the top, bottom, left, and right edges, respectively.
+        A tuple containing the number of white pixels to crop from the top,
+        bottom, left, and right edges, respectively.
     """
     if not im.dtype == np.float32:
         raise ValueError(f"Expected im.dtype to be np.float32, but got {im.dtype}")
@@ -132,20 +135,20 @@ def compute_cropping(
 
 
 def apply_cropping_padding(
-    im_src: np.ndarray,
-    cropping: Tuple[int],
-    padding: Tuple[int],
-) -> np.ndarray:
+    im_src: Float[np.ndarray, "h w 3"],
+    cropping: Tuple[int, int, int, int],
+    padding: Tuple[int, int, int, int],
+) -> Float[np.ndarray, "h' w' 3"]:
     """
     Apply cropping and padding to an image.
 
     Args:
-        im_src: (H, W, 3) image, float32.
+        im_src: Image, float32.
         cropping: 4-tuple (crop_t, crop_b, crop_l, crop_r)
         padding: 4-tuple (pad_t, pad_b, pad_l, pad_r)
 
     Return:
-        im_dst: (H, W, 3) image, float32.
+        Cropped and padded image.
     """
     if not im_src.dtype == np.float32:
         raise ValueError(f"im_src.dtype == {im_src.dtype} != np.float32")
@@ -169,12 +172,16 @@ def apply_cropping_padding(
     return im_dst
 
 
-def apply_croppings_paddings(src_ims, croppings, paddings):
+def apply_croppings_paddings(
+    src_ims: List[Float[np.ndarray, "h w 3"]],
+    croppings: List[Tuple[int, int, int, int]],
+    paddings: List[Tuple[int, int, int, int]],
+) -> List[Float[np.ndarray, "h' w' 3"]]:
     """
     Apply cropping and padding to a list of images.
 
     Args:
-        src_ims: list of (H, W, 3) images, float32.
+        src_ims: list of images, float32.
         croppings: list of 4-tuples
             [
                 (crop_t, crop_b, crop_l, crop_r),
@@ -205,11 +212,15 @@ def apply_croppings_paddings(src_ims, croppings, paddings):
     return dst_ims
 
 
-def get_post_croppings_paddings_shapes(src_shapes, croppings, paddings):
+def get_post_croppings_paddings_shapes(
+    src_shapes: List[Tuple[int, int, int]],
+    croppings: List[Tuple[int, int, int, int]],
+    paddings: List[Tuple[int, int, int, int]],
+) -> List[Tuple[int, int, int]]:
     """
     Compute image shapes after cropping and padding.
 
-    Ars:
+    Args:
         src_shapes: list of source image shapes.
         croppings: list of 4-tuples
             [
@@ -237,7 +248,12 @@ def get_post_croppings_paddings_shapes(src_shapes, croppings, paddings):
     return dst_shapes
 
 
-def overlay_mask_on_rgb(im_rgb, im_mask, overlay_alpha=0.4, overlay_color=[0, 0, 1]):
+def overlay_mask_on_rgb(
+    im_rgb: Float[np.ndarray, "h w 3"],
+    im_mask: Float[np.ndarray, "h w"],
+    overlay_alpha: float = 0.4,
+    overlay_color: Float[np.ndarray, "3"] = np.array([0, 0, 1]),
+) -> Float[np.ndarray, "h w 3"]:
     """
     Overlay mask on to of RGB image.
 
@@ -271,15 +287,19 @@ def overlay_mask_on_rgb(im_rgb, im_mask, overlay_alpha=0.4, overlay_color=[0, 0,
     return im_soft
 
 
-def ndc_coords_to_pixels(ndc_coords, im_size_wh, align_corners=False):
+def ndc_coords_to_pixels(
+    ndc_coords: Float[np.ndarray, "n 2"],
+    im_size_wh: Tuple[int, int],
+    align_corners: bool = False,
+) -> Float[np.ndarray, "n 2"]:
     """
     Convert NDC coordinates (from -1 to 1) to pixel coordinates. Out-of-bound
     values will NOT be corrected.
 
     Args:
-        ndc_coords: NDC coordinates. (N, 2) array of floats. Each row represents
-            (x, y) or (c, r). Most values shall be in [-1, 1], where (-1, -1) is
-            the top left corner and (1, 1) is the bottom right corner.
+        ndc_coords: NDC coordinates. Each row represents (x, y) or (c, r).
+            Most values shall be in [-1, 1], where (-1, -1) is the top left
+            corner and (1, 1) is the bottom right corner.
         im_size_wh: Image size (width, height).
         align_corners: If True, -1 and 1 are aligned to the center of the corner
             pixels. If False, -1 and 1 are aligned to the corner of the corner
@@ -291,7 +311,7 @@ def ndc_coords_to_pixels(ndc_coords, im_size_wh, align_corners=False):
             and 1 to the center or corner of the corner pixels.
 
     Returns:
-        Pixel coordinates. (N, 2) array of floats.
+        Pixel coordinates.
     """
     sanity.assert_shape(ndc_coords, (None, 2), name="ndc_coords")
     w, h = im_size_wh[:2]
@@ -317,7 +337,9 @@ def ndc_coords_to_pixels(ndc_coords, im_size_wh, align_corners=False):
     return dst_pixels
 
 
-def rotate(im, ccw_degrees):
+def rotate(
+    im: Float[np.ndarray, "h w c"], ccw_degrees: int
+) -> Float[np.ndarray, "h' w' c"]:
     """
     Rotate an image counter-clockwise by a given angle.
 
@@ -412,7 +434,28 @@ def recover_rotated_pixels(dst_pixels, src_wh, ccw_degrees):
     return src_pixels
 
 
-def resize(im, shape_wh, aspect_ratio_fill=None, interpolation=cv2.INTER_LINEAR):
+def resize(
+    im: Union[
+        Float[np.ndarray, "h w"],
+        Float[np.ndarray, "h w 3"],
+        UInt8[np.ndarray, "h w"],
+        UInt8[np.ndarray, "h w 3"],
+        UInt16[np.ndarray, "h w"],
+        UInt16[np.ndarray, "h w 3"],
+    ],
+    shape_wh: Tuple[int, int],
+    aspect_ratio_fill: Optional[
+        Union[float, Tuple[float, float, float], np.ndarray]
+    ] = None,
+    interpolation: int = cv2.INTER_LINEAR,
+) -> Union[
+    Float[np.ndarray, "h_ w_"],
+    Float[np.ndarray, "h_ w_ 3"],
+    UInt8[np.ndarray, "h_ w_"],
+    UInt8[np.ndarray, "h_ w_ 3"],
+    UInt16[np.ndarray, "h_ w_"],
+    UInt16[np.ndarray, "h_ w_ 3"],
+]:
     """
     Resize image to shape_wh = (width, height).
     In numpy, the resulting shape is (height, width) or (height, width, 3).
@@ -500,7 +543,12 @@ def resize(im, shape_wh, aspect_ratio_fill=None, interpolation=cv2.INTER_LINEAR)
     return im_resize
 
 
-def recover_resized_pixels(dst_pixels, src_wh, dst_wh, keep_aspect_ratio=True):
+def recover_resized_pixels(
+    dst_pixels: Float[np.ndarray, "n 2"],
+    src_wh: Tuple[int, int],
+    dst_wh: Tuple[int, int],
+    keep_aspect_ratio: bool = True,
+) -> Float[np.ndarray, "n 2"]:
     """
     Converts dst image pixel coordinates to src image pixel coordinates, where
     the src image is reshaped to the dst image.
@@ -570,19 +618,19 @@ def recover_resized_pixels(dst_pixels, src_wh, dst_wh, keep_aspect_ratio=True):
 
 
 def make_corres_image(
-    im_src,
-    im_dst,
-    src_pixels,
-    dst_pixels,
-    confidences=None,
-    texts=None,
-    point_color=(0, 1, 0, 1.0),
-    line_color=(0, 0, 1, 0.75),
-    text_color=(1, 1, 1),
-    point_size=1,
-    line_width=1,
-    sample_ratio=None,
-):
+    im_src: Float[np.ndarray, "h w 3"],
+    im_dst: Float[np.ndarray, "h w 3"],
+    src_pixels: Int[np.ndarray, "n 2"],
+    dst_pixels: Int[np.ndarray, "n 2"],
+    confidences: Optional[Float[np.ndarray, "n"]] = None,
+    texts: Optional[List[str]] = None,
+    point_color: Optional[Tuple[float, ...]] = (0, 1, 0, 1.0),
+    line_color: Optional[Tuple[float, ...]] = (0, 0, 1, 0.75),
+    text_color: Tuple[float, float, float] = (1, 1, 1),
+    point_size: int = 1,
+    line_width: int = 1,
+    sample_ratio: Optional[float] = None,
+) -> Float[np.ndarray, "h w' 3"]:
     """
     Make correspondence image.
 
@@ -605,6 +653,9 @@ def make_corres_image(
         point_size: Size of the point.
         line_width: Width of the line.
         sample_ratio: Float value from 0-1. If None, all points are drawn.
+
+    Returns:
+        Correspondence image with shape (h, w', 3) where w' = 2*w.
     """
     assert im_src.shape == im_dst.shape
     assert im_src.ndim == 3 and im_src.shape[2] == 3
@@ -790,10 +841,10 @@ def make_corres_image(
 
 
 def vstack_images(
-    ims: List[np.ndarray],
+    ims: List[Float[np.ndarray, "h w 3"]],
     alignment: str = "left",
     background_color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
-) -> np.ndarray:
+) -> Float[np.ndarray, "h' w' 3"]:
     """
     Vertically stacks images, aligning them to "left", "center", or "right",
     with a specified background color.
