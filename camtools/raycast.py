@@ -75,8 +75,8 @@ def mesh_to_im_distance(
     """
     Generate a distance image by ray casting a mesh from a given camera view.
 
-    The distance image contains the Euclidean distance from the camera center to
-    the mesh surface for each pixel. The ray casting follows the equation:
+    The distance image contains the Euclidean distance between each 3D point on
+    the mesh surface and the camera center. The ray casting follows the equation:
 
         distance = ||C - P||
 
@@ -84,6 +84,11 @@ def mesh_to_im_distance(
         - C is the camera center in world coordinates
         - P is the intersection point on the mesh surface
         - ||·|| denotes the Euclidean norm
+
+    Note:
+        A distance image shows the actual 3D distance from the camera center to
+        each surface point, while a depth image shows the z-coordinate in camera
+        space. Use ct.convert.im_distance_to_im_depth to convert between them.
 
     Args:
         mesh (o3d.geometry.TriangleMesh): Open3D TriangleMesh to be ray casted.
@@ -138,8 +143,8 @@ def mesh_to_im_distances(
     Generate multiple distance images by ray casting a mesh from different views.
 
     For each camera view, generates a distance image containing the Euclidean
-    distance from the camera center to the mesh surface. The distances are
-    calculated as:
+    distance between each 3D point on the mesh surface and the camera center.
+    The distances are calculated as:
 
     distance = ||C_i - P_i||
 
@@ -147,6 +152,11 @@ def mesh_to_im_distances(
     - C_i is the camera center for view i
     - P_i is the intersection point on the mesh surface for view i
     - ||·|| denotes the Euclidean norm
+
+    Note:
+        A distance image shows the actual 3D distance from the camera center to
+        each surface point, while a depth image shows the z-coordinate in camera
+        space. Use ct.convert.im_distance_to_im_depth to convert between them.
 
     Args:
         mesh (o3d.geometry.TriangleMesh): Open3D TriangleMesh to be ray casted.
@@ -215,7 +225,11 @@ def mesh_to_im_depth(
     width: int,
 ) -> Float[np.ndarray, "h w"]:
     """
-    Generate a depth image by ray casting a mesh from a camera view.
+    Generate a depth image (z-depth) by ray casting a mesh from a camera view.
+
+    The depth image contains the z-coordinate of each 3D point on the mesh
+    surface in camera coordinates. This represents the perpendicular distance
+    from the camera plane to the surface point.
 
     Args:
         mesh (o3d.geometry.TriangleMesh): Open3D TriangleMesh to be ray casted.
@@ -242,9 +256,14 @@ def mesh_to_im_depth(
 
     Returns:
         Float[np.ndarray, "h w"]: Depth image as a float32 array with shape
-            (height, width). Each pixel contains the distance from the camera
-            center to the mesh surface. Invalid depths (no intersection) are
+            (height, width). Each pixel contains the z-coordinate of the mesh
+            surface in camera space. Invalid depths (no intersection) are
             set to np.inf.
+
+    Note:
+        A depth image shows the z-coordinate in camera space, while a distance
+        image shows the actual 3D distance from the camera center to each surface
+        point. Use ct.convert.im_depth_to_im_distance to convert between them.
 
     Example:
         >>> # Create depth image from camera view
@@ -266,7 +285,12 @@ def mesh_to_im_depths(
     width: int,
 ) -> Float[np.ndarray, "n h w"]:
     """
-    Generate multiple depth images by ray casting a mesh from different views.
+    Generate multiple depth images (z-depth) by ray casting a mesh from different
+    views.
+
+    Each depth image contains the z-coordinate of each 3D point on the mesh
+    surface in the corresponding camera coordinates. This represents the
+    perpendicular distance from the camera plane to the surface point.
 
     Args:
         mesh (o3d.geometry.TriangleMesh): Open3D TriangleMesh to be ray casted.
@@ -286,6 +310,11 @@ def mesh_to_im_depths(
             (N, height, width). Each image contains the z-coordinates of the mesh
             surface in the corresponding camera space. Invalid depths (no
             intersection) are set to np.inf.
+
+    Note:
+        A depth image shows the z-coordinate in camera space, while a distance
+        image shows the actual 3D distance from the camera center to each surface
+        point. Use ct.convert.im_depth_to_im_distance to convert between them.
 
     Example:
         >>> # Create depth images for 3 different views
