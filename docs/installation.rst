@@ -2,7 +2,7 @@ Installation
 ============
 
 Quick Installation
------------------
+------------------
 
 To install CamTools, simply do:
 
@@ -11,7 +11,7 @@ To install CamTools, simply do:
    pip install camtools
 
 Installation from Source
------------------------
+------------------------
 
 Alternatively, you can install CamTools from source with one of the following
 methods:

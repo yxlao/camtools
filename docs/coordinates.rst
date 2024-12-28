@@ -31,7 +31,7 @@ We follow the standard OpenCV-style camera coordinate system as illustrated at
 the beginning of the documentation.
 
 Camera Coordinate
-----------------
+-----------------
 
 Right-handed, with :math:`Z` pointing away from the camera towards the view direction
 and :math:`Y` axis pointing down. Note that the OpenCV convention (camtools' default)
@@ -47,7 +47,7 @@ use the conversion functions:
 - ``ct.convert.pose_opengl_to_opencv()``
 
 Image Coordinate
----------------
+----------------
 
 Starts from the top-left corner of the image, with :math:`x` pointing right
 (corresponding to the image width) and :math:`y` pointing down (corresponding to
@@ -60,10 +60,10 @@ and the 1st dimension is the width (i.e., :math:`x`). That is:
 - :math:`y` <=> ``v`` <=> height <=> row <=> the 0th dimension
 
 Matrix Definitions
------------------
+------------------
 
 Camera Intrinsic Matrix (K)
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``K`` is a ``(3, 3)`` camera intrinsic matrix:
 
@@ -74,7 +74,7 @@ Camera Intrinsic Matrix (K)
         [ 0,  0,  1]]
 
 Camera Extrinsic Matrix (T or W2C)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``T`` is a ``(4, 4)`` camera extrinsic matrix:
 
@@ -93,7 +93,7 @@ Camera Extrinsic Matrix (T or W2C)
   camera coordinate.
 
 Rotation Matrix (R)
-^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 
 ``R`` is a ``(3, 3)`` rotation matrix:
 
@@ -108,7 +108,7 @@ Rotation Matrix (R)
     vector.
 
 Translation Vector (t)
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
 
 ``t`` is a ``(3,)`` translation vector:
 
@@ -119,7 +119,7 @@ Translation Vector (t)
 - ``t``'s shape is ``(3,)``, not ``(3, 1)``.
 
 Camera Pose Matrix (pose or C2W)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``pose`` is a ``(4, 4)`` camera pose matrix. It is the inverse of ``T``.
 
@@ -128,7 +128,7 @@ Camera Pose Matrix (pose or C2W)
 - ``pose`` is the inverse of ``T``, i.e., ``pose == np.linalg.inv(T)``.
 
 Camera Center (C)
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^
 
 ``C`` is the camera center:
 
@@ -141,7 +141,7 @@ Camera Center (C)
   vector of ``pose``.
 
 Projection Matrix (P)
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 ``P`` is a ``(3, 4)`` camera projection matrix:
 
@@ -151,8 +151,8 @@ Projection Matrix (P)
 
   .. code-block:: python
 
-     # P = K @ [R | t]
-     P = K @ np.hstack([R, t[:, None]])
+    # P = K @ [R | t]
+    P = K @ np.hstack([R, t[:, None]])
 
 - ``P``'s shape is ``(3, 4)``, not ``(4, 4)``.
 - It is possible to decompose ``P`` into intrinsic and extrinsic matrices by QR

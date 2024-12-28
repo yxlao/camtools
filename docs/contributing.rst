@@ -1,8 +1,8 @@
 Contributing
-===========
+============
 
 Contributing Guidelines
-----------------------
+-----------------------
 
 - Follow `Angular's commit message convention <https://github.com/angular/angular/blob/main/CONTRIBUTING.md#-commit-message-format>`_ for PRs.
   - This applies to PR's title and ultimately the commit messages in ``main``.
@@ -11,7 +11,7 @@ Contributing Guidelines
 - Format your code with `black <https://github.com/psf/black>`_. This will be enforced by the CI.
 
 Building Documentation
----------------------
+----------------------
 
 To build and view the documentation locally:
 
