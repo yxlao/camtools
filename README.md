@@ -6,6 +6,7 @@
 </p>
 <h1 align="center">CamTools: Camera Tools for Computer Vision</h1>
 
+[![Docs](https://readthedocs.org/projects/camtools/badge/?version=latest)](https://camtools.readthedocs.io/en/latest/?badge=latest)
 [![Formatter](https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/formatter.yml)
 [![Unit Test](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml)
 [![PyPI](https://github.com/yxlao/camtools/actions/workflows/pypi.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/pypi.yml)
