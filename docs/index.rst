@@ -35,9 +35,7 @@ clear and easy-to-use APIs.
    contributing
    api
 
-Indices and tables
-==================
+Indices
+=======
 
 * :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
