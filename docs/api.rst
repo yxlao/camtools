@@ -1,15 +1,10 @@
 API Reference
-============
-
-.. contents::
-   :local:
-   :depth: 2
-   :class: this-will-duplicate-information-and-it-is-still-useful-here
-
-Camera Operations
----------------
+==============
 
 .. currentmodule:: ct
+
+Camera Operations
+----------------------------------------
 
 .. automodule:: ct.camera
    :members:
@@ -17,15 +12,16 @@ Camera Operations
    :show-inheritance:
 
 Coordinate Conversion
--------------------
+----------------------------------------
 
+.. _label1:
 .. automodule:: ct.convert
    :members:
    :undoc-members:
    :show-inheritance:
 
 Image and Depth I/O
------------------
+----------------------------------------
 
 .. automodule:: ct.io
    :members:
@@ -33,7 +29,7 @@ Image and Depth I/O
    :show-inheritance:
 
 Projection
----------
+----------------------------------------
 
 .. automodule:: ct.project
    :members:
@@ -41,7 +37,7 @@ Projection
    :show-inheritance:
 
 Ray Casting
-----------
+----------------------------------------
 
 .. automodule:: ct.raycast
    :members:
@@ -49,7 +45,7 @@ Ray Casting
    :show-inheritance:
 
 COLMAP Tools
------------
+----------------------------------------
 
 .. automodule:: ct.colmap
    :members:
@@ -57,7 +53,7 @@ COLMAP Tools
    :show-inheritance:
 
 Image Metrics
-------------
+----------------------------------------
 
 .. automodule:: ct.metric
    :members:
@@ -65,7 +61,7 @@ Image Metrics
    :show-inheritance:
 
 Rendering
---------
+----------------------------------------
 
 .. automodule:: ct.render
    :members:
