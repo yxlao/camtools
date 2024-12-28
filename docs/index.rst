@@ -29,8 +29,8 @@ clear and easy-to-use APIs.
    :caption: Contents:
 
    features
-   installation
    coordinates
+   installation
    contributing
    api/modules
 
