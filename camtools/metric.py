@@ -225,6 +225,7 @@ def load_im_pd_im_gt_im_mask_for_eval(
     Returns:
         Tuple[Float[np.ndarray, "h w c"], Float[np.ndarray, "h w c"],
         Float[np.ndarray, "h w"]]: Tuple containing:
+
             - Predicted image array normalized to [0, 1]
             - Ground truth image array normalized to [0, 1]
             - Binary mask array where True indicates pixels to evaluate

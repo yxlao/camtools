@@ -44,16 +44,20 @@ def render_geometries(
         K (Optional[Float[np.ndarray, "3 3"]]): Camera intrinsic matrix. If None,
             uses Open3D's default camera inferred from the geometries. Must be
             provided if T is provided. Format:
+
             [[fx, 0, cx],
              [0, fy, cy],
              [0, 0, 1]]
+
             where fx, fy are focal lengths and cx, cy are principal points.
 
         T (Optional[Float[np.ndarray, "4 4"]]): Camera extrinsic matrix
             (world-to-camera transformation). If None, uses Open3D's default
             camera. Must be provided if K is provided. Format:
+
             [[R | t],
              [0 | 1]]
+
             where R is a 3x3 rotation matrix and t is a 3D translation vector.
 
         view_status_str (Optional[str]): JSON string containing viewing camera
@@ -190,16 +194,20 @@ def get_render_view_status_str(
         K (Optional[Float[np.ndarray, "3 3"]]): Camera intrinsic matrix. If None,
             uses Open3D's default camera inferred from the geometries. Must be
             provided if T is provided. Format:
+
                 [[fx, 0, cx],
                  [0, fy, cy],
                  [0, 0, 1]]
+
             where fx, fy are focal lengths and cx, cy are principal points.
 
         T (Optional[Float[np.ndarray, "4 4"]]): Camera extrinsic matrix
             (world-to-camera transformation). If None, uses Open3D's default
             camera. Must be provided if K is provided. Format:
+
                 [[R | t],
                  [0 | 1]]
+
             where R is a 3x3 rotation matrix and t is a 3D translation vector.
 
         height (int): Height of the view window in pixels. Default: 720.

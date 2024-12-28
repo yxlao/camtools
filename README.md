@@ -258,9 +258,12 @@ To build and view the documentation locally:
 ```bash
 # Build the documentation
 cd docs
-make html
+make clean && make html
 
-# Start a local server to view the documentation
+# To treat warnings as errors
+make clean && make html SPHINXOPTS="-W --keep-going"
+
+# Start a local server to view the documentation (run inside `docs/`)
 python -m http.server 8000 --directory _build/html
 ```
 

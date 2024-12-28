@@ -104,8 +104,7 @@ Rotation Matrix (R)
 - ``R`` is a rotation matrix. It is an orthogonal matrix with determinant 1, as
   rotations preserve volume and orientation.
   - ``R.T == np.linalg.inv(R)``
-  - ``np.linalg.norm(R @ x) == np.linalg.norm(x)``, where ``x`` is a ``(3,)``
-    vector.
+  - ``np.linalg.norm(R @ x) == np.linalg.norm(x)``, where ``x`` is a ``(3,)`` vector.
 
 Translation Vector (t)
 ^^^^^^^^^^^^^^^^^^^^^^
