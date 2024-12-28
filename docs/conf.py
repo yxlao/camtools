@@ -9,14 +9,12 @@
 import os
 import sys
 import subprocess
-import tomli
+import camtools as ct
 
 sys.path.insert(0, os.path.abspath(".."))
 
-# Read version from pyproject.toml
-with open("../pyproject.toml", "rb") as f:
-    pyproject = tomli.loads(f.read().decode("utf-8"))
-version = pyproject["project"]["version"]
+# Get version from camtools package
+version = ct.__version__
 
 # Get git commit hash
 try:

@@ -1,28 +1,38 @@
 Welcome to CamTools
 ===================
 
-.. raw:: html
+.. only:: not latex
 
-   <p align="center">
-     <picture>
-       <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camtools_logo_dark.png">
-       <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camtools_logo_light.png" width="360">
-     </picture>
-   </p>
+   .. image:: https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camtools_logo_light.png
+      :width: 360
+      :align: center
+      :alt: CamTools Logono
+      :class: only-light
+
+   .. image:: https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camtools_logo_dark.png
+      :width: 360
+      :align: center
+      :alt: CamTools Logo
+      :class: only-dark
 
 CamTools is a collection of tools for handling cameras in computer vision. It
 can be used for plotting, converting, projecting, ray casting, and doing more
 with camera parameters. It follows the standard camera coordinate system with
 clear and easy-to-use APIs.
 
-.. raw:: html
+.. only:: not latex
 
-   <p align="center">
-     <picture>
-       <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_dark.png">
-       <img alt="Camera Coordinates" src="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_light.png" width="520">
-     </picture>
-   </p>
+   .. image:: https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_light.png
+      :width: 520
+      :align: center
+      :alt: Camera Coordinates
+      :class: only-light
+
+   .. image:: https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_dark.png
+      :width: 520
+      :align: center
+      :alt: Camera Coordinates
+      :class: only-dark
 
 .. toctree::
    :maxdepth: 1
@@ -50,11 +60,10 @@ Useful for debugging 3D reconstruction and NeRFs!
    cameras = ct.camera.create_camera_frustums(Ks, Ts)
    o3d.visualization.draw_geometries([cameras])
 
-.. raw:: html
-
-   <p align="center">
-      <img src="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_frames.png" width="360" />
-   </p>
+.. image:: https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_frames.png
+   :width: 360
+   :align: center
+   :alt: Camera Frames
 
 2. Convert camera parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
