@@ -9,7 +9,6 @@
 
 <p align="center">
   <a href="https://camtools.readthedocs.io/"><strong>Docs</strong></a> |
-  <a href="#camera-coordinate-system"><strong>Camera Coordinates</strong></a> |
   <a href="#installation"><strong>Installation</strong></a>
 </p>
 
