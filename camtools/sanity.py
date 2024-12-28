@@ -16,9 +16,7 @@ def assert_numpy(x, name=None):
     """
     if not isinstance(x, np.ndarray):
         maybe_name = f" {name}" if name is not None else ""
-        raise ValueError(
-            f"Expected{maybe_name} to be numpy array, but got {type(x)}."
-        )
+        raise ValueError(f"Expected{maybe_name} to be numpy array, but got {type(x)}.")
 
 
 def assert_K(K: Float[np.ndarray, "3 3"]):
@@ -41,9 +39,7 @@ def assert_K(K: Float[np.ndarray, "3 3"]):
         ValueError: If K is not a 3x3 matrix
     """
     if K.shape != (3, 3):
-        raise ValueError(
-            f"K must has shape (3, 3), but got {K} of shape {K.shape}."
-        )
+        raise ValueError(f"K must has shape (3, 3), but got {K} of shape {K.shape}.")
 
 
 def assert_T(T: Float[np.ndarray, "4 4"]):
@@ -67,14 +63,10 @@ def assert_T(T: Float[np.ndarray, "4 4"]):
         ValueError: If T is not a 4x4 matrix or bottom row is not [0, 0, 0, 1]
     """
     if T.shape != (4, 4):
-        raise ValueError(
-            f"T must has shape (4, 4), but got {T} of shape {T.shape}."
-        )
+        raise ValueError(f"T must has shape (4, 4), but got {T} of shape {T.shape}.")
     is_valid = np.allclose(T[3, :], np.array([0, 0, 0, 1]))
     if not is_valid:
-        raise ValueError(
-            f"T must has [0, 0, 0, 1] the bottom row, but got {T}."
-        )
+        raise ValueError(f"T must has [0, 0, 0, 1] the bottom row, but got {T}.")
 
 
 def assert_pose(pose: Float[np.ndarray, "4 4"]):
@@ -90,14 +82,13 @@ def assert_pose(pose: Float[np.ndarray, "4 4"]):
         - R is a 3x3 rotation matrix
         - t is a 3x1 translation vector
         - Bottom row must be [0, 0, 0, 1]
-
     The pose matrix is the inverse of the extrinsic matrix T.
 
     Args:
-        pose (Float[np.ndarray, "4 4"]): Camera pose matrix to validate.
+        pose: Camera pose matrix to validate
 
     Raises:
-        ValueError: If pose is not a 4x4 matrix or bottom row is not [0, 0, 0, 1].
+        ValueError: If pose is not a 4x4 matrix or bottom row is not [0, 0, 0, 1]
     """
     if pose.shape != (4, 4):
         raise ValueError(
@@ -105,40 +96,25 @@ def assert_pose(pose: Float[np.ndarray, "4 4"]):
         )
     is_valid = np.allclose(pose[3, :], np.array([0, 0, 0, 1]))
     if not is_valid:
-        raise ValueError(
-            f"pose must has [0, 0, 0, 1] the bottom row, but got {pose}."
-        )
+        raise ValueError(f"pose must has [0, 0, 0, 1] the bottom row, but got {pose}.")
 
 
 def assert_shape(x: np.ndarray, shape: tuple, name: Optional[str] = None):
     """
     Assert that an array has the expected shape.
 
-    The shape can be specified in several ways:
-
-        1. Exact shape: (3, 4) matches only arrays with shape (3, 4)
-        2. Wildcard: (-1, 4) matches arrays with any first dimension and 4 columns
-        3. Multiple wildcards: (-1, -1, 3) matches any HxWx3 array
+    The shape pattern can contain None values to indicate that dimension can be
+    any size. For example:
+        - (None, 3) matches any 2D array where the second dimension is 3
+        - (3, None, 3) matches any 3D array where first and last dimensions are 3
 
     Args:
-        array (np.ndarray): Input array to check.
-
-        expected_shape (Tuple[int, ...]): Expected shape tuple. Use -1 as a
-            wildcard to match any size in that dimension.
-
-        name (Optional[str]): Name of the array for error messages. If None,
-            uses 'array'. Default: None.
+        x: Array to validate
+        shape: Tuple of expected dimensions (can contain None for flexible dimensions)
+        name: Optional name of the variable for error message
 
     Raises:
-        AssertionError: If the array shape does not match the expected shape.
-
-    Example:
-        >>> # Check exact shape
-        >>> assert_shape(array, (100, 3), 'points')
-        >>>
-        >>> # Check shape with wildcards
-        >>> assert_shape(image, (-1, -1, 3), 'image')  # Any HxWx3 array
-        >>> assert_shape(points, (-1, 3), 'points')    # Any Nx3 array
+        ValueError: If array dimensions don't match the expected shape pattern
     """
     shape_valid = True
 
@@ -154,9 +130,7 @@ def assert_shape(x: np.ndarray, shape: tuple, name: Optional[str] = None):
 
     if not shape_valid:
         name_must = f"{name} must" if name is not None else "Must"
-        raise ValueError(
-            f"{name_must} has shape {shape}, but got shape {x.shape}."
-        )
+        raise ValueError(f"{name_must} has shape {shape}, but got shape {x.shape}.")
 
 
 def assert_shape_ndim(x: np.ndarray, ndim: int, name: Optional[str] = None):
@@ -173,9 +147,7 @@ def assert_shape_ndim(x: np.ndarray, ndim: int, name: Optional[str] = None):
     """
     if x.ndim != ndim:
         name_must = f"{name} must" if name is not None else "Must"
-        raise ValueError(
-            f"{name_must} have {ndim} dimensions, but got {x.ndim}."
-        )
+        raise ValueError(f"{name_must} have {ndim} dimensions, but got {x.ndim}.")
 
 
 def assert_shape_nx3(x: np.ndarray, name: Optional[str] = None):

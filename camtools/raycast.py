@@ -75,50 +75,36 @@ def mesh_to_im_distance(
     """
     Generate a distance image by ray casting a mesh from a given camera view.
 
-    The distance image contains the Euclidean distance between each 3D point on
-    the mesh surface and the camera center. The ray casting follows the equation:
-
+    The distance image contains the Euclidean distance from the camera center to
+    the mesh surface for each pixel. The ray casting follows the equation:
         distance = ||C - P||
-
     where:
         - C is the camera center in world coordinates
         - P is the intersection point on the mesh surface
         - ||·|| denotes the Euclidean norm
 
-    Note:
-        A distance image shows the actual 3D distance from the camera center to
-        each surface point, while a depth image shows the z-coordinate in camera
-        space. Use ct.convert.im_distance_to_im_depth to convert between them.
+    Example usage:
+        # Create distance image for a 640x480 view
+        distance_image = ct.raycast.mesh_to_im_distance(mesh, K, T, 480, 640)
+        # Visualize distances
+        plt.imshow(distance_image)
+        plt.colorbar()
 
     Args:
-        mesh (o3d.geometry.TriangleMesh): Open3D TriangleMesh to be ray casted.
-
-        K (Float[np.ndarray, "3 3"]): Camera intrinsic matrix.
-
-        T (Float[np.ndarray, "4 4"]): Camera extrinsic matrix (world-to-camera
-            transformation).
-
-        height (int): Image height in pixels.
-
-        width (int): Image width in pixels.
+        mesh: Open3D TriangleMesh to be ray casted.
+        K: (3, 3) camera intrinsic matrix.
+        T: (4, 4) camera extrinsic matrix (world-to-camera transformation).
+        height: Image height in pixels.
+        width: Image width in pixels.
 
     Returns:
-        Float[np.ndarray, "h w"]: Distance image as a float32 array with shape
-            (height, width). Each pixel contains the distance from the camera
-            center to the mesh surface. Invalid distances (no intersection) are
-            set to np.inf.
+        (height, width) float32 array representing the distance image. Each
+        pixel contains the distance from the camera center to the mesh surface.
+        Invalid distances (no intersection) are set to np.inf.
 
-    Example:
-        >>> # Create distance image for a 640x480 view
-        >>> distance_image = ct.raycast.mesh_to_im_distance(mesh, K, T, 480, 640)
-        >>> # Visualize distances
-        >>> plt.imshow(distance_image)
-        >>> plt.colorbar()
-
-    Note:
-        For casting the same mesh with multiple camera views, use
-        mesh_to_im_distances for better efficiency as it avoids repeated scene
-        setup.
+    Note: For casting the same mesh with multiple camera views, use
+    mesh_to_im_distances for better efficiency as it avoids repeated scene
+    setup.
     """
     im_distances = mesh_to_im_distances(
         mesh=mesh,
@@ -143,50 +129,36 @@ def mesh_to_im_distances(
     Generate multiple distance images by ray casting a mesh from different views.
 
     For each camera view, generates a distance image containing the Euclidean
-    distance between each 3D point on the mesh surface and the camera center.
-    The distances are calculated as:
-
-    distance = ||C_i - P_i||
-
+    distance from the camera center to the mesh surface. The distances are
+    calculated as:
+        distance = ||C_i - P_i||
     where:
-    - C_i is the camera center for view i
-    - P_i is the intersection point on the mesh surface for view i
-    - ||·|| denotes the Euclidean norm
+        - C_i is the camera center for view i
+        - P_i is the intersection point on the mesh surface for view i
+        - ||·|| denotes the Euclidean norm
 
-    Note:
-        A distance image shows the actual 3D distance from the camera center to
-        each surface point, while a depth image shows the z-coordinate in camera
-        space. Use ct.convert.im_distance_to_im_depth to convert between them.
+    Example usage:
+        # Create distance images for 3 different views
+        distances = ct.raycast.mesh_to_im_distances(mesh, Ks, Ts, 480, 640)
+        # Visualize first view's distances
+        plt.imshow(distances[0])
+        plt.colorbar()
 
     Args:
-        mesh (o3d.geometry.TriangleMesh): Open3D TriangleMesh to be ray casted.
-
-        Ks (Float[np.ndarray, "n 3 3"]): Array of camera intrinsic matrices for
-            N views.
-
-        Ts (Float[np.ndarray, "n 4 4"]): Array of camera extrinsic matrices
-            (world-to-camera transformations) for N views.
-
-        height (int): Image height in pixels.
-
-        width (int): Image width in pixels.
+        mesh: Open3D TriangleMesh to be ray casted.
+        Ks: (N, 3, 3) array of camera intrinsic matrices for N views.
+        Ts: (N, 4, 4) array of camera extrinsic matrices (world-to-camera
+            transformations) for N views.
+        height: Image height in pixels.
+        width: Image width in pixels.
 
     Returns:
-        Float[np.ndarray, "n h w"]: Distance images as a float32 array with shape
-            (N, height, width). Each image contains the distances from the
-            corresponding camera center to the mesh surface. Invalid distances
-            (no intersection) are set to np.inf.
+        (N, height, width) float32 array representing the distance images. Each
+        image contains the distances from the corresponding camera center to the
+        mesh surface. Invalid distances (no intersection) are set to np.inf.
 
-    Example:
-        >>> # Create distance images for 3 different views
-        >>> distances = ct.raycast.mesh_to_im_distances(mesh, Ks, Ts, 480, 640)
-        >>> # Visualize first view's distances
-        >>> plt.imshow(distances[0])
-        >>> plt.colorbar()
-
-    Note:
-        This function is more efficient than calling mesh_to_im_distance multiple
-        times as it only sets up the ray casting scene once.
+    Note: This function is more efficient than calling mesh_to_im_distance
+    multiple times as it only sets up the ray casting scene once.
     """
     for K in Ks:
         sanity.assert_K(K)
@@ -225,52 +197,37 @@ def mesh_to_im_depth(
     width: int,
 ) -> Float[np.ndarray, "h w"]:
     """
-    Generate a depth image (z-depth) by ray casting a mesh from a camera view.
+    Generate a depth image by ray casting a mesh from a given camera view.
 
-    The depth image contains the z-coordinate of each 3D point on the mesh
-    surface in camera coordinates. This represents the perpendicular distance
-    from the camera plane to the surface point.
+    The depth image contains the z-coordinate of the mesh surface in the camera
+    coordinate system for each pixel. The depth is calculated as:
+        depth = (distance * f) / sqrt(u² + v² + f²)
+    where:
+        - distance is the Euclidean distance from camera center to surface point
+        - f is the focal length from the intrinsic matrix K
+        - (u, v) are the pixel coordinates in the camera plane
+
+    Example usage:
+        # Create depth image for a 640x480 view
+        depth_image = ct.raycast.mesh_to_im_depth(mesh, K, T, 480, 640)
+        # Visualize depths
+        plt.imshow(depth_image)
+        plt.colorbar()
 
     Args:
-        mesh (o3d.geometry.TriangleMesh): Open3D TriangleMesh to be ray casted.
-
-        K (Float[np.ndarray, "3 3"]): Camera intrinsic matrix. Format:
-
-            [[fx, 0, cx],
-             [0, fy, cy],
-             [0, 0, 1]]
-
-            where fx, fy are focal lengths and cx, cy are principal points.
-
-        T (Float[np.ndarray, "4 4"]): Camera extrinsic matrix (world-to-camera
-            transformation). Format:
-
-            [[R | t],
-             [0 | 1]]
-
-            where R is a 3x3 rotation matrix and t is a 3D translation vector.
-
-        height (int): Image height in pixels.
-
-        width (int): Image width in pixels.
+        mesh: Open3D TriangleMesh to be ray casted.
+        K: (3, 3) camera intrinsic matrix.
+        T: (4, 4) camera extrinsic matrix (world-to-camera transformation).
+        height: Image height in pixels.
+        width: Image width in pixels.
 
     Returns:
-        Float[np.ndarray, "h w"]: Depth image as a float32 array with shape
-            (height, width). Each pixel contains the z-coordinate of the mesh
-            surface in camera space. Invalid depths (no intersection) are
-            set to np.inf.
+        (height, width) float32 array representing the depth image. Each
+        pixel contains the z-coordinate of the mesh surface in camera space.
+        Invalid depths (no intersection) are set to np.inf.
 
-    Note:
-        A depth image shows the z-coordinate in camera space, while a distance
-        image shows the actual 3D distance from the camera center to each surface
-        point. Use ct.convert.im_depth_to_im_distance to convert between them.
-
-    Example:
-        >>> # Create depth image from camera view
-        >>> depth = ct.raycast.mesh_to_im_depth(mesh, K, T, 480, 640)
-        >>> # Visualize depths
-        >>> plt.imshow(depth)
-        >>> plt.colorbar()
+    Note: This function internally uses mesh_to_im_distance and converts the
+    distances to depths using the camera intrinsic parameters.
     """
     im_distance = mesh_to_im_distance(mesh, K, T, height, width)
     im_depth = convert.im_distance_to_im_depth(im_distance, K)
@@ -285,47 +242,38 @@ def mesh_to_im_depths(
     width: int,
 ) -> Float[np.ndarray, "n h w"]:
     """
-    Generate multiple depth images (z-depth) by ray casting a mesh from different
-    views.
+    Generate multiple depth images by ray casting a mesh from different views.
 
-    Each depth image contains the z-coordinate of each 3D point on the mesh
-    surface in the corresponding camera coordinates. This represents the
-    perpendicular distance from the camera plane to the surface point.
+    For each camera view, generates a depth image containing the z-coordinate of
+    the mesh surface in the camera coordinate system. The depths are calculated as:
+        depth = (distance * f) / sqrt(u² + v² + f²)
+    where:
+        - distance is the Euclidean distance from camera center to surface point
+        - f is the focal length from the intrinsic matrix K
+        - (u, v) are the pixel coordinates in the camera plane
+
+    Example usage:
+        # Create depth images for 3 different views
+        depths = ct.raycast.mesh_to_im_depths(mesh, Ks, Ts, 480, 640)
+        # Visualize first view's depths
+        plt.imshow(depths[0])
+        plt.colorbar()
 
     Args:
-        mesh (o3d.geometry.TriangleMesh): Open3D TriangleMesh to be ray casted.
-
-        Ks (Float[np.ndarray, "n 3 3"]): Array of camera intrinsic matrices for
-            N views.
-
-        Ts (Float[np.ndarray, "n 4 4"]): Array of camera extrinsic matrices
-            (world-to-camera transformations) for N views.
-
-        height (int): Image height in pixels.
-
-        width (int): Image width in pixels.
+        mesh: Open3D TriangleMesh to be ray casted.
+        Ks: (N, 3, 3) array of camera intrinsic matrices for N views.
+        Ts: (N, 4, 4) array of camera extrinsic matrices (world-to-camera
+            transformations) for N views.
+        height: Image height in pixels.
+        width: Image width in pixels.
 
     Returns:
-        Float[np.ndarray, "n h w"]: Depth images as a float32 array with shape
-            (N, height, width). Each image contains the z-coordinates of the mesh
-            surface in the corresponding camera space. Invalid depths (no
-            intersection) are set to np.inf.
+        (N, height, width) float32 array representing the depth images. Each
+        image contains the z-coordinates of the mesh surface in camera space.
+        Invalid depths (no intersection) are set to np.inf.
 
-    Note:
-        A depth image shows the z-coordinate in camera space, while a distance
-        image shows the actual 3D distance from the camera center to each surface
-        point. Use ct.convert.im_depth_to_im_distance to convert between them.
-
-    Example:
-        >>> # Create depth images for 3 different views
-        >>> depths = ct.raycast.mesh_to_im_depths(mesh, Ks, Ts, 480, 640)
-        >>> # Visualize first view's depths
-        >>> plt.imshow(depths[0])
-        >>> plt.colorbar()
-
-    Note:
-        This function internally uses mesh_to_im_distances and converts the
-        distances to depths using the camera intrinsic parameters.
+    Note: This function internally uses mesh_to_im_distances and converts the
+    distances to depths using the camera intrinsic parameters.
     """
     im_distances = mesh_to_im_distances(mesh, Ks, Ts, height, width)
     im_depths = np.stack(

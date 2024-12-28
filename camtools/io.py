@@ -117,10 +117,12 @@ def imwrite_depth(
     Args:
         im_path (Union[str, Path]): Output file path. Must have .png extension.
             Parent directories will be created automatically if they don't exist.
+
         im (Float[np.ndarray]): Depth map as a 2D numpy array. Must be:
             - Shape: (height, width)
             - Data type: float32 or float64
             - Values: Depth values in meters (or other consistent units)
+
         depth_scale (float, optional): Scaling factor to apply before converting
             to uint16. Defaults to 1000.0. This determines the precision of
             stored depth values. For example:
@@ -135,16 +137,16 @@ def imwrite_depth(
         - When reading the depth map with imread_depth(), use the same depth_scale
           to recover the original depth values
 
-        The user is responsible for defining what is invalid depth. For example,
-        invalid depth can be represented as np.nan, np.inf, 0, -1, etc. This
-        function simply multiplies the depth by depth_scale and converts to
-        uint16. For instance, with depth_scale = 1000:
-
-        - Input depths     : [np.nan, np.inf, -np.inf,   0,      -1,   3.14]
-        - Written to ".png": [     0,      0,       0,   0,   64536,   3140]
-        - Read from ".png" : [     0,      0,       0,   0,   64536,   3140]
-        - Convert to float : [     0,      0,       0,   0,  64.536,   3.14]
-
+        The user is responsible for defining what is invalid depth. E.g.,
+        invalid depth can represented as np.nan, np.inf, 0, -1, etc. This
+        function simply multiplies the depth by depth_scale can convert to
+        uint16. For instance, with depth_scale = 1000,
+            - Input depths     : [np.nan, np.inf, -np.inf,   0,      -1,   3.14]
+            - Written to ".png": [     0,      0,       0,   0,   64536,   3140]
+            - Read from ".png" : [     0,      0,       0,   0,   64536,   3140]
+            - Convert to float : [     0,      0,       0,   0,  64.536,   3.14]
+                                                             ^
+                                                        Best practice.
         Note that -1 is converted to 64536 / 1000 = 64.536 meters, therefore,
         it is important to clip depth with min_depth and max_depth. The best
         practice is to use 0 as invalid depth.
@@ -259,8 +261,7 @@ def imread(
         if im.shape[2] == 4:
             if alpha_mode is None:
                 raise ValueError(
-                    f"{im_path} has an alpha channel, alpha_mode "
-                    f"must be specified."
+                    f"{im_path} has an alpha channel, alpha_mode " f"must be specified."
                 )
             elif alpha_mode == "keep":
                 pass
@@ -279,8 +280,7 @@ def imread(
                 im = im[..., :3] * im[..., 3:]
             else:
                 raise ValueError(
-                    f"Unexpected alpha_mode: {alpha_mode} for a "
-                    "4-channel image."
+                    f"Unexpected alpha_mode: {alpha_mode} for a " "4-channel image."
                 )
         elif im.shape[2] == 3:
             pass
@@ -317,39 +317,57 @@ def imread_depth(
     depth_scale: float = 1000.0,
 ) -> Float[np.ndarray, "h w"]:
     """
-    Read a depth map from a 16-bit PNG file and convert to float.
+    Read and normalize a 16-bit depth map from a PNG file.
 
     This function handles depth map reading by:
-    - Loading 16-bit PNG data
-    - Converting to float32 format
-    - Applying depth scale to recover original values
+    - Loading 16-bit depth values from PNG
+    - Converting to float32
+    - Applying depth scale normalization
     - Validating input data
 
     Args:
-        im_path (Union[str, Path]): Path to the depth map PNG file.
-        depth_scale (float, optional): Scaling factor to convert from uint16 to
-            float. Defaults to 1000.0. Must match the scale used when saving
-            the depth map. For example:
-            - depth_scale=1000: 1mm precision
-            - depth_scale=100: 1cm precision
-            - depth_scale=1: 1m precision
+        im_path (Union[str, Path]): Path to the depth map file. Must be a 16-bit PNG.
+
+        depth_scale (float, optional): Scale factor to divide depth values by.
+            Defaults to 1000.0. This should match the scale used when writing
+            the depth map with imwrite_depth().
 
     Returns:
-        Float[np.ndarray, "h w"]: Depth map as a float32 array with shape
-            (height, width). Values are in the original units (typically meters).
+        Float[np.ndarray]: Depth map as a 2D numpy array with:
+            - Data type: float32
+            - Shape: (height, width)
+            - Values: Depth values in meters (or other consistent units)
 
     Notes:
-        - Zero values in the PNG file are preserved as zeros in the output
-        - Non-zero values are divided by depth_scale to recover original depths
-        - Use the same depth_scale value that was used with imwrite_depth()
+        - Invalid depth values (0, 65535) are preserved in the output
+        - The depth_scale should match the one used during writing
         - For best results, use 0 to represent invalid depth values
+        - Depth values are not automatically clipped - the user should
+          handle clipping based on their specific requirements
+
+        The user is responsible for defining what is invalid depth. E.g.,
+        invalid depth can represented as np.nan, np.inf, 0, -1, etc. This
+        function simply multiplies the depth by depth_scale can convert to
+        uint16. For instance, with depth_scale = 1000,
+            - Input depths     : [np.nan, np.inf, -np.inf,   0,      -1,   3.14]
+            - Written to ".png": [     0,      0,       0,   0,   64536,   3140]
+            - Read from ".png" : [     0,      0,       0,   0,   64536,   3140]
+            - Convert to float : [     0,      0,       0,   0,  64.536,   3.14]
+                                                             ^
+                                                        Best practice.
+        Note that -1 is converted to 64536 / 1000 = 64.536 meters, therefore,
+        it is important to clip depth with min_depth and max_depth. The best
+        practice is to use 0 as invalid depth.
 
     Examples:
-        >>> # Read depth map saved with 1mm precision
+        >>> # Read depth map with 1mm precision
         >>> depth = imread_depth('depth.png', depth_scale=1000)
 
-        >>> # Read depth map saved with 1cm precision
+        >>> # Read depth map with 1cm precision
         >>> depth = imread_depth('depth.png', depth_scale=100)
+
+        >>> # Read depth map with 1m precision
+        >>> depth = imread_depth('depth.png', depth_scale=1)
     """
     im_path = Path(im_path)
     assert is_png_path(im_path), f"{im_path} is not a PNG file."

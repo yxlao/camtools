@@ -1,9 +1,5 @@
-from concurrent.futures import (
-    ProcessPoolExecutor,
-    ThreadPoolExecutor,
-    as_completed,
-)
-from typing import Any, Callable, Iterable, Optional
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from typing import Any, Callable, Iterable
 
 from functools import lru_cache
 from tqdm import tqdm
@@ -30,13 +26,10 @@ def mt_loop(
     desc = f"[mt] {func.__name__}"
     with ThreadPoolExecutor() as executor:
         future_to_index = {
-            executor.submit(func, item, **kwargs): i
-            for i, item in enumerate(inputs)
+            executor.submit(func, item, **kwargs): i for i, item in enumerate(inputs)
         }
         results = [None] * len(inputs)
-        for future in tqdm(
-            as_completed(future_to_index), total=len(inputs), desc=desc
-        ):
+        for future in tqdm(as_completed(future_to_index), total=len(inputs), desc=desc):
             results[future_to_index[future]] = future.result()
     return results
 
@@ -62,42 +55,41 @@ def mp_loop(
     desc = f"[mp] {func.__name__}"
     with ProcessPoolExecutor() as executor:
         future_to_index = {
-            executor.submit(func, item, **kwargs): i
-            for i, item in enumerate(inputs)
+            executor.submit(func, item, **kwargs): i for i, item in enumerate(inputs)
         }
         results = [None] * len(inputs)
-        for future in tqdm(
-            as_completed(future_to_index), total=len(inputs), desc=desc
-        ):
+        for future in tqdm(as_completed(future_to_index), total=len(inputs), desc=desc):
             results[future_to_index[future]] = future.result()
     return results
 
 
 def query_yes_no(question, default=None):
-    """
-    Ask a yes/no question via raw_input() and return their answer.
+    """Ask a yes/no question via raw_input() and return their answer.
 
     Args:
-        question (str): A string that is presented to the user.
-        default (Optional[bool]): The presumed answer if the user just hits
-            <Enter>. Possible values:
-            - True: The answer is assumed to be yes
-            - False: The answer is assumed to be no
-            - None: The answer is required from the user
+        question: A string that is presented to the user.
+        default: The presumed answer if the user just hits <Enter>.
+            - True: The answer is assumed to be yes.
+            - False: The answer is assumed to be no.
+            - None: The answer is required from the user.
 
     Returns:
-        bool: True for "yes" or False for "no".
+        Returns True for "yes" or False for "no".
 
     Examples:
-        >>> if query_yes_no("Continue?", default="yes"):
-        ...     print("Proceeding.")
-        ... else:
-        ...     print("Aborted.")
+        ```python
+        if query_yes_no("Continue?", default="yes"):
+            print("Proceeding.")
+        else:
+            print("Aborted.")
+        ```
 
-        >>> if not query_yes_no("Continue?", default="yes"):
-        ...     print("Aborted.")
-        ...     return  # Or exit(0)
-        ... print("Proceeding.")
+        ```python
+        if not query_yes_no("Continue?", default="yes"):
+            print("Aborted.")
+            return  # Or exit(0)
+        print("Proceeding.")
+        ```
     """
     if default is None:
         prompt = "[y/n]"

@@ -62,9 +62,7 @@ def mesh_to_lineset(
     """
     # Downsample mesh
     if downsample_ratio < 1.0:
-        target_number_of_triangles = int(
-            len(mesh.triangles) * downsample_ratio
-        )
+        target_number_of_triangles = int(len(mesh.triangles) * downsample_ratio)
         mesh = mesh.simplify_quadric_decimation(target_number_of_triangles)
     elif downsample_ratio > 1.0:
         raise ValueError("Subsample must be less than or equal to 1.0")

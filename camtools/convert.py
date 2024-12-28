@@ -20,9 +20,7 @@ def pad_0001(array):
     """
     if array.ndim == 2:
         if not array.shape == (3, 4):
-            raise ValueError(
-                f"Expected array of shape (3, 4), but got {array.shape}."
-            )
+            raise ValueError(f"Expected array of shape (3, 4), but got {array.shape}.")
     elif array.ndim == 3:
         if not array.shape[-2:] == (3, 4):
             raise ValueError(
@@ -58,9 +56,7 @@ def rm_pad_0001(array, check_vals=False):
     # Check shapes.
     if array.ndim == 2:
         if not array.shape == (4, 4):
-            raise ValueError(
-                f"Expected array of shape (4, 4), but got {array.shape}."
-            )
+            raise ValueError(f"Expected array of shape (4, 4), but got {array.shape}.")
     elif array.ndim == 3:
         if not array.shape[-2:] == (4, 4):
             raise ValueError(
@@ -81,9 +77,7 @@ def rm_pad_0001(array, check_vals=False):
                 )
         elif array.ndim == 3:
             bottom = array[:, 3:4, :]
-            expected_bottom = np.broadcast_to(
-                [0, 0, 0, 1], (array.shape[0], 1, 4)
-            )
+            expected_bottom = np.broadcast_to([0, 0, 0, 1], (array.shape[0], 1, 4))
             if not np.allclose(bottom, expected_bottom):
                 raise ValueError(
                     f"Expected bottom row to be {expected_bottom}, but got {bottom}."
@@ -105,9 +99,7 @@ def to_homo(array):
         A numpy array of shape (N, M+1) with a column of ones appended.
     """
     if not isinstance(array, np.ndarray) or array.ndim != 2:
-        raise ValueError(
-            f"Input must be a 2D numpy array, but got {array.shape}."
-        )
+        raise ValueError(f"Input must be a 2D numpy array, but got {array.shape}.")
 
     ones = np.ones((array.shape[0], 1), dtype=array.dtype)
     return np.hstack((array, ones))
@@ -125,9 +117,7 @@ def from_homo(array):
         A numpy array of shape (N, M-1) in Cartesian coordinates.
     """
     if not isinstance(array, np.ndarray) or array.ndim != 2:
-        raise ValueError(
-            f"Input must be a 2D numpy array, but got {array.shape}."
-        )
+        raise ValueError(f"Input must be a 2D numpy array, but got {array.shape}.")
     if array.shape[1] < 2:
         raise ValueError(
             f"Input array must have at least two columns for removing "
@@ -221,9 +211,7 @@ def pose_to_T(pose):
     return np.linalg.inv(pose)
 
 
-def T_opengl_to_opencv(
-    T: Float[np.ndarray, "4 4"]
-) -> Float[np.ndarray, "4 4"]:
+def T_opengl_to_opencv(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
     """
     Convert T from OpenGL convention to OpenCV convention.
 
@@ -251,9 +239,7 @@ def T_opengl_to_opencv(
     return T
 
 
-def T_opencv_to_opengl(
-    T: Float[np.ndarray, "4 4"]
-) -> Float[np.ndarray, "4 4"]:
+def T_opencv_to_opengl(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
     """
     Convert T from OpenCV convention to OpenGL convention.
 
@@ -281,9 +267,7 @@ def T_opencv_to_opengl(
     return T
 
 
-def pose_opengl_to_opencv(
-    pose: Float[np.ndarray, "4 4"]
-) -> Float[np.ndarray, "4 4"]:
+def pose_opengl_to_opencv(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
     """
     Convert pose from OpenGL convention to OpenCV convention.
 
@@ -308,9 +292,7 @@ def pose_opengl_to_opencv(
     return pose
 
 
-def pose_opencv_to_opengl(
-    pose: Float[np.ndarray, "4 4"]
-) -> Float[np.ndarray, "4 4"]:
+def pose_opencv_to_opengl(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
     """
     Convert pose from OpenCV convention to OpenGL convention.
 
@@ -464,9 +446,7 @@ def T_to_R_t(
 
 def P_to_K_R_t(
     P: Float[np.ndarray, "3 4"],
-) -> Tuple[
-    Float[np.ndarray, "3 3"], Float[np.ndarray, "3 3"], Float[np.ndarray, "3"]
-]:
+) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "3 3"], Float[np.ndarray, "3"]]:
     """
     Decompose projection matrix P into intrinsic matrix K, rotation matrix R,
     and translation vector t.
@@ -805,9 +785,7 @@ def mesh_to_lineset(
 
     if color is not None:
         if len(color) != 3:
-            raise ValueError(
-                f"Expected color of shape (3,), but got {color.shape}."
-            )
+            raise ValueError(f"Expected color of shape (3,), but got {color.shape}.")
         lineset.paint_uniform_color(color)
 
     return lineset

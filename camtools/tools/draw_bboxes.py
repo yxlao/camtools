@@ -100,9 +100,7 @@ class BBoxer:
         """
         A better matplotlib.transforms.Bbox.__str__()`
         """
-        return (
-            f"Bbox({bbox.x0:.2f}, {bbox.y0:.2f}, {bbox.x1:.2f}, {bbox.y1:.2f})"
-        )
+        return f"Bbox({bbox.x0:.2f}, {bbox.y0:.2f}, {bbox.x1:.2f}, {bbox.y1:.2f})"
 
     @staticmethod
     def _copy_rectangle(
@@ -118,21 +116,9 @@ class BBoxer:
             xy=(rectangle.xy[0], rectangle.xy[1]),
             width=rectangle.get_width(),
             height=rectangle.get_height(),
-            linestyle=(
-                linestyle
-                if linestyle is not None
-                else rectangle.get_linestyle()
-            ),
-            linewidth=(
-                linewidth
-                if linewidth is not None
-                else rectangle.get_linewidth()
-            ),
-            edgecolor=(
-                edgecolor
-                if edgecolor is not None
-                else rectangle.get_edgecolor()
-            ),
+            linestyle=linestyle if linestyle is not None else rectangle.get_linestyle(),
+            linewidth=linewidth if linewidth is not None else rectangle.get_linewidth(),
+            edgecolor=edgecolor if edgecolor is not None else rectangle.get_edgecolor(),
             facecolor=rectangle.get_facecolor(),
         )
         return new_rectangle
@@ -235,9 +221,7 @@ class BBoxer:
                     (br_bound[0], br_bound[1]),  # Bottom-right
                 ]
                 for corner in corners:
-                    im_mask = fill_connected_component(
-                        im_mask, corner[0], corner[1]
-                    )
+                    im_mask = fill_connected_component(im_mask, corner[0], corner[1])
                 # 4. Undo mask invalid pixels.
                 im_mask[im_mask == -1.0] = 0.0
 
@@ -304,9 +288,7 @@ class BBoxer:
         im_height = im_shape[0]
 
         axis = self.axes[0]
-        bbox = axis.get_window_extent().transformed(
-            self.fig.dpi_scale_trans.inverted()
-        )
+        bbox = axis.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
         axis_height = bbox.height * self.fig.dpi
 
         # Get the linewidth in pixels.
@@ -314,9 +296,7 @@ class BBoxer:
         linewidth_px = linewidth_px / axis_height * im_height
         linewidth_px = int(round(linewidth_px))
 
-        dst_paths = [
-            p.parent / f"bbox_{p.stem}{p.suffix}" for p in self.src_paths
-        ]
+        dst_paths = [p.parent / f"bbox_{p.stem}{p.suffix}" for p in self.src_paths]
         for src_path, dst_path in zip(self.src_paths, dst_paths):
             im_dst = ct.io.imread(src_path)
             for rectangle in self.confirmed_rectangles:
@@ -371,9 +351,7 @@ class BBoxer:
                     self.confirmed_rectangles.append(
                         BBoxer._copy_rectangle(self.current_rectangle)
                     )
-                    bbox_str = BBoxer._bbox_str(
-                        self.current_rectangle.get_bbox()
-                    )
+                    bbox_str = BBoxer._bbox_str(self.current_rectangle.get_bbox())
                     print_msg(f"Bounding box saved: {bbox_str}.")
                     # Clear current.
                     self.current_rectangle = None

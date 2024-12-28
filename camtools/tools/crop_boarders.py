@@ -74,13 +74,9 @@ def entry_point(parser, args):
     The parser argument is not used.
     """
     if args.pad_pixel < 0:
-        raise ValueError(
-            f"pad_pixel must be non-negative, but got {args.pad_pixel}"
-        )
+        raise ValueError(f"pad_pixel must be non-negative, but got {args.pad_pixel}")
     if args.pad_ratio < 0:
-        raise ValueError(
-            f"pad_ratio must be non-negative, but got {args.pad_ratio}"
-        )
+        raise ValueError(f"pad_ratio must be non-negative, but got {args.pad_ratio}")
 
     # Determine src and dst paths.
     if isinstance(args.input, list):
@@ -99,8 +95,7 @@ def entry_point(parser, args):
     else:
         if args.skip_cropped:
             dst_paths = [
-                src_path.parent / f"cropped_{src_path.name}"
-                for src_path in src_paths
+                src_path.parent / f"cropped_{src_path.name}" for src_path in src_paths
             ]
             skipped_src_paths = [p for p in src_paths if p in dst_paths]
             src_paths = [p for p in src_paths if p not in dst_paths]
@@ -109,8 +104,7 @@ def entry_point(parser, args):
                 for src_path in skipped_src_paths:
                     print(f"  - {src_path}")
         dst_paths = [
-            src_path.parent / f"cropped_{src_path.name}"
-            for src_path in src_paths
+            src_path.parent / f"cropped_{src_path.name}" for src_path in src_paths
         ]
 
     # Read.
@@ -118,13 +112,9 @@ def entry_point(parser, args):
 
     for src_im in src_ims:
         if not src_im.dtype == np.float32:
-            raise ValueError(
-                f"Input image {src_path} must be of dtype float32."
-            )
+            raise ValueError(f"Input image {src_path} must be of dtype float32.")
         if not src_im.ndim == 3 or not src_im.shape[2] == 3:
-            raise ValueError(
-                f"Input image {src_path} must be of shape (H, W, 3)."
-            )
+            raise ValueError(f"Input image {src_path} must be of shape (H, W, 3).")
     num_ims = len(src_ims)
 
     # Compute.
@@ -133,26 +123,19 @@ def entry_point(parser, args):
         shapes = [im.shape for im in src_ims]
         if not all([s == shapes[0] for s in shapes]):
             raise ValueError(
-                "All images must be of the same shape when --same_crop is "
-                "specified."
+                "All images must be of the same shape when --same_crop is " "specified."
             )
 
-        individual_croppings = ct.util.mt_loop(
-            ct.image.compute_cropping, src_ims
-        )
+        individual_croppings = ct.util.mt_loop(ct.image.compute_cropping, src_ims)
 
         # Compute the minimum cropping boarders.
-        min_crop_u, min_crop_d, min_crop_l, min_crop_r = individual_croppings[
-            0
-        ]
+        min_crop_u, min_crop_d, min_crop_l, min_crop_r = individual_croppings[0]
         for crop_u, crop_d, crop_l, crop_r in individual_croppings[1:]:
             min_crop_u = min(min_crop_u, crop_u)
             min_crop_d = min(min_crop_d, crop_d)
             min_crop_l = min(min_crop_l, crop_l)
             min_crop_r = min(min_crop_r, crop_r)
-        croppings = [(min_crop_u, min_crop_d, min_crop_l, min_crop_r)] * len(
-            src_ims
-        )
+        croppings = [(min_crop_u, min_crop_d, min_crop_l, min_crop_r)] * len(src_ims)
 
         # Compute padding (remains unchanged)
         if args.pad_pixel != 0:
@@ -201,9 +184,7 @@ def entry_point(parser, args):
                     )
                 )
             for i in range(num_ims):
-                paddings[i] = tuple(
-                    np.array(paddings[i]) + np.array(extra_paddings[i])
-                )
+                paddings[i] = tuple(np.array(paddings[i]) + np.array(extra_paddings[i]))
 
     # Apply.
     dst_ims = ct.image.apply_croppings_paddings(
