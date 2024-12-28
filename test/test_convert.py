@@ -121,11 +121,7 @@ def test_convert_pose_opencv_opengl():
                 [-axis[1], axis[0], 0],
             ]
         )
-        RT = (
-            np.eye(3)
-            + np.sin(angle) * ss
-            + (1 - np.cos(angle)) * np.dot(ss, ss)
-        )
+        RT = np.eye(3) + np.sin(angle) * ss + (1 - np.cos(angle)) * np.dot(ss, ss)
         c = np.random.uniform(-10, 10, size=(3,))
         pose = np.eye(4)
         pose[:3, :3] = RT
@@ -142,12 +138,8 @@ def test_convert_pose_opencv_opengl():
         pose_gl = ct.convert.pose_opencv_to_opengl(pose_cv)
         pose_cv_recovered = ct.convert.pose_opengl_to_opencv(pose_gl)
         pose_gl_recovered = ct.convert.pose_opencv_to_opengl(pose_cv_recovered)
-        np.testing.assert_allclose(
-            pose_cv, pose_cv_recovered, rtol=1e-5, atol=1e-5
-        )
-        np.testing.assert_allclose(
-            pose_gl, pose_gl_recovered, rtol=1e-5, atol=1e-5
-        )
+        np.testing.assert_allclose(pose_cv, pose_cv_recovered, rtol=1e-5, atol=1e-5)
+        np.testing.assert_allclose(pose_gl, pose_gl_recovered, rtol=1e-5, atol=1e-5)
 
         # Test convert T bidirectionally
         T_cv = np.copy(T)
@@ -216,12 +208,8 @@ def test_convert_T_opencv_to_opengl():
         pose_gl = ct.convert.pose_opencv_to_opengl(pose_cv)
         pose_cv_recovered = ct.convert.pose_opengl_to_opencv(pose_gl)
         pose_gl_recovered = ct.convert.pose_opencv_to_opengl(pose_cv_recovered)
-        np.testing.assert_allclose(
-            pose_cv, pose_cv_recovered, rtol=1e-5, atol=1e-5
-        )
-        np.testing.assert_allclose(
-            pose_gl, pose_gl_recovered, rtol=1e-5, atol=1e-5
-        )
+        np.testing.assert_allclose(pose_cv, pose_cv_recovered, rtol=1e-5, atol=1e-5)
+        np.testing.assert_allclose(pose_gl, pose_gl_recovered, rtol=1e-5, atol=1e-5)
 
         # Test T and pose are consistent across conversions
         np.testing.assert_allclose(
@@ -304,9 +292,7 @@ def test_im_depth_im_distance_convert():
     # Geometries
     sphere = o3d.geometry.TriangleMesh.create_sphere(radius=1.0)
     sphere = sphere.translate([0, 0, 4])
-    box = o3d.geometry.TriangleMesh.create_box(
-        width=1.5, height=1.5, depth=1.5
-    )
+    box = o3d.geometry.TriangleMesh.create_box(width=1.5, height=1.5, depth=1.5)
     box = box.translate([0, 0, 4])
     mesh = sphere + box
 
@@ -327,6 +313,4 @@ def test_im_depth_im_distance_convert():
     im_depth_reconstructed = ct.convert.im_distance_to_im_depth(im_distance, K)
 
     # Assert that the reconstructed depth is close to the original
-    np.testing.assert_allclose(
-        im_depth, im_depth_reconstructed, rtol=1e-5, atol=1e-5
-    )
+    np.testing.assert_allclose(im_depth, im_depth_reconstructed, rtol=1e-5, atol=1e-5)
