@@ -2,7 +2,9 @@ import numpy as np
 from jaxtyping import Float
 
 
-def compute_normalize_mat(points: Float[np.ndarray, "n 3"]) -> Float[np.ndarray, "4 4"]:
+def compute_normalize_mat(
+    points: Float[np.ndarray, "n 3"]
+) -> Float[np.ndarray, "4 4"]:
     """
     Args:
         points: (N, 3) numpy array.

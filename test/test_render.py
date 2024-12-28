@@ -18,11 +18,15 @@ def test_render_geometries(visualize: bool):
     See conftest.py for more information on the visualize fixture.
     """
     # Setup geometries: sphere (red), box (blue)
-    sphere = o3d.geometry.TriangleMesh.create_sphere(radius=1.0, resolution=100)
+    sphere = o3d.geometry.TriangleMesh.create_sphere(
+        radius=1.0, resolution=100
+    )
     sphere = sphere.translate([0, 0, 4])
     sphere = sphere.paint_uniform_color([0.2, 0.4, 0.8])
     sphere.compute_vertex_normals()
-    box = o3d.geometry.TriangleMesh.create_box(width=1.5, height=1.5, depth=1.5)
+    box = o3d.geometry.TriangleMesh.create_box(
+        width=1.5, height=1.5, depth=1.5
+    )
     box = box.translate([0, 0, 4])
     box = box.paint_uniform_color([0.8, 0.2, 0.2])
     box.compute_vertex_normals()
@@ -65,7 +69,11 @@ def test_render_geometries(visualize: bool):
     im_raycast_depth[im_raycast_depth == np.inf] = 0
 
     # Heuristic checks of RGB rendering
-    assert im_render_rgb.shape == (height, width, 3), "Image has incorrect dimensions"
+    assert im_render_rgb.shape == (
+        height,
+        width,
+        3,
+    ), "Image has incorrect dimensions"
     num_white_pixels = np.sum(
         (im_render_rgb[:, :, 0] > 0.9)
         & (im_render_rgb[:, :, 1] > 0.9)
@@ -81,7 +89,9 @@ def test_render_geometries(visualize: bool):
         & (im_render_rgb[:, :, 1] < 0.3)
         & (im_render_rgb[:, :, 2] < 0.5)
     )
-    assert num_white_pixels > (height * width * 0.5), "Expected mostly white background"
+    assert num_white_pixels > (
+        height * width * 0.5
+    ), "Expected mostly white background"
     assert num_blue_pixels > 100, "Expected blue pixels (sphere) not found"
     assert num_red_pixels > 100, "Expected red pixels (box) not found"
 
@@ -98,7 +108,8 @@ def test_render_geometries(visualize: bool):
         im_render_rgb_mask.astype(float) - im_render_depth_mask.astype(float)
     )
     im_mask_diff_raycast_vs_render = np.abs(
-        im_raycast_depth_mask.astype(float) - im_render_depth_mask.astype(float)
+        im_raycast_depth_mask.astype(float)
+        - im_render_depth_mask.astype(float)
     )
     assert (
         np.mean(im_mask_diff_rgb_vs_raycast) < 0.01

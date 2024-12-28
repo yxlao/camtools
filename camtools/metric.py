@@ -113,7 +113,12 @@ def image_lpips(
         loss_fn = lpips.LPIPS(net="alex")
         image_lpips.static_vars["loss_fn"] = loss_fn
 
-    ans = loss_fn.forward(torch.tensor(pr), torch.tensor(gt)).cpu().detach().numpy()
+    ans = (
+        loss_fn.forward(torch.tensor(pr), torch.tensor(gt))
+        .cpu()
+        .detach()
+        .numpy()
+    )
     return float(ans)
 
 
@@ -198,7 +203,9 @@ def load_im_pd_im_gt_im_mask_for_eval(
     im_mask_path: Optional[Union[str, Path]] = None,
     alpha_mode: str = "white",
 ) -> Tuple[
-    Float[np.ndarray, "h w 3"], Float[np.ndarray, "h w 3"], Float[np.ndarray, "h w"]
+    Float[np.ndarray, "h w 3"],
+    Float[np.ndarray, "h w 3"],
+    Float[np.ndarray, "h w"],
 ]:
     """
     Load predicted image, ground truth image, and mask for evaluation.
@@ -240,7 +247,9 @@ def load_im_pd_im_gt_im_mask_for_eval(
         ...     'pred.png', 'gt.png', 'mask.png', 1.0)
     """
     if alpha_mode != "white":
-        raise NotImplementedError('Currently only alpha_mode="white" is supported.')
+        raise NotImplementedError(
+            'Currently only alpha_mode="white" is supported.'
+        )
 
     # Prepare im_gt.
     # (h, w, 3) or (h, w, 4), float32.

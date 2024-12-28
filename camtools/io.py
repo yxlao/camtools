@@ -259,7 +259,8 @@ def imread(
         if im.shape[2] == 4:
             if alpha_mode is None:
                 raise ValueError(
-                    f"{im_path} has an alpha channel, alpha_mode " f"must be specified."
+                    f"{im_path} has an alpha channel, alpha_mode "
+                    f"must be specified."
                 )
             elif alpha_mode == "keep":
                 pass
@@ -278,7 +279,8 @@ def imread(
                 im = im[..., :3] * im[..., 3:]
             else:
                 raise ValueError(
-                    f"Unexpected alpha_mode: {alpha_mode} for a " "4-channel image."
+                    f"Unexpected alpha_mode: {alpha_mode} for a "
+                    "4-channel image."
                 )
         elif im.shape[2] == 3:
             pass

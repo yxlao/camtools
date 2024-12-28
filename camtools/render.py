@@ -417,7 +417,9 @@ def _lineset_to_meshes(
         axis = np.cross(a, b)
         axis /= np.linalg.norm(axis)
         angle = np.arccos(
-            np.clip(np.dot(a / np.linalg.norm(a), b / np.linalg.norm(b)), -1.0, 1.0)
+            np.clip(
+                np.dot(a / np.linalg.norm(a), b / np.linalg.norm(b)), -1.0, 1.0
+            )
         )
         return axis, angle
 
@@ -441,9 +443,13 @@ def _lineset_to_meshes(
         start_point, end_point = points[line[0]], points[line[1]]
         line_segment = end_point - start_point
         line_segment_unit, line_length = normalized(line_segment)
-        axis, angle = align_vector_to_another(np.array([0, 0, 1]), line_segment_unit)
+        axis, angle = align_vector_to_another(
+            np.array([0, 0, 1]), line_segment_unit
+        )
         translation = start_point + line_segment * 0.5
-        cylinder = o3d.geometry.TriangleMesh.create_cylinder(radius, line_length)
+        cylinder = o3d.geometry.TriangleMesh.create_cylinder(
+            radius, line_length
+        )
         cylinder.translate(translation, relative=False)
         if not np.isclose(angle, 0):
             axis_angle = axis * angle
@@ -699,7 +705,9 @@ def render_texts(
                     (0, 0),
                     (
                         (max_width - im.shape[1]) // 2,
-                        max_width - im.shape[1] - (max_width - im.shape[1]) // 2,
+                        max_width
+                        - im.shape[1]
+                        - (max_width - im.shape[1]) // 2,
                     ),
                     (0, 0),
                 ),

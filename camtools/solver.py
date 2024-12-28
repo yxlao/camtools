@@ -23,9 +23,13 @@ def line_intersection_3d(
         https://math.stackexchange.com/a/1762491/209055
     """
     if src_points.ndim != 2 or src_points.shape[1] != 3:
-        raise ValueError(f"src_points must be (N, 3), but got {src_points.shape}.")
+        raise ValueError(
+            f"src_points must be (N, 3), but got {src_points.shape}."
+        )
     if dst_points.ndim != 2 or dst_points.shape[1] != 3:
-        raise ValueError(f"dst_points must be (N, 3), but got {dst_points.shape}.")
+        raise ValueError(
+            f"dst_points must be (N, 3), but got {dst_points.shape}."
+        )
 
     dirs = dst_points - src_points
     dirs = dirs / np.linalg.norm(dirs, axis=1).reshape((-1, 1))
@@ -208,7 +212,9 @@ def points_to_mesh_distances(
         np.ndarray: Array of distances with shape (N,).
     """
     if not points.ndim == 2 or points.shape[1] != 3:
-        raise ValueError(f"Expected points of shape (N, 3), but got {points.shape}.")
+        raise ValueError(
+            f"Expected points of shape (N, 3), but got {points.shape}."
+        )
     mesh_t = o3d.t.geometry.TriangleMesh.from_legacy(mesh)
     scene = o3d.t.geometry.RaycastingScene()
     _ = scene.add_triangles(mesh_t)

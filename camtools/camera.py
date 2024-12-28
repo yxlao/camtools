@@ -13,7 +13,9 @@ def create_camera_frustums(
     image_whs: Optional[List[List[int]]] = None,
     size: float = 0.1,
     color: Tuple[float, float, float] = (0, 0, 1),
-    highlight_color_map: Optional[Dict[int, Tuple[float, float, float]]] = None,
+    highlight_color_map: Optional[
+        Dict[int, Tuple[float, float, float]]
+    ] = None,
     center_line: bool = True,
     center_line_color: Tuple[float, float, float] = (1, 0, 0),
     up_triangle: bool = True,
@@ -72,7 +74,9 @@ def create_camera_frustums(
             if not isinstance(w, (int, np.integer)) or not isinstance(
                 h, (int, np.integer)
             ):
-                raise ValueError(f"image_wh must be integer, but got {image_wh}.")
+                raise ValueError(
+                    f"image_wh must be integer, but got {image_wh}."
+                )
 
     # Wrap the highlight_color_map dimensions.
     if highlight_color_map is not None:
@@ -115,7 +119,9 @@ def create_camera_frustum_with_Ts(
     image_whs: Optional[List[List[int]]] = None,
     size: float = 0.1,
     color: Tuple[float, float, float] = (0, 0, 1),
-    highlight_color_map: Optional[Dict[int, Tuple[float, float, float]]] = None,
+    highlight_color_map: Optional[
+        Dict[int, Tuple[float, float, float]]
+    ] = None,
     center_line: bool = True,
     center_line_color: Tuple[float, float, float] = (1, 0, 0),
     up_triangle: bool = True,
@@ -209,7 +215,9 @@ def _create_camera_frustum(
     sanity.assert_shape_3(color, "color")
 
     w, h = image_wh
-    if not isinstance(w, (int, np.integer)) or not isinstance(h, (int, np.integer)):
+    if not isinstance(w, (int, np.integer)) or not isinstance(
+        h, (int, np.integer)
+    ):
         raise ValueError(f"image_wh must be integer, but got {image_wh}.")
 
     R, _ = convert.T_to_R_t(T)
@@ -223,7 +231,9 @@ def _create_camera_frustum(
             [0, h - 1, 1],
         ]
     )
-    camera_plane_points_3d = (np.linalg.inv(K) @ camera_plane_points_2d_homo.T).T
+    camera_plane_points_3d = (
+        np.linalg.inv(K) @ camera_plane_points_2d_homo.T
+    ).T
     camera_plane_dist = solver.point_plane_distance_three_points(
         [0, 0, 0], camera_plane_points_3d
     )

@@ -4,7 +4,9 @@ import argparse
 
 
 def _print_greetings():
-    greeting_str = f"* CamTools: Camera Tools for Computer Vision (v{ct.__version__}) *"
+    greeting_str = (
+        f"* CamTools: Camera Tools for Computer Vision (v{ct.__version__}) *"
+    )
     header = "*" * len(greeting_str)
     print(header)
     print(greeting_str)

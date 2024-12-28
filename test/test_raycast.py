@@ -17,7 +17,9 @@ def test_mesh_to_depth(visualize: bool):
     # Geometries
     sphere = o3d.geometry.TriangleMesh.create_sphere(radius=1.0)
     sphere = sphere.translate([0, 0, 4])
-    box = o3d.geometry.TriangleMesh.create_box(width=1.5, height=1.5, depth=1.5)
+    box = o3d.geometry.TriangleMesh.create_box(
+        width=1.5, height=1.5, depth=1.5
+    )
     box = box.translate([0, 0, 4])
     mesh = sphere + box
     lineset = ct.convert.mesh_to_lineset(mesh)

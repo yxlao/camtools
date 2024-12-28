@@ -4,7 +4,8 @@ import open3d as o3d
 
 def pytest_configure(config):
     config.addinivalue_line(
-        "markers", "skip_no_o3d_display: skip test when no display is available"
+        "markers",
+        "skip_no_o3d_display: skip test when no display is available",
     )
 
 

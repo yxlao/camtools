@@ -1,4 +1,8 @@
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from concurrent.futures import (
+    ProcessPoolExecutor,
+    ThreadPoolExecutor,
+    as_completed,
+)
 from typing import Any, Callable, Iterable, Optional
 
 from functools import lru_cache
@@ -26,10 +30,13 @@ def mt_loop(
     desc = f"[mt] {func.__name__}"
     with ThreadPoolExecutor() as executor:
         future_to_index = {
-            executor.submit(func, item, **kwargs): i for i, item in enumerate(inputs)
+            executor.submit(func, item, **kwargs): i
+            for i, item in enumerate(inputs)
         }
         results = [None] * len(inputs)
-        for future in tqdm(as_completed(future_to_index), total=len(inputs), desc=desc):
+        for future in tqdm(
+            as_completed(future_to_index), total=len(inputs), desc=desc
+        ):
             results[future_to_index[future]] = future.result()
     return results
 
@@ -55,10 +62,13 @@ def mp_loop(
     desc = f"[mp] {func.__name__}"
     with ProcessPoolExecutor() as executor:
         future_to_index = {
-            executor.submit(func, item, **kwargs): i for i, item in enumerate(inputs)
+            executor.submit(func, item, **kwargs): i
+            for i, item in enumerate(inputs)
         }
         results = [None] * len(inputs)
-        for future in tqdm(as_completed(future_to_index), total=len(inputs), desc=desc):
+        for future in tqdm(
+            as_completed(future_to_index), total=len(inputs), desc=desc
+        ):
             results[future_to_index[future]] = future.result()
     return results
 

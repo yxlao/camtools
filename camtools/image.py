@@ -7,7 +7,8 @@ from jaxtyping import Float, UInt8, UInt16, Int
 
 
 def crop_white_boarders(
-    im: Float[np.ndarray, "h w 3"], padding: Tuple[int, int, int, int] = (0, 0, 0, 0)
+    im: Float[np.ndarray, "h w 3"],
+    padding: Tuple[int, int, int, int] = (0, 0, 0, 0),
 ) -> Float[np.ndarray, "h_cropped w_cropped 3"]:
     """
     Crop white borders from an image and apply optional padding.
@@ -27,7 +28,9 @@ def crop_white_boarders(
     return im_dst
 
 
-def compute_cropping_v1(im: Float[np.ndarray, "h w n"]) -> Tuple[int, int, int, int]:
+def compute_cropping_v1(
+    im: Float[np.ndarray, "h w n"]
+) -> Tuple[int, int, int, int]:
     """
     Compute white border sizes in pixels for multi-channel images.
 
@@ -115,9 +118,13 @@ def compute_cropping(
         ValueError: If input image has invalid dtype, dimensions, or fails v1 check.
     """
     if not im.dtype == np.float32:
-        raise ValueError(f"Expected im.dtype to be np.float32, but got {im.dtype}")
+        raise ValueError(
+            f"Expected im.dtype to be np.float32, but got {im.dtype}"
+        )
     if im.ndim != 3 or im.shape[2] != 3:
-        raise ValueError(f"Expected im to be of shape (H, W, 3), but got {im.shape}")
+        raise ValueError(
+            f"Expected im to be of shape (H, W, 3), but got {im.shape}"
+        )
 
     # Create a mask where white pixels are marked as True
     white_mask = np.all(im == 1.0, axis=-1)
@@ -128,9 +135,13 @@ def compute_cropping(
 
     # Determine the crop values based on the positions of non-white pixels
     crop_t = rows_with_color[0] if len(rows_with_color) else 0
-    crop_b = im.shape[0] - rows_with_color[-1] - 1 if len(rows_with_color) else 0
+    crop_b = (
+        im.shape[0] - rows_with_color[-1] - 1 if len(rows_with_color) else 0
+    )
     crop_l = cols_with_color[0] if len(cols_with_color) else 0
-    crop_r = im.shape[1] - cols_with_color[-1] - 1 if len(cols_with_color) else 0
+    crop_r = (
+        im.shape[1] - cols_with_color[-1] - 1 if len(cols_with_color) else 0
+    )
 
     # Check the results against compute_cropping_v1 if requested
     if check_with_v1:
@@ -316,7 +327,9 @@ def overlay_mask_on_rgb(
     assert overlay_color.max() <= 1.0 and overlay_color.min() >= 0.0
 
     im_mask_stacked = np.dstack([im_mask, im_mask, im_mask])
-    im_hard = im_rgb * (1.0 - im_mask_stacked) + overlay_color * im_mask_stacked
+    im_hard = (
+        im_rgb * (1.0 - im_mask_stacked) + overlay_color * im_mask_stacked
+    )
     im_soft = im_rgb * (1.0 - overlay_alpha) + im_hard * overlay_alpha
 
     return im_soft
@@ -368,7 +381,9 @@ def ndc_coords_to_pixels(
         dst_tl = np.array([-0.5, -0.5], dtype=dtype)
         dst_br = np.array([w - 0.5, h - 0.5], dtype=dtype)
 
-    dst_pixels = (ndc_coords - src_tl) / (src_br - src_tl) * (dst_br - dst_tl) + dst_tl
+    dst_pixels = (ndc_coords - src_tl) / (src_br - src_tl) * (
+        dst_br - dst_tl
+    ) + dst_tl
 
     return dst_pixels
 
@@ -467,7 +482,9 @@ def recover_rotated_pixels(dst_pixels, src_wh, ccw_degrees):
         dst_pixels_recovered = np.stack([h - 1 - src_r, src_c], axis=1)
     else:
         raise ValueError(f"Invalid rotation angle: {ccw_degrees}.")
-    np.testing.assert_allclose(dst_pixels, dst_pixels_recovered, rtol=1e-5, atol=1e-5)
+    np.testing.assert_allclose(
+        dst_pixels, dst_pixels_recovered, rtol=1e-5, atol=1e-5
+    )
 
     return src_pixels
 
@@ -595,7 +612,9 @@ def resize(
     if tmp_w == dst_w and tmp_h == dst_h:
         im_resize = im_tmp
     else:
-        im_resize = np.full(dst_numpy_shape, fill_value=aspect_ratio_fill, dtype=dtype)
+        im_resize = np.full(
+            dst_numpy_shape, fill_value=aspect_ratio_fill, dtype=dtype
+        )
         im_resize[:tmp_h, :tmp_w] = im_tmp
 
     # Final sanity checks for the reshaped image.
@@ -672,7 +691,9 @@ def recover_resized_pixels(
     src_br = np.array([src_w - 0.5, src_h - 0.5])
     dst_tl = np.array([-0.5, -0.5])
     dst_br = np.array([tmp_w - 0.5, tmp_h - 0.5])
-    src_pixels = (dst_pixels - dst_tl) / (dst_br - dst_tl) * (src_br - src_tl) + src_tl
+    src_pixels = (dst_pixels - dst_tl) / (dst_br - dst_tl) * (
+        src_br - src_tl
+    ) + src_tl
 
     return src_pixels
 
@@ -738,7 +759,9 @@ def make_corres_image(
 
     if confidences is not None:
         assert len(confidences) == len(src_pixels)
-        assert confidences.dtype == np.float32 or confidences.dtype == np.float64
+        assert (
+            confidences.dtype == np.float32 or confidences.dtype == np.float64
+        )
         if confidences.size > 0:
             assert confidences.min() >= 0.0 and confidences.max() <= 1.0
         assert confidences.ndim == 1
@@ -783,7 +806,9 @@ def make_corres_image(
             assert sample_ratio > 0.0 and sample_ratio <= 1.0
             num_points = len(src_pixels)
             num_samples = int(round(num_points * sample_ratio))
-            sample_indices = np.random.choice(num_points, num_samples, replace=False)
+            sample_indices = np.random.choice(
+                num_points, num_samples, replace=False
+            )
             src_pixels = src_pixels[sample_indices]
             dst_pixels = dst_pixels[sample_indices]
             confidences = confidences[sample_indices]
@@ -795,8 +820,12 @@ def make_corres_image(
 
             if confidences is None:
                 # Draw white points as mask.
-                im_point_mask = np.zeros(im_corres.shape[:2], dtype=im_corres.dtype)
-                for (src_c, src_r), (dst_c, dst_r) in zip(src_pixels, dst_pixels):
+                im_point_mask = np.zeros(
+                    im_corres.shape[:2], dtype=im_corres.dtype
+                )
+                for (src_c, src_r), (dst_c, dst_r) in zip(
+                    src_pixels, dst_pixels
+                ):
                     cv2.circle(
                         im_point_mask,
                         (src_c, src_r),
@@ -851,7 +880,11 @@ def make_corres_image(
             im_line_mask = np.zeros(im_corres.shape[:2], dtype=im_corres.dtype)
             for (src_c, src_r), (dst_c, dst_r) in zip(src_pixels, dst_pixels):
                 cv2.line(
-                    im_line_mask, (src_c, src_r), (dst_c + w, dst_r), (1,), line_width
+                    im_line_mask,
+                    (src_c, src_r),
+                    (dst_c + w, dst_r),
+                    (1,),
+                    line_width,
                 )
 
             line_alpha = line_color[3] if len(line_color) == 4 else 1.0
@@ -963,9 +996,9 @@ def vstack_images(
             if alignment == "center"
             else max_width - im.shape[1] if alignment == "right" else 0
         )
-        im_stacked[curr_row : curr_row + im.shape[0], offset : offset + im.shape[1]] = (
-            im
-        )
+        im_stacked[
+            curr_row : curr_row + im.shape[0], offset : offset + im.shape[1]
+        ] = im
         curr_row += im.shape[0]
 
     return im_stacked

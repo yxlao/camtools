@@ -82,7 +82,9 @@ def entry_point(parser, args):
 
     # Handle PNG file's alpha channel.
     src_paths_with_alpha = []
-    png_paths = [src_path for src_path in src_paths if ct.io.is_png_path(src_path)]
+    png_paths = [
+        src_path for src_path in src_paths if ct.io.is_png_path(src_path)
+    ]
     for src_path in png_paths:
         im = ct.io.imread(src_path, alpha_mode="keep")
         if im.shape[2] == 4:
@@ -183,8 +185,12 @@ def entry_point(parser, args):
     print(f"  - compression_ratio: {compression_ratio:.2f}")
 
     # Update text files.
-    src_paths = [stat["src_path"] for stat in stats if not stat["is_direct_copy"]]
-    dst_paths = [stat["dst_path"] for stat in stats if not stat["is_direct_copy"]]
+    src_paths = [
+        stat["src_path"] for stat in stats if not stat["is_direct_copy"]
+    ]
+    dst_paths = [
+        stat["dst_path"] for stat in stats if not stat["is_direct_copy"]
+    ]
     if num_compressed > 0 and update_texts_in_dir is not None:
         do_update_texts_in_dir(
             src_paths=src_paths,
@@ -343,7 +349,9 @@ def get_all_text_paths(root_dir):
 
     root_dir = Path(root_dir)
     text_paths = list(root_dir.glob("**/*"))
-    text_paths = [text_path for text_path in text_paths if is_text_file(text_path)]
+    text_paths = [
+        text_path for text_path in text_paths if is_text_file(text_path)
+    ]
     return text_paths
 
 
