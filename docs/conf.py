@@ -74,4 +74,5 @@ napoleon_type_aliases = None
 autodoc_member_order = "bysource"
 autodoc_typehints = "description"
 autodoc_typehints_description_target = "documented"
-add_module_names = False
+add_module_names = True
+python_use_unqualified_type_names = False
