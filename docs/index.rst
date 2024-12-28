@@ -19,8 +19,7 @@ CamTools Documentation
 
    <p align="center">
      <a href="https://camtools.readthedocs.io/"><strong>Docs</strong></a> |
-     <a href="https://github.com/yxlao/camtools"><strong>Repo</strong></a> |
-     <a href="https://camtools.readthedocs.io/installation.html"><strong>Installation</strong></a>
+     <a href="https://github.com/yxlao/camtools"><strong>Repo</strong></a>
    </p>
 
 CamTools is a collection of tools for handling cameras in computer vision. It
