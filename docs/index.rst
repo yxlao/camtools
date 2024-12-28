@@ -34,8 +34,3 @@ clear and easy-to-use APIs.
    installation
    contributing
    api
-
-Indices
-=======
-
-* :ref:`genindex`

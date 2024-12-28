@@ -4,11 +4,11 @@ API Reference
 .. toctree::
    :maxdepth: 2
 
-   camera
-   colmap
-   convert
-   io
-   metric
-   project
-   raycast
-   render
+   api/camera
+   api/colmap
+   api/convert
+   api/io
+   api/metric
+   api/project
+   api/raycast
+   api/render
