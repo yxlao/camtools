@@ -38,6 +38,11 @@ dev = [
   "pytest-benchmark>=4.0.0",
   "ipdb",
 ]
+docs = [
+  "sphinx",
+  "sphinx-rtd-theme",
+  "myst-parser",
+]
 torch = [
   "torch>=1.8.0",
   "lpips>=0.1.4",
@@ -45,3 +50,8 @@ torch = [
 
 [tool.setuptools]
 packages = ["camtools", "camtools.tools"]
+
+[tool.black]
+include = '\.pyi?$'
+line-length = 79
+target-version = ['py38']
