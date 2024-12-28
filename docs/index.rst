@@ -28,6 +28,7 @@ clear and easy-to-use APIs.
    :maxdepth: 2
    :caption: Docs
 
+   Home <self>
    features
    coordinates
    installation
