@@ -42,6 +42,7 @@ docs = [
   "sphinx",
   "sphinx-rtd-theme",
   "myst-parser",
+  "furo",
 ]
 torch = [
   "torch>=1.8.0",
