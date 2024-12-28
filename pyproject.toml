@@ -51,8 +51,3 @@ torch = [
 
 [tool.setuptools]
 packages = ["camtools", "camtools.tools"]
-
-[tool.black]
-include = '\.pyi?$'
-line-length = 79
-target-version = ['py38']
