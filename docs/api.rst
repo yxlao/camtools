@@ -1,14 +1,20 @@
 API Reference
-=============
+============
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    api/camera
-   api/colmap
+   api/colormap
    api/convert
+   api/geometry
+   api/image
    api/io
    api/metric
+   api/normalize
    api/project
    api/raycast
    api/render
+   api/solver
+   api/transform
+   api/util
