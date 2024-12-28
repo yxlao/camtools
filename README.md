@@ -6,14 +6,13 @@
 </p>
 <h1 align="center">CamTools: Camera Tools for Computer Vision</h1>
 
-[![Docs](https://img.shields.io/badge/Docs-323940.svg?style=flat&logo=read-the-docs&logoColor=959DA5)](https://camtools.readthedocs.io/en/latest/?badge=latest)
-[![Docs](https://readthedocs.org/projects/camtools/badge/?version=latest)](https://camtools.readthedocs.io/en/latest/?badge=latest)
-[![Formatter](https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/formatter.yml)
-[![Unit Test](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml)
-[![PyPI](https://github.com/yxlao/camtools/actions/workflows/pypi.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/pypi.yml)
-[![GitHub](https://img.shields.io/badge/GitHub-323940.svg?style=flat&logo=github&logoColor=959DA5)](https://github.com/yxlao/camtools)
-[![Gitee](https://img.shields.io/badge/Gitee-323940.svg?style=flat&logo=gitee&logoColor=959DA5)](https://gitee.com/yxlao/camtools)
-[![PyPI](https://img.shields.io/pypi/v/camtools?style=flat&label=PyPI&logo=PyPI&logoColor=959DA5&labelColor=323940&color=808080)](https://pypi.org/project/camtools)
+[![docs](https://readthedocs.org/projects/camtools/badge/?version=latest)](https://camtools.readthedocs.io/en/latest/?badge=latest)
+[![formatter](https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/formatter.yml)
+[![unit Test](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml)
+[![pypi](https://github.com/yxlao/camtools/actions/workflows/pypi.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/pypi.yml)
+[![github](https://img.shields.io/badge/GitHub-323940.svg?style=flat&logo=github&logoColor=959DA5)](https://github.com/yxlao/camtools)
+[![gitee](https://img.shields.io/badge/Gitee-323940.svg?style=flat&logo=gitee&logoColor=959DA5)](https://gitee.com/yxlao/camtools)
+[![pypi](https://img.shields.io/pypi/v/camtools?style=flat&label=PyPI&logo=PyPI&logoColor=959DA5&labelColor=323940&color=808080)](https://pypi.org/project/camtools)
 
 CamTools is a collection of tools for handling cameras in computer vision. It
 can be used for plotting, converting, projecting, ray casting, and doing more
