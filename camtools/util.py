@@ -1,5 +1,5 @@
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, Optional
 
 from functools import lru_cache
 from tqdm import tqdm
@@ -64,32 +64,30 @@ def mp_loop(
 
 
 def query_yes_no(question, default=None):
-    """Ask a yes/no question via raw_input() and return their answer.
+    """
+    Ask a yes/no question via raw_input() and return their answer.
 
     Args:
-        question: A string that is presented to the user.
-        default: The presumed answer if the user just hits <Enter>.
-            - True: The answer is assumed to be yes.
-            - False: The answer is assumed to be no.
-            - None: The answer is required from the user.
+        question (str): A string that is presented to the user.
+        default (Optional[bool]): The presumed answer if the user just hits
+            <Enter>. Possible values:
+            - True: The answer is assumed to be yes
+            - False: The answer is assumed to be no
+            - None: The answer is required from the user
 
     Returns:
-        Returns True for "yes" or False for "no".
+        bool: True for "yes" or False for "no".
 
     Examples:
-        ```python
-        if query_yes_no("Continue?", default="yes"):
-            print("Proceeding.")
-        else:
-            print("Aborted.")
-        ```
+        >>> if query_yes_no("Continue?", default="yes"):
+        ...     print("Proceeding.")
+        ... else:
+        ...     print("Aborted.")
 
-        ```python
-        if not query_yes_no("Continue?", default="yes"):
-            print("Aborted.")
-            return  # Or exit(0)
-        print("Proceeding.")
-        ```
+        >>> if not query_yes_no("Continue?", default="yes"):
+        ...     print("Aborted.")
+        ...     return  # Or exit(0)
+        ... print("Proceeding.")
     """
     if default is None:
         prompt = "[y/n]"

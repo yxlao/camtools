@@ -82,13 +82,14 @@ def assert_pose(pose: Float[np.ndarray, "4 4"]):
         - R is a 3x3 rotation matrix
         - t is a 3x1 translation vector
         - Bottom row must be [0, 0, 0, 1]
+
     The pose matrix is the inverse of the extrinsic matrix T.
 
     Args:
-        pose: Camera pose matrix to validate
+        pose (Float[np.ndarray, "4 4"]): Camera pose matrix to validate.
 
     Raises:
-        ValueError: If pose is not a 4x4 matrix or bottom row is not [0, 0, 0, 1]
+        ValueError: If pose is not a 4x4 matrix or bottom row is not [0, 0, 0, 1].
     """
     if pose.shape != (4, 4):
         raise ValueError(
@@ -109,12 +110,14 @@ def assert_shape(x: np.ndarray, shape: tuple, name: Optional[str] = None):
         - (3, None, 3) matches any 3D array where first and last dimensions are 3
 
     Args:
-        x: Array to validate
-        shape: Tuple of expected dimensions (can contain None for flexible dimensions)
-        name: Optional name of the variable for error message
+        x (np.ndarray): Array to validate.
+        shape (tuple): Tuple of expected dimensions (can contain None for flexible
+            dimensions).
+        name (Optional[str]): Optional name of the variable for error message.
+            Default: None.
 
     Raises:
-        ValueError: If array dimensions don't match the expected shape pattern
+        ValueError: If array dimensions don't match the expected shape pattern.
     """
     shape_valid = True
 
