@@ -260,14 +260,13 @@ To build and view the documentation locally:
 pip install -e .[docs]
 
 # Build the documentation
-cd docs
-make clean && make html
+make -C docs clean && make -C docs html
 
-# To treat warnings as errors
-make clean && make html SPHINXOPTS="-W --keep-going"
+# (Optional) Build the documentation with warnings as errors
+make -C docs clean && make -C docs html SPHINXOPTS="-W --keep-going"
 
-# Start a local server to view the documentation (run inside `docs/`)
-python -m http.server 8000 --directory _build/html
+# Start a local server to view the documentation
+python -m http.server 8000 --directory docs/_build/html
 ```
 
 Then open your browser and navigate to `http://localhost:8000` to view the documentation.
