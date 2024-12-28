@@ -4,7 +4,9 @@ API Reference
 Camera Operations
 ---------------
 
-.. automodule:: camtools.camera
+.. currentmodule:: ct
+
+.. automodule:: ct.camera
    :members:
    :undoc-members:
    :show-inheritance:
@@ -12,7 +14,7 @@ Camera Operations
 Coordinate Conversion
 -------------------
 
-.. automodule:: camtools.convert
+.. automodule:: ct.convert
    :members:
    :undoc-members:
    :show-inheritance:
@@ -20,7 +22,7 @@ Coordinate Conversion
 Image and Depth I/O
 -----------------
 
-.. automodule:: camtools.io
+.. automodule:: ct.io
    :members:
    :undoc-members:
    :show-inheritance:
@@ -28,7 +30,7 @@ Image and Depth I/O
 Projection
 ---------
 
-.. automodule:: camtools.project
+.. automodule:: ct.project
    :members:
    :undoc-members:
    :show-inheritance:
@@ -36,7 +38,7 @@ Projection
 Ray Casting
 ----------
 
-.. automodule:: camtools.raycast
+.. automodule:: ct.raycast
    :members:
    :undoc-members:
    :show-inheritance:
@@ -44,7 +46,7 @@ Ray Casting
 COLMAP Tools
 -----------
 
-.. automodule:: camtools.colmap
+.. automodule:: ct.colmap
    :members:
    :undoc-members:
    :show-inheritance:
@@ -52,7 +54,7 @@ COLMAP Tools
 Image Metrics
 ------------
 
-.. automodule:: camtools.metric
+.. automodule:: ct.metric
    :members:
    :undoc-members:
    :show-inheritance:
@@ -60,7 +62,7 @@ Image Metrics
 Rendering
 --------
 
-.. automodule:: camtools.render
+.. automodule:: ct.render
    :members:
    :undoc-members:
    :show-inheritance:
