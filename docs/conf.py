@@ -94,6 +94,5 @@ python_use_unqualified_type_names = False
 
 # Custom module name display
 modindex_common_prefix = ["camtools."]  # Strip 'camtools.' from module index
-import camtools as ct
 
 sys.modules["ct"] = ct  # Allow using 'ct' as an alias in documentation
