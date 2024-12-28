@@ -1,7 +1,16 @@
 API Reference
 =============
 
-This section provides detailed API documentation for all CamTools modules.
+- :ref:`ct.camera <ct-camera>`
+- :ref:`ct.colmap <ct-colmap>`
+- :ref:`ct.convert <ct-convert>`
+- :ref:`ct.io <ct-io>`
+- :ref:`ct.metric <ct-metric>`
+- :ref:`ct.project <ct-project>`
+- :ref:`ct.raycast <ct-raycast>`
+- :ref:`ct.render <ct-render>`
+
+.. _ct-camera:
 
 > ct.camera
 ===========
@@ -13,6 +22,8 @@ This section provides detailed API documentation for all CamTools modules.
    :undoc-members:
    :show-inheritance:
 
+.. _ct-colmap:
+
 > ct.colmap
 ===========
 
@@ -22,6 +33,8 @@ This section provides detailed API documentation for all CamTools modules.
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. _ct-convert:
 
 > ct.convert
 ===========
@@ -33,6 +46,8 @@ This section provides detailed API documentation for all CamTools modules.
    :undoc-members:
    :show-inheritance:
 
+.. _ct-io:
+
 > ct.io
 =======
 
@@ -42,6 +57,8 @@ This section provides detailed API documentation for all CamTools modules.
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. _ct-metric:
 
 > ct.metric
 ===========
@@ -53,6 +70,8 @@ This section provides detailed API documentation for all CamTools modules.
    :undoc-members:
    :show-inheritance:
 
+.. _ct-project:
+
 > ct.project
 ===========
 
@@ -63,6 +82,8 @@ This section provides detailed API documentation for all CamTools modules.
    :undoc-members:
    :show-inheritance:
 
+.. _ct-raycast:
+
 > ct.raycast
 ===========
 
@@ -72,6 +93,8 @@ This section provides detailed API documentation for all CamTools modules.
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. _ct-render:
 
 > ct.render
 ===========
