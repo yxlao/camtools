@@ -96,3 +96,8 @@ python_use_unqualified_type_names = False
 modindex_common_prefix = ["camtools."]  # Strip 'camtools.' from module index
 
 sys.modules["ct"] = ct  # Allow using 'ct' as an alias in documentation
+
+# Suppress specific warnings
+suppress_warnings = [
+    "toctree.excluded",  # Suppress warnings about files not in any toctree
+]

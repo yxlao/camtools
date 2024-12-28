@@ -17,4 +17,10 @@ API Reference
    api/render
    api/solver
    api/transform
-   api/util
+
+
+.. Not included in the docs website:
+..    api/artifact
+..    api/colmap
+..    api/sanity
+..    api/util
