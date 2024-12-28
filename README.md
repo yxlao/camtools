@@ -251,6 +251,21 @@ the beginning of the README.
   [part 2](https://ksimek.github.io/2012/08/22/extrinsic/),
   and [part 3](https://ksimek.github.io/2013/08/13/intrinsic/).
 
+## Building Documentation
+
+To build and view the documentation locally:
+
+```bash
+# Build the documentation
+cd docs
+make html
+
+# Start a local server to view the documentation
+python -m http.server 8000 --directory _build/html
+```
+
+Then open your browser and navigate to `http://localhost:8000` to view the documentation.
+
 ## Contributing
 
 - Follow [Angular's commit message convention](https://github.com/angular/angular/blob/main/CONTRIBUTING.md#-commit-message-format) for PRs.
