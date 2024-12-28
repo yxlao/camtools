@@ -142,7 +142,7 @@ def R_to_quat(R):
     return q.squeeze()
 
 
-def T_to_C(T):
+def T_to_C(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "3"]:
     """
     Convert T to camera center.
     """
@@ -151,7 +151,7 @@ def T_to_C(T):
     return R_t_to_C(R, t)
 
 
-def pose_to_C(pose):
+def pose_to_C(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "3"]:
     """
     Convert pose to camera center.
     """
@@ -176,7 +176,7 @@ def pose_to_T(pose):
     return np.linalg.inv(pose)
 
 
-def T_opengl_to_opencv(T):
+def T_opengl_to_opencv(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
     """
     Convert T from OpenGL convention to OpenCV convention.
 
@@ -204,7 +204,7 @@ def T_opengl_to_opencv(T):
     return T
 
 
-def T_opencv_to_opengl(T):
+def T_opencv_to_opengl(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
     """
     Convert T from OpenCV convention to OpenGL convention.
 
@@ -232,7 +232,7 @@ def T_opencv_to_opengl(T):
     return T
 
 
-def pose_opengl_to_opencv(pose):
+def pose_opengl_to_opencv(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
     """
     Convert pose from OpenGL convention to OpenCV convention.
 
@@ -257,7 +257,7 @@ def pose_opengl_to_opencv(pose):
     return pose
 
 
-def pose_opencv_to_opengl(pose):
+def pose_opencv_to_opengl(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
     """
     Convert pose from OpenCV convention to OpenGL convention.
 
@@ -282,7 +282,10 @@ def pose_opencv_to_opengl(pose):
     return pose
 
 
-def R_t_to_C(R, t):
+def R_t_to_C(
+    R: Float[np.ndarray, "3 3"],
+    t: Float[np.ndarray, "3"],
+) -> Float[np.ndarray, "3"]:
     """
     Convert R, t to camera center
     """
@@ -297,7 +300,10 @@ def R_t_to_C(R, t):
     return C.squeeze()
 
 
-def R_C_to_t(R, C):
+def R_C_to_t(
+    R: Float[np.ndarray, "3 3"],
+    C: Float[np.ndarray, "3"],
+) -> Float[np.ndarray, "3"]:
     # https://github.com/isl-org/StableViewSynthesis/blob/main/data/create_custom_track.py
     C = C.reshape(-1, 3, 1)
     R = R.reshape(-1, 3, 3)
