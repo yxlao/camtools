@@ -1,5 +1,5 @@
-Welcome to CamTools
-===================
+CamTools Documentation
+======================
 
 .. only:: not latex
 
@@ -14,6 +14,14 @@ Welcome to CamTools
       :align: center
       :alt: CamTools Logo
       :class: only-dark
+
+.. raw:: html
+
+   <p align="center">
+     <a href="https://camtools.readthedocs.io/"><strong>Docs</strong></a> |
+     <a href="https://github.com/yxlao/camtools"><strong>Repo</strong></a> |
+     <a href="https://camtools.readthedocs.io/installation.html"><strong>Installation</strong></a>
+   </p>
 
 CamTools is a collection of tools for handling cameras in computer vision. It
 can be used for plotting, converting, projecting, ray casting, and doing more

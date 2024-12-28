@@ -9,6 +9,7 @@
 
 <p align="center">
   <a href="https://camtools.readthedocs.io/"><strong>Docs</strong></a> |
+  <a href="https://github.com/yxlao/camtools"><strong>Repo</strong></a> |
   <a href="#installation"><strong>Installation</strong></a>
 </p>
 
