@@ -1,6 +1,20 @@
 Camera Coordinates
 ==================
 
+.. only:: not latex
+
+   .. image:: https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_light.png
+      :width: 520
+      :align: center
+      :alt: Camera Coordinates
+      :class: only-light
+
+   .. image:: https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_dark.png
+      :width: 520
+      :align: center
+      :alt: Camera Coordinates
+      :class: only-dark
+
 A homogeneous point ``[X, Y, Z, 1]`` in the world coordinate can be projected to a
 homogeneous point ``[x, y, 1]`` in the image (pixel) coordinate using the
 following equation:

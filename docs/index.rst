@@ -47,7 +47,7 @@ clear and easy-to-use APIs.
    :caption: Docs
 
    Home <self>
-   coordinates
+   camera
    installation
    contributing
    api
