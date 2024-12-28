@@ -4,14 +4,20 @@
     <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camtools_logo_light.png" width="360">
   </picture>
 </p>
+
 <h1 align="center">CamTools: Camera Tools for Computer Vision</h1>
+
+<p align="center">
+  <a href="https://camtools.readthedocs.io/"><strong>Docs</strong></a> |
+  <a href="https://github.com/yxlao/camtools"><strong>Repo</strong></a> |
+  <a href="#installation"><strong>Installation</strong></a>
+</p>
 
 [![Formatter](https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/formatter.yml)
 [![Unit Test](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml)
 [![PyPI](https://github.com/yxlao/camtools/actions/workflows/pypi.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/pypi.yml)
-[![GitHub](https://img.shields.io/badge/GitHub-323940.svg?style=flat&logo=github&logoColor=959DA5)](https://github.com/yxlao/camtools)
-[![Gitee](https://img.shields.io/badge/Gitee-323940.svg?style=flat&logo=gitee&logoColor=959DA5)](https://gitee.com/yxlao/camtools)
 [![PyPI](https://img.shields.io/pypi/v/camtools?style=flat&label=PyPI&logo=PyPI&logoColor=959DA5&labelColor=323940&color=808080)](https://pypi.org/project/camtools)
+[![Docs](https://readthedocs.org/projects/camtools/badge/?version=latest)](https://camtools.readthedocs.io/en/latest/?badge=latest)
 
 CamTools is a collection of tools for handling cameras in computer vision. It
 can be used for plotting, converting, projecting, ray casting, and doing more
@@ -20,8 +26,13 @@ clear and easy-to-use APIs.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_dark.png">
-    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_light.png" width="520">
+    <source
+      media="(prefers-color-scheme: dark)"
+      srcset="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_dark.png">
+    <img
+      alt="CamTools Logo"
+      src="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_light.png"
+      width="520">
   </picture>
 </p>
 
@@ -250,6 +261,31 @@ the beginning of the README.
   [part 1](https://ksimek.github.io/2012/08/14/decompose/),
   [part 2](https://ksimek.github.io/2012/08/22/extrinsic/),
   and [part 3](https://ksimek.github.io/2013/08/13/intrinsic/).
+
+## Building Documentation
+
+To build and view the documentation locally:
+
+```bash
+# Install documentation dependencies
+pip install -e .[docs]
+
+# Build the documentation
+make -C docs clean && make -C docs html
+
+# (Optional) Build the documentation with warnings as errors
+make -C docs clean && make -C docs html SPHINXOPTS="-W --keep-going"
+
+# Start a local server to view the documentation
+python -m http.server 8000 --directory docs/_build/html
+```
+
+Then open your browser and navigate to `http://localhost:8000` to view the documentation.
+
+The documentation is also automatically built by GitHub Actions on pull requests and pushes to main. After merging to main, you can view:
+
+- Public documentation at https://camtools.readthedocs.io/en/latest/
+- Admin panel at https://app.readthedocs.org/projects/camtools/
 
 ## Contributing
 
