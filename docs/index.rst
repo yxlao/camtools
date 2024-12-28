@@ -25,7 +25,7 @@ clear and easy-to-use APIs.
    </p>
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Docs
 
    Home <self>
