@@ -1,5 +1,5 @@
 ct.convert
-=========
+==========
 
 .. currentmodule:: ct
 
