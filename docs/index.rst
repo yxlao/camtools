@@ -1,13 +1,37 @@
-Welcome to CamTools's documentation!
-================================
+Welcome to CamTools
+===================
 
-.. include:: ../README.md
-   :parser: myst_parser.sphinx_
+.. raw:: html
+
+   <p align="center">
+     <picture>
+       <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camtools_logo_dark.png">
+       <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camtools_logo_light.png" width="360">
+     </picture>
+   </p>
+
+CamTools is a collection of tools for handling cameras in computer vision. It
+can be used for plotting, converting, projecting, ray casting, and doing more
+with camera parameters. It follows the standard camera coordinate system with
+clear and easy-to-use APIs.
+
+.. raw:: html
+
+   <p align="center">
+     <picture>
+       <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_dark.png">
+       <img alt="Camera Coordinates" src="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_light.png" width="520">
+     </picture>
+   </p>
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+   features
+   installation
+   coordinates
+   contributing
    api/modules
 
 Indices and tables
