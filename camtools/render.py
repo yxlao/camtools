@@ -21,32 +21,73 @@ def render_geometries(
     visible: bool = False,
 ) -> Float[np.ndarray, "h w 3"]:
     """
-    Render Open3D geometries to an image. This function may require a display.
+    Render Open3D geometries to an image using the specified camera parameters.
+    This function may require a display.
+
+    The rendering follows the standard pinhole camera model:
+        λ[x, y, 1]^T = K @ [R | t] @ [X, Y, Z, 1]^T
+    where:
+        - [X, Y, Z, 1]^T is a homogeneous 3D point in world coordinates
+        - [R | t] is the 3x4 extrinsic matrix (world-to-camera transformation)
+        - K is the 3x3 intrinsic matrix
+        - [x, y, 1]^T is the projected homogeneous 2D point in pixel coordinates
+        - λ is the depth value
+
+    Example usage:
+        # Create some geometries
+        mesh = o3d.geometry.TriangleMesh.create_box()
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(np.random.rand(100, 3))
+
+        # Render with default camera
+        image = render_geometries([mesh, pcd])
+
+        # Render with specific camera parameters
+        K = np.array([[1000, 0, 640], [0, 1000, 360], [0, 0, 1]])
+        T = np.eye(4)
+        depth_image = render_geometries([mesh], K=K, T=T, to_depth=True)
 
     Args:
-        mesh: Open3d TriangleMesh.
-        K: (3, 3) np.ndarray camera intrinsic. If None, use Open3D's camera
-            inferred from the geometries. K must be provided if T is provided.
-        T: (4, 4) np.ndarray camera extrinsic. If None, use Open3D's camera
-            inferred from the geometries. T must be provided if K is provided.
-        view_status_str: The json string returned by
-            o3d.visualization.Visualizer.get_view_status(), containing
-            the viewing camera parameters. This does not include the window
-            size and the point size.
-        height: int image height.
-        width: int image width.
-        point_size: float point size for point cloud objects.
-        line_radius: float line radius for line set objects, when set, the line
-            sets will be converted to cylinder meshes with the given radius.
-            The radius is in world metric space, not relative pixel space like
-            the point size.
-        to_depth: bool whether to render a depth image instead of RGB image.
-            Invalid depth or infinite depth is set to 0.
-        visible: bool whether to show the window.
+        geometries: List of Open3D geometries to render. Supported types include:
+            - TriangleMesh
+            - PointCloud
+            - LineSet
+        K: (3, 3) camera intrinsic matrix. If None, uses Open3D's default camera
+            inferred from the geometries. Must be provided if T is provided.
+            The intrinsic matrix follows the format:
+                [[fx, 0, cx],
+                 [0, fy, cy],
+                 [0, 0, 1]]
+            where:
+                - fx, fy: focal lengths in pixels
+                - cx, cy: principal point coordinates
+        T: (4, 4) camera extrinsic matrix (world-to-camera transformation).
+            If None, uses Open3D's default camera inferred from the geometries.
+            Must be provided if K is provided. The extrinsic matrix follows the
+            format:
+                [[R | t],
+                 [0 | 1]]
+            where:
+                - R: (3, 3) rotation matrix
+                - t: (3,) translation vector
+        view_status_str: JSON string containing viewing camera parameters from
+            o3d.visualization.Visualizer.get_view_status(). This does not
+            include window size or point size.
+        height: Height of the output image in pixels.
+        width: Width of the output image in pixels.
+        point_size: Size of points for PointCloud objects, in pixels.
+        line_radius: Radius of lines for LineSet objects, in world units. When
+            set, LineSets are converted to cylinder meshes with this radius.
+            Unlike point_size, this is in world metric space, not pixel space.
+        to_depth: If True, renders a depth image instead of RGB. Invalid depths
+            are set to 0.
+        visible: If True, shows the rendering window.
 
     Returns:
-        (H, W, 3) float32 np.ndarray RGB image by default; (H, W) float32
-        depth image if to_depth is True.
+        If to_depth is False:
+            (H, W, 3) float32 RGB image array with values in [0, 1]
+        If to_depth is True:
+            (H, W) float32 depth image array with depth values in world units
     """
 
     if not isinstance(geometries, list):
@@ -123,24 +164,63 @@ def get_render_view_status_str(
     width: int = 1280,
 ) -> str:
     """
-    Get a view status string for rendering with Open3D visualizer. This is
-    useful for rendering multiple geometries with the same rendering camera.
+    Get a view status string containing camera parameters from Open3D visualizer.
+    This is useful for rendering multiple geometries with consistent camera views.
     This function may require a display.
 
+    The view status string contains camera parameters in JSON format, including:
+        - Camera position and orientation
+        - Field of view
+        - Zoom level
+        - Other view control settings
+
+    Example usage:
+        # Get view status for default camera
+        view_str = get_render_view_status_str([mesh, pcd])
+
+        # Get view status for specific camera
+        K = np.array([[1000, 0, 640], [0, 1000, 360], [0, 0, 1]])
+        T = np.eye(4)
+        view_str = get_render_view_status_str([mesh], K=K, T=T)
+
+        # Use view status for consistent rendering
+        image1 = render_geometries([mesh], view_status_str=view_str)
+        image2 = render_geometries([pcd], view_status_str=view_str)
+
     Args:
-        geometries: List of Open3D geometries.
-        K: (3, 3) np.ndarray camera intrinsic. If None, use Open3D's camera
-            inferred from the geometries. K must be provided if T is provided.
-        T: (4, 4) np.ndarray camera extrinsic. If None, use Open3D's camera
-            inferred from the geometries. T must be provided if K is provided.
-        height: int image height.
-        width: int image width.
+        geometries: List of Open3D geometries to set up the view. Supported types:
+            - TriangleMesh
+            - PointCloud
+            - LineSet
+        K: (3, 3) camera intrinsic matrix. If None, uses Open3D's default camera
+            inferred from the geometries. Must be provided if T is provided.
+            The intrinsic matrix follows the format:
+                [[fx, 0, cx],
+                 [0, fy, cy],
+                 [0, 0, 1]]
+            where:
+                - fx, fy: focal lengths in pixels
+                - cx, cy: principal point coordinates
+        T: (4, 4) camera extrinsic matrix (world-to-camera transformation).
+            If None, uses Open3D's default camera inferred from the geometries.
+            Must be provided if K is provided. The extrinsic matrix follows the
+            format:
+                [[R | t],
+                 [0 | 1]]
+            where:
+                - R: (3, 3) rotation matrix
+                - t: (3,) translation vector
+        height: Height of the view window in pixels.
+        width: Width of the view window in pixels.
 
     Returns:
-        view_status_str: The json string returned by
-            o3d.visualization.Visualizer.get_view_status(), containing
-            the viewing camera parameters. This does not include the window
-            size and the point size.
+        JSON string containing camera view parameters from
+        o3d.visualization.Visualizer.get_view_status(). This includes:
+            - Camera position and orientation
+            - Field of view
+            - Zoom level
+            - Other view control settings
+        Note: Does not include window size or point size.
     """
     if not isinstance(geometries, list):
         raise TypeError("geometries must be a list of Open3D geometries.")
@@ -199,19 +279,56 @@ def get_render_K_T(
     width: int = 1280,
 ) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "4 4"]]:
     """
-    Get the rendering camera intrinsic (K) and extrinsic (T) matrices set by Open3D.
+    Get the camera intrinsic (K) and extrinsic (T) matrices from Open3D visualizer.
+    These matrices represent the current rendering camera parameters.
+
+    The matrices follow the standard pinhole camera model:
+        λ[x, y, 1]^T = K @ [R | t] @ [X, Y, Z, 1]^T
+    where:
+        - [X, Y, Z, 1]^T is a homogeneous 3D point in world coordinates
+        - [R | t] is the 3x4 extrinsic matrix (world-to-camera transformation)
+        - K is the 3x3 intrinsic matrix
+        - [x, y, 1]^T is the projected homogeneous 2D point in pixel coordinates
+        - λ is the depth value
+
+    Example usage:
+        # Get camera matrices for default view
+        K, T = get_render_K_T([mesh, pcd])
+
+        # Get camera matrices for specific view
+        view_str = get_render_view_status_str([mesh])
+        K, T = get_render_K_T([mesh], view_status_str=view_str)
+
+        # Use matrices for consistent rendering
+        image = render_geometries([mesh], K=K, T=T)
 
     Args:
-        geometries: List of Open3D geometries.
-        view_status_str: Optional. The json string returned by
-            o3d.visualization.Visualizer.get_view_status(), containing
-            the viewing camera parameters.
-        height: int, image height.
-        width: int, image width.
+        geometries: List of Open3D geometries to set up the view. Supported types:
+            - TriangleMesh
+            - PointCloud
+            - LineSet
+        view_status_str: Optional JSON string containing camera parameters from
+            o3d.visualization.Visualizer.get_view_status(). If provided, uses
+            these parameters to set up the view.
+        height: Height of the view window in pixels.
+        width: Width of the view window in pixels.
 
     Returns:
-        K: (3, 3) np.ndarray camera intrinsic matrix.
-        T: (4, 4) np.ndarray camera extrinsic matrix.
+        Tuple containing:
+        - K: (3, 3) camera intrinsic matrix following the format:
+            [[fx, 0, cx],
+             [0, fy, cy],
+             [0, 0, 1]]
+            where:
+                - fx, fy: focal lengths in pixels
+                - cx, cy: principal point coordinates
+        - T: (4, 4) camera extrinsic matrix (world-to-camera transformation)
+            following the format:
+                [[R | t],
+                 [0 | 1]]
+            where:
+                - R: (3, 3) rotation matrix
+                - t: (3,) translation vector
     """
     if not isinstance(geometries, list):
         raise TypeError("geometries must be a list of Open3D geometries.")
