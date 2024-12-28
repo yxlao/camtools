@@ -12,7 +12,7 @@ API Reference
 
 .. _ct-camera:
 
-> ct.camera
+``> ct.camera``
 ===========
 
 .. currentmodule:: ct
@@ -24,7 +24,7 @@ API Reference
 
 .. _ct-colmap:
 
-> ct.colmap
+``> ct.colmap``
 ===========
 
 .. currentmodule:: ct
@@ -36,7 +36,7 @@ API Reference
 
 .. _ct-convert:
 
-> ct.convert
+``> ct.convert``
 ===========
 
 .. currentmodule:: ct
@@ -48,7 +48,7 @@ API Reference
 
 .. _ct-io:
 
-> ct.io
+``> ct.io``
 =======
 
 .. currentmodule:: ct
@@ -60,7 +60,7 @@ API Reference
 
 .. _ct-metric:
 
-> ct.metric
+``> ct.metric``
 ===========
 
 .. currentmodule:: ct
@@ -72,7 +72,7 @@ API Reference
 
 .. _ct-project:
 
-> ct.project
+``> ct.project``
 ===========
 
 .. currentmodule:: ct
@@ -84,7 +84,7 @@ API Reference
 
 .. _ct-raycast:
 
-> ct.raycast
+``> ct.raycast``
 ===========
 
 .. currentmodule:: ct
@@ -96,7 +96,7 @@ API Reference
 
 .. _ct-render:
 
-> ct.render
+``> ct.render``
 ===========
 
 .. currentmodule:: ct
