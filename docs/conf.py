@@ -11,13 +11,10 @@ import sys
 import subprocess
 import tomli
 
-# Get script directory and workspace root
-script_dir = os.path.dirname(os.path.abspath(__file__))
-workspace_root = os.path.abspath(os.path.join(script_dir, ".."))
-sys.path.insert(0, workspace_root)
+sys.path.insert(0, os.path.abspath(".."))
 
 # Read version from pyproject.toml
-with open(os.path.join(workspace_root, "pyproject.toml"), "r", encoding="utf-8") as f:
+with open("../pyproject.toml", "rb") as f:
     pyproject = tomli.loads(f.read())
 version = pyproject["project"]["version"]
 
