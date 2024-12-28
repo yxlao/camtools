@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import open3d as o3d
 from jaxtyping import Float
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 from . import sanity
 from . import convert
