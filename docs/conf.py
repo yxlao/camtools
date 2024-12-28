@@ -8,13 +8,33 @@
 
 import os
 import sys
+import subprocess
+import tomli
 
-sys.path.insert(0, os.path.abspath(".."))
+# Get script directory and workspace root
+script_dir = os.path.dirname(os.path.abspath(__file__))
+workspace_root = os.path.abspath(os.path.join(script_dir, ".."))
+sys.path.insert(0, workspace_root)
+
+# Read version from pyproject.toml
+with open(os.path.join(workspace_root, "pyproject.toml"), "r", encoding="utf-8") as f:
+    pyproject = tomli.loads(f.read())
+version = pyproject["project"]["version"]
+
+# Get git commit hash
+try:
+    git_hash = (
+        subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
+        .decode("ascii")
+        .strip()
+    )
+    release = f"{version}+{git_hash}"
+except subprocess.CalledProcessError:
+    release = version
 
 project = "CamTools"
 copyright = "2024, Yixing Lao"
 author = "Yixing Lao"
-release = "0.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

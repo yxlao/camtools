@@ -43,6 +43,7 @@ docs = [
   "sphinx-rtd-theme",
   "myst-parser",
   "furo",
+  "tomli",
 ]
 torch = [
   "torch>=1.8.0",

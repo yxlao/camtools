@@ -1,5 +1,5 @@
-Camera Coordinate System
-========================
+Camera Coordinates
+==================
 
 A homogeneous point ``[X, Y, Z, 1]`` in the world coordinate can be projected to a
 homogeneous point ``[x, y, 1]`` in the image (pixel) coordinate using the
