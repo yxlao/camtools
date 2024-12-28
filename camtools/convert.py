@@ -520,7 +520,8 @@ def K_R_t_to_P(
     t: Float[np.ndarray, "3"],
 ) -> Float[np.ndarray, "3 4"]:
     """
-    Compute projection matrix from intrinsic matrix, rotation matrix, and translation vector.
+    Compute projection matrix from intrinsic matrix, rotation matrix, and
+    translation vector.
 
     Args:
         K: Intrinsic matrix of shape (3, 3).
@@ -541,7 +542,8 @@ def K_R_t_to_W2P(
     t: Float[np.ndarray, "3"],
 ) -> Float[np.ndarray, "4 4"]:
     """
-    Compute world-to-projection matrix from intrinsic matrix, rotation matrix, and translation vector.
+    Compute world-to-projection matrix from intrinsic matrix, rotation matrix,
+    and translation vector.
 
     Args:
         K: Intrinsic matrix of shape (3, 3).
@@ -559,7 +561,8 @@ def K_T_to_W2P(
     T: Float[np.ndarray, "4 4"],
 ) -> Float[np.ndarray, "4 4"]:
     """
-    Compute world-to-projection matrix from intrinsic matrix and transformation matrix.
+    Compute world-to-projection matrix from intrinsic matrix and transformation
+    matrix.
 
     Args:
         K: Intrinsic matrix of shape (3, 3).
