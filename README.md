@@ -4,10 +4,13 @@
     <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camtools_logo_light.png" width="360">
   </picture>
 </p>
+
 <h1 align="center">CamTools: Camera Tools for Computer Vision</h1>
 
 <p align="center">
-  <a href="https://camtools.readthedocs.io/"><strong>Docs</strong></a> | <a href="https://github.com/yxlao/camtools"><strong>Source Code</strong></a> | <a href="#installation"><strong>Installation</strong></a>
+  <a href="https://camtools.readthedocs.io/"><strong>Docs</strong></a> |
+  <a href="#camera-coordinate-system"><strong>Camera Coordinates</strong></a> |
+  <a href="#installation"><strong>Installation</strong></a>
 </p>
 
 
@@ -24,8 +27,13 @@ clear and easy-to-use APIs.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_dark.png">
-    <img alt="CamTools Logo" src="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_light.png" width="520">
+    <source
+      media="(prefers-color-scheme: dark)"
+      srcset="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_dark.png">
+    <img
+      alt="CamTools Logo"
+      src="https://raw.githubusercontent.com/yxlao/camtools/main/camtools/assets/camera_coordinates_light.png"
+      width="520">
   </picture>
 </p>
 
