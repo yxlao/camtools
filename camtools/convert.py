@@ -189,7 +189,8 @@ def T_to_pose(T):
         T: Extrinsic matrix (world-to-camera) of shape (4, 4).
 
     Returns:
-        pose: Pose matrix (camera-to-world) of shape (4, 4), which is the inverse of T.
+        pose: Pose matrix (camera-to-world) of shape (4, 4),
+              which is the inverse of T.
     """
     sanity.assert_T(T)
     return np.linalg.inv(T)
@@ -203,7 +204,8 @@ def pose_to_T(pose):
         pose: Pose matrix (camera-to-world) of shape (4, 4).
 
     Returns:
-        T: Extrinsic matrix (world-to-camera) of shape (4, 4), which is the inverse of pose.
+        T: Extrinsic matrix (world-to-camera) of shape (4, 4),
+           which is the inverse of pose.
     """
     sanity.assert_T(pose)
     return np.linalg.inv(pose)
@@ -446,7 +448,8 @@ def P_to_K_R_t(
     P: Float[np.ndarray, "3 4"],
 ) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "3 3"], Float[np.ndarray, "3"]]:
     """
-    Decompose projection matrix P into intrinsic matrix K, rotation matrix R, and translation vector t.
+    Decompose projection matrix P into intrinsic matrix K, rotation matrix R,
+    and translation vector t.
 
     Args:
         P: Projection matrix of shape (3, 4).
