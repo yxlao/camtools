@@ -32,7 +32,7 @@ clear and easy-to-use APIs.
    coordinates
    installation
    contributing
-   api/modules
+   api
 
 Indices and tables
 ==================
