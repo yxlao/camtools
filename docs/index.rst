@@ -32,11 +32,6 @@ clear and easy-to-use APIs.
    coordinates
    installation
    contributing
-
-.. toctree::
-   :maxdepth: 2
-   :caption: API
-
    api
 
 Indices and tables
