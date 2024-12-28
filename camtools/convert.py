@@ -153,7 +153,13 @@ def R_to_quat(R):
 
 def T_to_C(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "3"]:
     """
-    Convert T to camera center.
+    Convert extrinsic matrix T to camera center C.
+
+    Args:
+        T: Extrinsic matrix (world-to-camera) of shape (4, 4).
+
+    Returns:
+        C: Camera center in world coordinates of shape (3,).
     """
     sanity.assert_T(T)
     R, t = T[:3, :3], T[:3, 3]
@@ -162,7 +168,13 @@ def T_to_C(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "3"]:
 
 def pose_to_C(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "3"]:
     """
-    Convert pose to camera center.
+    Convert pose matrix to camera center C.
+
+    Args:
+        pose: Pose matrix (camera-to-world) of shape (4, 4).
+
+    Returns:
+        C: Camera center in world coordinates of shape (3,).
     """
     sanity.assert_pose(pose)
     C = pose[:3, 3]
@@ -171,7 +183,13 @@ def pose_to_C(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "3"]:
 
 def T_to_pose(T):
     """
-    Convert T to pose.
+    Convert extrinsic matrix T to pose matrix.
+
+    Args:
+        T: Extrinsic matrix (world-to-camera) of shape (4, 4).
+
+    Returns:
+        pose: Pose matrix (camera-to-world) of shape (4, 4), which is the inverse of T.
     """
     sanity.assert_T(T)
     return np.linalg.inv(T)
@@ -179,7 +197,13 @@ def T_to_pose(T):
 
 def pose_to_T(pose):
     """
-    Convert pose to T.
+    Convert pose matrix to extrinsic matrix T.
+
+    Args:
+        pose: Pose matrix (camera-to-world) of shape (4, 4).
+
+    Returns:
+        T: Extrinsic matrix (world-to-camera) of shape (4, 4), which is the inverse of pose.
     """
     sanity.assert_T(pose)
     return np.linalg.inv(pose)
@@ -296,7 +320,14 @@ def R_t_to_C(
     t: Float[np.ndarray, "3"],
 ) -> Float[np.ndarray, "3"]:
     """
-    Convert R, t to camera center
+    Convert rotation matrix R and translation vector t to camera center C.
+
+    Args:
+        R: Rotation matrix of shape (3, 3).
+        t: Translation vector of shape (3,).
+
+    Returns:
+        C: Camera center in world coordinates of shape (3,).
     """
     # Equivalently,
     # C = - R.T @ t
@@ -314,14 +345,14 @@ def R_C_to_t(
     C: Float[np.ndarray, "3"],
 ) -> Float[np.ndarray, "3"]:
     """
-    Convert rotation matrix and camera center to translation vector.
+    Convert rotation matrix R and camera center C to translation vector t.
 
     Args:
         R: Rotation matrix of shape (3, 3) or (N, 3, 3).
-        C: Camera center of shape (3,) or (N, 3).
+        C: Camera center in world coordinates of shape (3,) or (N, 3).
 
     Returns:
-        Translation vector of shape (3,) or (N, 3).
+        t: Translation vector of shape (3,) or (N, 3).
     """
     # https://github.com/isl-org/StableViewSynthesis/blob/main/data/create_custom_track.py
     C = C.reshape(-1, 3, 1)
@@ -376,14 +407,14 @@ def R_t_to_T(
     t: Float[np.ndarray, "3"],
 ) -> Float[np.ndarray, "4 4"]:
     """
-    Convert rotation matrix and translation vector to transformation matrix.
+    Convert rotation matrix R and translation vector t to extrinsic matrix T.
 
     Args:
         R: Rotation matrix of shape (3, 3).
         t: Translation vector of shape (3,).
 
     Returns:
-        Transformation matrix of shape (4, 4).
+        T: Extrinsic matrix (world-to-camera) of shape (4, 4).
     """
     T = np.eye(4)
     T[:3, :3] = R
@@ -394,6 +425,17 @@ def R_t_to_T(
 def T_to_R_t(
     T: Float[np.ndarray, "4 4"],
 ) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "3"]]:
+    """
+    Decompose extrinsic matrix T into rotation matrix R and translation vector t.
+
+    Args:
+        T: Extrinsic matrix (world-to-camera) of shape (4, 4).
+
+    Returns:
+        Tuple containing:
+        - R: Rotation matrix of shape (3, 3)
+        - t: Translation vector of shape (3,)
+    """
     sanity.assert_T(T)
     R = T[:3, :3]
     t = T[:3, 3]
@@ -404,7 +446,7 @@ def P_to_K_R_t(
     P: Float[np.ndarray, "3 4"],
 ) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "3 3"], Float[np.ndarray, "3"]]:
     """
-    Decompose projection matrix into intrinsic matrix, rotation matrix, and translation vector.
+    Decompose projection matrix P into intrinsic matrix K, rotation matrix R, and translation vector t.
 
     Args:
         P: Projection matrix of shape (3, 4).
@@ -437,7 +479,7 @@ def P_to_K_T(
     P: Float[np.ndarray, "3 4"],
 ) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "4 4"]]:
     """
-    Decompose projection matrix into intrinsic matrix and transformation matrix.
+    Decompose projection matrix P into intrinsic matrix K and extrinsic matrix T.
 
     Args:
         P: Projection matrix of shape (3, 4).
@@ -445,7 +487,7 @@ def P_to_K_T(
     Returns:
         Tuple containing:
         - K: Intrinsic matrix of shape (3, 3)
-        - T: Transformation matrix of shape (4, 4)
+        - T: Extrinsic matrix (world-to-camera) of shape (4, 4)
     """
     K, R, t = P_to_K_R_t(P)
     T = R_t_to_T(R, t)
@@ -457,14 +499,14 @@ def K_T_to_P(
     T: Float[np.ndarray, "4 4"],
 ) -> Float[np.ndarray, "3 4"]:
     """
-    Compute projection matrix from intrinsic matrix and transformation matrix.
+    Compute projection matrix P from intrinsic matrix K and extrinsic matrix T.
 
     Args:
         K: Intrinsic matrix of shape (3, 3).
-        T: Transformation matrix of shape (4, 4).
+        T: Extrinsic matrix (world-to-camera) of shape (4, 4).
 
     Returns:
-        Projection matrix of shape (3, 4).
+        P: Projection matrix of shape (3, 4).
     """
     return K @ T[:3, :]
 
@@ -518,7 +560,7 @@ def K_T_to_W2P(
 
     Args:
         K: Intrinsic matrix of shape (3, 3).
-        T: Transformation matrix of shape (4, 4).
+        T: Extrinsic matrix (world-to-camera matrix) of shape (4, 4).
 
     Returns:
         World-to-projection matrix of shape (4, 4).
