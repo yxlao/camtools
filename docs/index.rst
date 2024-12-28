@@ -26,12 +26,17 @@ clear and easy-to-use APIs.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Docs
 
    features
    coordinates
    installation
    contributing
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API
+
    api
 
 Indices and tables
