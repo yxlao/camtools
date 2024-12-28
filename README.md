@@ -256,6 +256,9 @@ the beginning of the README.
 To build and view the documentation locally:
 
 ```bash
+# Install documentation dependencies
+pip install -e .[docs]
+
 # Build the documentation
 cd docs
 make clean && make html
@@ -268,6 +271,11 @@ python -m http.server 8000 --directory _build/html
 ```
 
 Then open your browser and navigate to `http://localhost:8000` to view the documentation.
+
+The documentation is also automatically built by GitHub Actions on pull requests and pushes to main. After merging to main, you can view:
+
+- Public documentation at https://camtools.readthedocs.io/en/latest/
+- Admin panel at https://app.readthedocs.org/projects/camtools/
 
 ## Contributing
 
