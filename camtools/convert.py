@@ -128,6 +128,15 @@ def from_homo(array):
 
 
 def R_to_quat(R):
+    """
+    Convert rotation matrix to quaternion.
+
+    Args:
+        R: Rotation matrix of shape (3, 3) or (N, 3, 3).
+
+    Returns:
+        Quaternion of shape (4,) or (N, 4). The quaternion is normalized.
+    """
     # https://github.com/isl-org/StableViewSynthesis/tree/main/co
     R = R.reshape(-1, 3, 3)
     q = np.empty((R.shape[0], 4), dtype=R.dtype)
@@ -304,6 +313,16 @@ def R_C_to_t(
     R: Float[np.ndarray, "3 3"],
     C: Float[np.ndarray, "3"],
 ) -> Float[np.ndarray, "3"]:
+    """
+    Convert rotation matrix and camera center to translation vector.
+
+    Args:
+        R: Rotation matrix of shape (3, 3) or (N, 3, 3).
+        C: Camera center of shape (3,) or (N, 3).
+
+    Returns:
+        Translation vector of shape (3,) or (N, 3).
+    """
     # https://github.com/isl-org/StableViewSynthesis/blob/main/data/create_custom_track.py
     C = C.reshape(-1, 3, 1)
     R = R.reshape(-1, 3, 3)
@@ -316,6 +335,17 @@ def roll_pitch_yaw_to_R(
     pitch: float,
     yaw: float,
 ) -> Float[np.ndarray, "3 3"]:
+    """
+    Convert roll, pitch, and yaw angles to a rotation matrix.
+
+    Args:
+        roll: Rotation around the x-axis in radians.
+        pitch: Rotation around the y-axis in radians.
+        yaw: Rotation around the z-axis in radians.
+
+    Returns:
+        Rotation matrix of shape (3, 3).
+    """
     rx_roll = np.array(
         [
             [1, 0, 0],
@@ -345,6 +375,16 @@ def R_t_to_T(
     R: Float[np.ndarray, "3 3"],
     t: Float[np.ndarray, "3"],
 ) -> Float[np.ndarray, "4 4"]:
+    """
+    Convert rotation matrix and translation vector to transformation matrix.
+
+    Args:
+        R: Rotation matrix of shape (3, 3).
+        t: Translation vector of shape (3,).
+
+    Returns:
+        Transformation matrix of shape (4, 4).
+    """
     T = np.eye(4)
     T[:3, :3] = R
     T[:3, 3] = t
@@ -363,6 +403,18 @@ def T_to_R_t(
 def P_to_K_R_t(
     P: Float[np.ndarray, "3 4"],
 ) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "3 3"], Float[np.ndarray, "3"]]:
+    """
+    Decompose projection matrix into intrinsic matrix, rotation matrix, and translation vector.
+
+    Args:
+        P: Projection matrix of shape (3, 4).
+
+    Returns:
+        Tuple containing:
+        - K: Intrinsic matrix of shape (3, 3)
+        - R: Rotation matrix of shape (3, 3)
+        - t: Translation vector of shape (3,)
+    """
     (
         camera_matrix,
         rot_matrix,
@@ -384,6 +436,17 @@ def P_to_K_R_t(
 def P_to_K_T(
     P: Float[np.ndarray, "3 4"],
 ) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "4 4"]]:
+    """
+    Decompose projection matrix into intrinsic matrix and transformation matrix.
+
+    Args:
+        P: Projection matrix of shape (3, 4).
+
+    Returns:
+        Tuple containing:
+        - K: Intrinsic matrix of shape (3, 3)
+        - T: Transformation matrix of shape (4, 4)
+    """
     K, R, t = P_to_K_R_t(P)
     T = R_t_to_T(R, t)
     return K, T
@@ -393,6 +456,16 @@ def K_T_to_P(
     K: Float[np.ndarray, "3 3"],
     T: Float[np.ndarray, "4 4"],
 ) -> Float[np.ndarray, "3 4"]:
+    """
+    Compute projection matrix from intrinsic matrix and transformation matrix.
+
+    Args:
+        K: Intrinsic matrix of shape (3, 3).
+        T: Transformation matrix of shape (4, 4).
+
+    Returns:
+        Projection matrix of shape (3, 4).
+    """
     return K @ T[:3, :]
 
 
@@ -401,6 +474,17 @@ def K_R_t_to_P(
     R: Float[np.ndarray, "3 3"],
     t: Float[np.ndarray, "3"],
 ) -> Float[np.ndarray, "3 4"]:
+    """
+    Compute projection matrix from intrinsic matrix, rotation matrix, and translation vector.
+
+    Args:
+        K: Intrinsic matrix of shape (3, 3).
+        R: Rotation matrix of shape (3, 3).
+        t: Translation vector of shape (3,).
+
+    Returns:
+        Projection matrix of shape (3, 4).
+    """
     T = R_t_to_T(R, t)
     P = K @ T[:3, :]
     return P
@@ -411,6 +495,17 @@ def K_R_t_to_W2P(
     R: Float[np.ndarray, "3 3"],
     t: Float[np.ndarray, "3"],
 ) -> Float[np.ndarray, "4 4"]:
+    """
+    Compute world-to-projection matrix from intrinsic matrix, rotation matrix, and translation vector.
+
+    Args:
+        K: Intrinsic matrix of shape (3, 3).
+        R: Rotation matrix of shape (3, 3).
+        t: Translation vector of shape (3,).
+
+    Returns:
+        World-to-projection matrix of shape (4, 4).
+    """
     return P_to_W2P(K_R_t_to_P(K, R, t))
 
 
@@ -418,6 +513,16 @@ def K_T_to_W2P(
     K: Float[np.ndarray, "3 3"],
     T: Float[np.ndarray, "4 4"],
 ) -> Float[np.ndarray, "4 4"]:
+    """
+    Compute world-to-projection matrix from intrinsic matrix and transformation matrix.
+
+    Args:
+        K: Intrinsic matrix of shape (3, 3).
+        T: Transformation matrix of shape (4, 4).
+
+    Returns:
+        World-to-projection matrix of shape (4, 4).
+    """
     R, t = T_to_R_t(T)
     return K_R_t_to_W2P(K, R, t)
 
@@ -425,6 +530,15 @@ def K_T_to_W2P(
 def P_to_W2P(
     P: Float[np.ndarray, "3 4"],
 ) -> Float[np.ndarray, "4 4"]:
+    """
+    Convert projection matrix to world-to-projection matrix.
+
+    Args:
+        P: Projection matrix of shape (3, 4).
+
+    Returns:
+        World-to-projection matrix of shape (4, 4).
+    """
     sanity.assert_shape_3x4(P, name="P")
     W2P = convert.pad_0001(P)
     return W2P
@@ -433,6 +547,15 @@ def P_to_W2P(
 def W2P_to_P(
     W2P: Float[np.ndarray, "4 4"],
 ) -> Float[np.ndarray, "3 4"]:
+    """
+    Convert world-to-projection matrix to projection matrix.
+
+    Args:
+        W2P: World-to-projection matrix of shape (4, 4).
+
+    Returns:
+        Projection matrix of shape (3, 4).
+    """
     if W2P.shape != (4, 4):
         raise ValueError(f"Expected W2P of shape (4, 4), but got {W2P.shape}.")
     P = convert.rm_pad_0001(W2P, check_vals=True)
@@ -445,6 +568,18 @@ def fx_fy_cx_cy_to_K(
     cx: float,
     cy: float,
 ) -> Float[np.ndarray, "3 3"]:
+    """
+    Create intrinsic matrix from focal lengths and principal point coordinates.
+
+    Args:
+        fx: Focal length in x direction.
+        fy: Focal length in y direction.
+        cx: Principal point x coordinate.
+        cy: Principal point y coordinate.
+
+    Returns:
+        Intrinsic matrix of shape (3, 3).
+    """
     K = np.zeros((3, 3))
     K[0, 0] = fx
     K[1, 1] = fy
@@ -457,6 +592,19 @@ def fx_fy_cx_cy_to_K(
 def K_to_fx_fy_cx_cy(
     K: Float[np.ndarray, "3 3"],
 ) -> Tuple[float, float, float, float]:
+    """
+    Extract focal lengths and principal point coordinates from intrinsic matrix.
+
+    Args:
+        K: Intrinsic matrix of shape (3, 3).
+
+    Returns:
+        Tuple containing:
+        - fx: Focal length in x direction
+        - fy: Focal length in y direction
+        - cx: Principal point x coordinate
+        - cy: Principal point y coordinate
+    """
     fx = K[0, 0]
     fy = K[1, 1]
     cx = K[0, 2]
