@@ -4,9 +4,8 @@ Functions for projecting 2D->3D or 3D->2D.
 
 import cv2
 import numpy as np
+from typing import Optional, Tuple, Union
 from jaxtyping import Float
-from typing import Union, Tuple, Optional
-
 from . import convert, image, sanity
 
 
@@ -14,7 +13,7 @@ def points_to_pixels(
     points: Float[np.ndarray, "n 3"],
     K: Float[np.ndarray, "3 3"],
     T: Float[np.ndarray, "4 4"],
-) -> Float[np.ndarray, "N 2"]:
+) -> Float[np.ndarray, "n 2"]:
     """
     Project points in world coordinates to pixel coordinates.
 

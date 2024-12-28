@@ -3,12 +3,16 @@ Functions for transforming points in 3D space.
 """
 
 import numpy as np
+from jaxtyping import Float
 
 from . import sanity
 from . import convert
 
 
-def transform_points(points, transform_mat):
+def transform_points(
+    points: Float[np.ndarray, "n 3"],
+    transform_mat: Float[np.ndarray, "4 4"],
+) -> Float[np.ndarray, "n 3"]:
     """
     Transform points by a 4x4 matrix via homogenous coordinates projection.
 
@@ -29,7 +33,10 @@ def transform_points(points, transform_mat):
     return points_transformed
 
 
-def transform_point(point, transform_mat):
+def transform_point(
+    point: Float[np.ndarray, "3"],
+    transform_mat: Float[np.ndarray, "4 4"],
+) -> Float[np.ndarray, "3"]:
     """
     Transform a single point by a 4x4 matrix via homogenous coordinates projection.
 

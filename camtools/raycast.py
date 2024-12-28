@@ -1,12 +1,17 @@
 import numpy as np
 import open3d as o3d
+from typing import Tuple
 from jaxtyping import Float
 
 from . import sanity
 from . import convert
 
 
-def gen_rays(K, T, pixels):
+def gen_rays(
+    K: Float[np.ndarray, "3 3"],
+    T: Float[np.ndarray, "4 4"],
+    pixels: Float[np.ndarray, "n 2"],
+) -> Tuple[Float[np.ndarray, "n 3"], Float[np.ndarray, "n 3"]]:
     """
     Args:
         pixels: image coordinates, (N, 2), order (col, row).
@@ -46,7 +51,7 @@ def mesh_to_im_distance(
     T: Float[np.ndarray, "4 4"],
     height: int,
     width: int,
-):
+) -> Float[np.ndarray, "h w"]:
     """
     Cast mesh to a distance image given camera parameters and image dimensions.
     Each pixel contains the distance between camera center to the mesh surface.
@@ -85,7 +90,7 @@ def mesh_to_im_distances(
     Ts: Float[np.ndarray, "n 4 4"],
     height: int,
     width: int,
-):
+) -> Float[np.ndarray, "n h w"]:
     """
     Cast mesh to distance images given multiple camera parameters and image
     dimensions. Each distance image contains the distance between camera center
@@ -194,7 +199,13 @@ def mesh_to_im_depths(
     return im_depths
 
 
-def mesh_to_mask(mesh, K, T, height, width):
+def mesh_to_mask(
+    mesh: o3d.geometry.TriangleMesh,
+    K: Float[np.ndarray, "3 3"],
+    T: Float[np.ndarray, "4 4"],
+    height: int,
+    width: int,
+) -> Float[np.ndarray, "h w"]:
     """
     Cast mesh to mask image given camera parameters and image dimensions.
 

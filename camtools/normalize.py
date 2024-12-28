@@ -1,7 +1,8 @@
 import numpy as np
+from jaxtyping import Float
 
 
-def compute_normalize_mat(points):
+def compute_normalize_mat(points: Float[np.ndarray, "n 3"]) -> Float[np.ndarray, "4 4"]:
     """
     Args:
         points: (N, 3) numpy array.
@@ -46,7 +47,19 @@ def compute_normalize_mat(points):
     return s_mat @ t_mat
 
 
-def report_points_range(points):
+def report_points_range(points: Float[np.ndarray, "n 3"]) -> None:
+    """
+    Report statistics about the points.
+
+    Args:
+        points: (N, 3) numpy array.
+
+    Prints:
+        - Center of the points
+        - Maximum radius with respect to center
+        - Maximum radius with respect to origin
+        - Range of points (min and max coordinates)
+    """
     points_center = points.mean(axis=0)
     points_radii_wrt_center = np.linalg.norm(points - points_center, axis=1)
     points_radii_wrt_origin = np.linalg.norm(points, axis=1)

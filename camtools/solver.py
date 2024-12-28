@@ -1,11 +1,14 @@
 import numpy as np
-
-from camtools import sanity
+from typing import Tuple
 from jaxtyping import Float
 import open3d as o3d
+from . import sanity
 
 
-def line_intersection_3d(src_points=None, dst_points=None):
+def line_intersection_3d(
+    src_points: Float[np.ndarray, "n 3"],
+    dst_points: Float[np.ndarray, "n 3"],
+) -> Float[np.ndarray, "3"]:
     """
     Estimate 3D intersection of lines with least squares.
 
@@ -63,7 +66,12 @@ def line_intersection_3d(src_points=None, dst_points=None):
     return np.linalg.solve(s, c)
 
 
-def closest_points_of_line_pair(src_o, src_d, dst_o, dst_d):
+def closest_points_of_line_pair(
+    src_o: Float[np.ndarray, "3"],
+    src_d: Float[np.ndarray, "3"],
+    dst_o: Float[np.ndarray, "3"],
+    dst_d: Float[np.ndarray, "3"],
+) -> Tuple[Float[np.ndarray, "3"], Float[np.ndarray, "3"]]:
     """
     Find the closest points of two lines. The distance between the closest
     points is the shortest distance between the two lines. Used the batched
@@ -95,7 +103,12 @@ def closest_points_of_line_pair(src_o, src_d, dst_o, dst_d):
     return src_ps[0], dst_ps[0]
 
 
-def closest_points_of_line_pairs(src_os, src_ds, dst_os, dst_ds):
+def closest_points_of_line_pairs(
+    src_os: Float[np.ndarray, "n 3"],
+    src_ds: Float[np.ndarray, "n 3"],
+    dst_os: Float[np.ndarray, "n 3"],
+    dst_ds: Float[np.ndarray, "n 3"],
+) -> Tuple[Float[np.ndarray, "n 3"], Float[np.ndarray, "n 3"]]:
     """
     Find the closest points of two lines. The distance between the closest
     points is the shortest distance between the two lines.
@@ -147,7 +160,10 @@ def closest_points_of_line_pairs(src_os, src_ds, dst_os, dst_ds):
     return src_ps, dst_ps
 
 
-def point_plane_distance_three_points(point, plane_points):
+def point_plane_distance_three_points(
+    point: Float[np.ndarray, "3"],
+    plane_points: Float[np.ndarray, "3 3"],
+) -> float:
     """
     Compute the distance between a point and a plane defined by three points.
 

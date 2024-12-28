@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import open3d as o3d
 from jaxtyping import Float
-from typing import Optional
+from typing import Optional, Tuple
 
 from . import sanity
 from . import convert
@@ -142,7 +142,7 @@ def R_to_quat(R):
     return q.squeeze()
 
 
-def T_to_C(T):
+def T_to_C(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "3"]:
     """
     Convert T to camera center.
     """
@@ -151,7 +151,7 @@ def T_to_C(T):
     return R_t_to_C(R, t)
 
 
-def pose_to_C(pose):
+def pose_to_C(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "3"]:
     """
     Convert pose to camera center.
     """
@@ -176,7 +176,7 @@ def pose_to_T(pose):
     return np.linalg.inv(pose)
 
 
-def T_opengl_to_opencv(T):
+def T_opengl_to_opencv(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
     """
     Convert T from OpenGL convention to OpenCV convention.
 
@@ -204,7 +204,7 @@ def T_opengl_to_opencv(T):
     return T
 
 
-def T_opencv_to_opengl(T):
+def T_opencv_to_opengl(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
     """
     Convert T from OpenCV convention to OpenGL convention.
 
@@ -232,7 +232,7 @@ def T_opencv_to_opengl(T):
     return T
 
 
-def pose_opengl_to_opencv(pose):
+def pose_opengl_to_opencv(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
     """
     Convert pose from OpenGL convention to OpenCV convention.
 
@@ -257,7 +257,7 @@ def pose_opengl_to_opencv(pose):
     return pose
 
 
-def pose_opencv_to_opengl(pose):
+def pose_opencv_to_opengl(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
     """
     Convert pose from OpenCV convention to OpenGL convention.
 
@@ -282,7 +282,10 @@ def pose_opencv_to_opengl(pose):
     return pose
 
 
-def R_t_to_C(R, t):
+def R_t_to_C(
+    R: Float[np.ndarray, "3 3"],
+    t: Float[np.ndarray, "3"],
+) -> Float[np.ndarray, "3"]:
     """
     Convert R, t to camera center
     """
@@ -297,7 +300,10 @@ def R_t_to_C(R, t):
     return C.squeeze()
 
 
-def R_C_to_t(R, C):
+def R_C_to_t(
+    R: Float[np.ndarray, "3 3"],
+    C: Float[np.ndarray, "3"],
+) -> Float[np.ndarray, "3"]:
     # https://github.com/isl-org/StableViewSynthesis/blob/main/data/create_custom_track.py
     C = C.reshape(-1, 3, 1)
     R = R.reshape(-1, 3, 3)
@@ -305,7 +311,11 @@ def R_C_to_t(R, C):
     return t.squeeze()
 
 
-def roll_pitch_yaw_to_R(roll, pitch, yaw):
+def roll_pitch_yaw_to_R(
+    roll: float,
+    pitch: float,
+    yaw: float,
+) -> Float[np.ndarray, "3 3"]:
     rx_roll = np.array(
         [
             [1, 0, 0],
@@ -331,21 +341,28 @@ def roll_pitch_yaw_to_R(roll, pitch, yaw):
     return R
 
 
-def R_t_to_T(R, t):
+def R_t_to_T(
+    R: Float[np.ndarray, "3 3"],
+    t: Float[np.ndarray, "3"],
+) -> Float[np.ndarray, "4 4"]:
     T = np.eye(4)
     T[:3, :3] = R
     T[:3, 3] = t
     return T
 
 
-def T_to_R_t(T):
+def T_to_R_t(
+    T: Float[np.ndarray, "4 4"],
+) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "3"]]:
     sanity.assert_T(T)
     R = T[:3, :3]
     t = T[:3, 3]
     return R, t
 
 
-def P_to_K_R_t(P):
+def P_to_K_R_t(
+    P: Float[np.ndarray, "3 4"],
+) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "3 3"], Float[np.ndarray, "3"]]:
     (
         camera_matrix,
         rot_matrix,
@@ -364,45 +381,70 @@ def P_to_K_R_t(P):
     return K, R, t.squeeze()
 
 
-def P_to_K_T(P):
+def P_to_K_T(
+    P: Float[np.ndarray, "3 4"],
+) -> Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "4 4"]]:
     K, R, t = P_to_K_R_t(P)
     T = R_t_to_T(R, t)
     return K, T
 
 
-def K_T_to_P(K, T):
+def K_T_to_P(
+    K: Float[np.ndarray, "3 3"],
+    T: Float[np.ndarray, "4 4"],
+) -> Float[np.ndarray, "3 4"]:
     return K @ T[:3, :]
 
 
-def K_R_t_to_P(K, R, t):
+def K_R_t_to_P(
+    K: Float[np.ndarray, "3 3"],
+    R: Float[np.ndarray, "3 3"],
+    t: Float[np.ndarray, "3"],
+) -> Float[np.ndarray, "3 4"]:
     T = R_t_to_T(R, t)
     P = K @ T[:3, :]
     return P
 
 
-def K_R_t_to_W2P(K, R, t):
+def K_R_t_to_W2P(
+    K: Float[np.ndarray, "3 3"],
+    R: Float[np.ndarray, "3 3"],
+    t: Float[np.ndarray, "3"],
+) -> Float[np.ndarray, "4 4"]:
     return P_to_W2P(K_R_t_to_P(K, R, t))
 
 
-def K_T_to_W2P(K, T):
+def K_T_to_W2P(
+    K: Float[np.ndarray, "3 3"],
+    T: Float[np.ndarray, "4 4"],
+) -> Float[np.ndarray, "4 4"]:
     R, t = T_to_R_t(T)
     return K_R_t_to_W2P(K, R, t)
 
 
-def P_to_W2P(P):
+def P_to_W2P(
+    P: Float[np.ndarray, "3 4"],
+) -> Float[np.ndarray, "4 4"]:
     sanity.assert_shape_3x4(P, name="P")
     W2P = convert.pad_0001(P)
     return W2P
 
 
-def W2P_to_P(W2P):
+def W2P_to_P(
+    W2P: Float[np.ndarray, "4 4"],
+) -> Float[np.ndarray, "3 4"]:
     if W2P.shape != (4, 4):
         raise ValueError(f"Expected W2P of shape (4, 4), but got {W2P.shape}.")
     P = convert.rm_pad_0001(W2P, check_vals=True)
     return P
 
 
-def fx_fy_cx_cy_to_K(fx, fy, cx, cy):
+def fx_fy_cx_cy_to_K(
+    fx: float,
+    fy: float,
+    cx: float,
+    cy: float,
+) -> Float[np.ndarray, "3 3"]:
     K = np.zeros((3, 3))
     K[0, 0] = fx
     K[1, 1] = fy
@@ -412,7 +454,9 @@ def fx_fy_cx_cy_to_K(fx, fy, cx, cy):
     return K
 
 
-def K_to_fx_fy_cx_cy(K):
+def K_to_fx_fy_cx_cy(
+    K: Float[np.ndarray, "3 3"],
+) -> Tuple[float, float, float, float]:
     fx = K[0, 0]
     fy = K[1, 1]
     cx = K[0, 2]
@@ -421,7 +465,11 @@ def K_to_fx_fy_cx_cy(K):
     return float(fx), float(fy), float(cx), float(cy)
 
 
-def euler_to_R(yaw, pitch, roll):
+def euler_to_R(
+    yaw: float,
+    pitch: float,
+    roll: float,
+) -> Float[np.ndarray, "3 3"]:
     """
     Convert Euler angles to rotation matrix. Given a unit vector x, R @ x is x
     rotated by applying yaw, pitch, and roll consecutively. Ref:
@@ -463,7 +511,11 @@ def euler_to_R(yaw, pitch, roll):
     return R
 
 
-def spherical_to_T_towards_origin(radius, theta, phi):
+def spherical_to_T_towards_origin(
+    radius: float,
+    theta: float,
+    phi: float,
+) -> Float[np.ndarray, "4 4"]:
     """
     Convert spherical coordinates (ISO convention) to T, where the cameras looks
     at the origin from a distance (radius), and the camera up direction alines

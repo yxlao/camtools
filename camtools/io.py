@@ -1,7 +1,8 @@
 import cv2
-from cv2 import CV_32F
 import numpy as np
 from pathlib import Path
+from typing import Union, Optional
+from jaxtyping import UInt8, Float
 
 
 def is_jpg_path(path):
@@ -12,7 +13,16 @@ def is_png_path(path):
     return Path(path).suffix.lower() in [".png"]
 
 
-def imwrite(im_path, im, quality: int = 95):
+def imwrite(
+    im_path: Union[str, Path],
+    im: Union[
+        UInt8[np.ndarray, "h w"],
+        UInt8[np.ndarray, "h w 3"],
+        Float[np.ndarray, "h w"],
+        Float[np.ndarray, "h w 3"],
+    ],
+    quality: int = 95,
+) -> None:
     """
     Write image, with no surprises.
 
@@ -22,7 +32,7 @@ def imwrite(im_path, im, quality: int = 95):
             - Directory will be created if it does not exist.
         im: Numpy array.
             - ndims: Must be 1 or 3. Otherwise, an exception will be thrown.
-            - dtype: Must be uint8, float32, float64.
+            - dtype: Must be uint8, float32, or float64.
         quality: Quality of the output JPEG image, 1-100. Default is 95.
 
     Notes:
@@ -64,7 +74,11 @@ def imwrite(im_path, im, quality: int = 95):
         cv2.imwrite(str(im_path), im)
 
 
-def imwrite_depth(im_path, im, depth_scale=1000.0):
+def imwrite_depth(
+    im_path: Union[str, Path],
+    im: Float[np.ndarray, "h w"],
+    depth_scale: float = 1000.0,
+) -> None:
     """
     Multiply depths by depth_scale and write depth image to a 16-bit .png file.
 
@@ -72,6 +86,8 @@ def imwrite_depth(im_path, im, depth_scale=1000.0):
         im_path: Path to image. Must be "*.png". Folders will be created if
             necessary.
         im: Numpy array. Must be float32 or float64.
+        depth_scale: Scale factor to multiply depth values by before converting
+            to uint16. Default is 1000.0.
 
     Note:
         The user is responsible for defining what is invalid depth. E.g.,
@@ -102,7 +118,14 @@ def imwrite_depth(im_path, im, depth_scale=1000.0):
     cv2.imwrite(str(im_path), im)
 
 
-def imread(im_path, alpha_mode=None):
+def imread(
+    im_path: Union[str, Path],
+    alpha_mode: Optional[str] = None,
+) -> Union[
+    Float[np.ndarray, "h w"],
+    Float[np.ndarray, "h w 3"],
+    Float[np.ndarray, "h w 4"],
+]:
     """
     Read image, with no surprises.
     - Input : uint8 (divide by 255) or uint16 (divide by 65535) image.
@@ -118,6 +141,7 @@ def imread(im_path, alpha_mode=None):
             - "ignore": Ignore alpha channel. Returns an RGB image.
             - "white" : Fill with white background. Returns an RGB image.
             - "black" : Fill with black background. Returns an RGB image.
+
     Returns:
         An image in float32, and range from 0 to 1. Possible number of channels:
         - alpha_mode == None    : {1, 3}
@@ -205,12 +229,17 @@ def imread(im_path, alpha_mode=None):
     return im
 
 
-def imread_depth(im_path, depth_scale=1000.0):
+def imread_depth(
+    im_path: Union[str, Path],
+    depth_scale: float = 1000.0,
+) -> Float[np.ndarray, "h w"]:
     """
     Read depth image from a 16-bit .png file and divide depths by depth_scale.
 
     Args:
         im_path: Path to image. Must be "*.png".
+        depth_scale: Scale factor to divide depth values by after reading from
+            uint16. Default is 1000.0.
 
     Returns:
         Numpy array with dtype float32.

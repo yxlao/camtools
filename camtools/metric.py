@@ -1,10 +1,9 @@
 import numpy as np
-
-
 from skimage.metrics import peak_signal_noise_ratio
 from skimage.metrics import structural_similarity
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Optional, Union
+from jaxtyping import Float
 
 from . import image
 from . import io
@@ -13,9 +12,9 @@ from .util import _safe_torch as torch
 
 
 def image_psnr(
-    im_pd: np.ndarray,
-    im_gt: np.ndarray,
-    im_mask: np.ndarray = None,
+    im_pd: Float[np.ndarray, "h w 3"],
+    im_gt: Float[np.ndarray, "h w 3"],
+    im_mask: Optional[Float[np.ndarray, "h w"]] = None,
 ) -> float:
     """
     Computes PSNR given images in numpy arrays.
@@ -43,9 +42,9 @@ def image_psnr(
 
 
 def image_ssim(
-    im_pd: np.ndarray,
-    im_gt: np.ndarray,
-    im_mask: np.ndarray = None,
+    im_pd: Float[np.ndarray, "h w 3"],
+    im_gt: Float[np.ndarray, "h w 3"],
+    im_mask: Optional[Float[np.ndarray, "h w"]] = None,
 ) -> float:
     """
     Computes SSIM given images in numpy arrays.
@@ -79,9 +78,9 @@ def image_ssim(
 
 
 def image_lpips(
-    im_pd: np.ndarray,
-    im_gt: np.ndarray,
-    im_mask: np.ndarray = None,
+    im_pd: Float[np.ndarray, "h w 3"],
+    im_gt: Float[np.ndarray, "h w 3"],
+    im_mask: Optional[Float[np.ndarray, "h w"]] = None,
 ) -> float:
     """
     Computes LPIPS given images in numpy arrays.
@@ -122,9 +121,9 @@ image_lpips.static_vars = {}
 
 
 def image_psnr_with_paths(
-    im_pd_path: Path,
-    im_gt_path: Path,
-    im_mask_path: Path = None,
+    im_pd_path: Union[str, Path],
+    im_gt_path: Union[str, Path],
+    im_mask_path: Optional[Union[str, Path]] = None,
 ) -> float:
     """
     Args:
@@ -147,9 +146,9 @@ def image_psnr_with_paths(
 
 
 def image_ssim_with_paths(
-    im_pd_path: Path,
-    im_gt_path: Path,
-    im_mask_path: Path = None,
+    im_pd_path: Union[str, Path],
+    im_gt_path: Union[str, Path],
+    im_mask_path: Optional[Union[str, Path]] = None,
 ) -> float:
     """
     Args:
@@ -172,9 +171,9 @@ def image_ssim_with_paths(
 
 
 def image_lpips_with_paths(
-    im_pd_path: Path,
-    im_gt_path: Path,
-    im_mask_path: Path = None,
+    im_pd_path: Union[str, Path],
+    im_gt_path: Union[str, Path],
+    im_mask_path: Optional[Union[str, Path]] = None,
 ) -> float:
     """
     Args:
@@ -194,11 +193,13 @@ def image_lpips_with_paths(
 
 
 def load_im_pd_im_gt_im_mask_for_eval(
-    im_pd_path: Path,
-    im_gt_path: Path,
-    im_mask_path: Path = None,
+    im_pd_path: Union[str, Path],
+    im_gt_path: Union[str, Path],
+    im_mask_path: Optional[Union[str, Path]] = None,
     alpha_mode: str = "white",
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> Tuple[
+    Float[np.ndarray, "h w 3"], Float[np.ndarray, "h w 3"], Float[np.ndarray, "h w"]
+]:
     """
     Load prediction, ground truth, and mask images for image metric evaluation.
 
@@ -267,9 +268,9 @@ def load_im_pd_im_gt_im_mask_for_eval(
 
 
 def _check_inputs(
-    im_pd: np.ndarray,
-    im_gt: np.ndarray,
-    im_mask: np.ndarray = None,
+    im_pd: Float[np.ndarray, "h w 3"],
+    im_gt: Float[np.ndarray, "h w 3"],
+    im_mask: Float[np.ndarray, "h w"],
 ) -> None:
     # Instance type.
     sanity.assert_numpy(im_pd, name="im_pd")
