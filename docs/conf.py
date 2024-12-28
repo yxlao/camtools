@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath(".."))
 
 # Read version from pyproject.toml
 with open("../pyproject.toml", "rb") as f:
-    pyproject = tomli.loads(f.read())
+    pyproject = tomli.loads(f.read().decode("utf-8"))
 version = pyproject["project"]["version"]
 
 # Get git commit hash
