@@ -201,28 +201,42 @@ def load_im_pd_im_gt_im_mask_for_eval(
     Float[np.ndarray, "h w 3"], Float[np.ndarray, "h w 3"], Float[np.ndarray, "h w"]
 ]:
     """
-    Load prediction, ground truth, and mask images for image metric evaluation.
+    Load predicted image, ground truth image, and mask for evaluation.
+
+    This function loads and preprocesses images for evaluation:
+
+        1. Load predicted and ground truth images
+        2. Convert images to float32 and normalize to [0, 1]
+        3. Load or create evaluation mask
+        4. Apply mask to both images
+        5. Validate image shapes and types
 
     Args:
-        im_pd_path (Union[str, Path]): Path to the rendered image.
-        im_gt_path (Union[str, Path]): Path to the ground truth RGB or RGBA image.
-        im_mask_path (Optional[Union[str, Path]]): Path to the mask image. The mask
-            will be resized to the same (h, w) as im_gt.
-        alpha_mode (str): The mode for handling alpha channels. Currently only
-            "white" is supported. Options:
-            - "white": If im_gt contains alpha channel, it will be converted to RGB
-              with white background, and the alpha channel will be ignored.
-            - "keep": If im_gt contains alpha channel, it will be used as mask.
-              This mask can be overwritten by im_mask_path if provided.
-              (This option is not implemented yet.)
+        im_pd_path (str): Path to predicted image file.
+
+        im_gt_path (str): Path to ground truth image file.
+
+        im_mask_path (Optional[str]): Path to mask image file. If None, uses
+            entire image. Default: None.
+
+        im_mask_value (Optional[float]): Value in mask image to use for
+            evaluation. Pixels with this value are included. Default: 255.0.
 
     Returns:
-        Tuple[Float[np.ndarray, "h w 3"], Float[np.ndarray, "h w 3"],
-        Float[np.ndarray, "h w"]]: A tuple containing:
-            - im_pd: Prediction image with shape (h, w, 3), float32, range [0, 1]
-            - im_gt: Ground truth image with shape (h, w, 3), float32, range [0, 1]
-            - im_mask: Binary mask with shape (h, w), float32, values in {0, 1}.
-              If im_mask_path is None, all values will be 1.
+        Tuple[Float[np.ndarray, "h w c"], Float[np.ndarray, "h w c"],
+        Float[np.ndarray, "h w"]]: Tuple containing:
+            - Predicted image array normalized to [0, 1]
+            - Ground truth image array normalized to [0, 1]
+            - Binary mask array where True indicates pixels to evaluate
+
+    Example:
+        >>> # Load images with full evaluation mask
+        >>> im_pd, im_gt, mask = load_im_pd_im_gt_im_mask_for_eval(
+        ...     'pred.png', 'gt.png')
+        >>>
+        >>> # Load images with specific mask
+        >>> im_pd, im_gt, mask = load_im_pd_im_gt_im_mask_for_eval(
+        ...     'pred.png', 'gt.png', 'mask.png', 1.0)
     """
     if alpha_mode != "white":
         raise NotImplementedError('Currently only alpha_mode="white" is supported.')

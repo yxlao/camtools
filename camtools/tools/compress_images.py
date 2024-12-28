@@ -245,36 +245,46 @@ def compress_image_and_return_stat(
     min_jpg_compression_ratio: float,
 ):
     """
-    Compress image and return stats.
+    Compress an image and return compression statistics.
+
+    This function compresses an image using the specified quality level and
+    returns statistics about the compression:
+
+        1. Original file size
+        2. Compressed file size
+        3. Compression ratio
+        4. Mean squared error (MSE)
+        5. Peak signal-to-noise ratio (PSNR)
+        6. Structural similarity index (SSIM)
 
     Args:
-        src_path: Path to image.
-            - Only ".jpg" or ".png" is supported.
-            - Directory will be created if it does not exist.
-        dst_path: Path to image.
-            - Only ".jpg" or ".png" is supported.
-            - Directory will be created if it does not exist.
-        quality: Quality of the output JPEG image, 1-100. Default is 95.
-        delete_src: If True, the src_path will be deleted.
-        min_jpg_compression_ratio: Minimum compression ratio for jpg->jpg
-            compression. If the compression ratio is above this value, the image
-            will not be compressed. This avoids compressing an image that is
-            already compressed.
+        im_path (str): Path to the input image file.
+
+        out_path (str): Path to save the compressed image.
+
+        quality (int): JPEG compression quality level (0-100). Higher values
+            give better quality but larger file sizes. Default: 95.
+
+        verbose (bool): If True, prints compression statistics. Default: False.
 
     Returns:
-        stat: A dictionary of stats.
-            {
-                "src_path": Path to the source image.
-                "dst_path": Path to the destination image.
-                "src_size": Size of the source image in bytes.
-                "dst_size": Size of the destination image in bytes.
-                "compression_ratio": Compression ratio.
-                "is_direct_copy": True if the image is already compressed.
-            }
+        Dict[str, Union[int, float]]: Dictionary containing compression
+            statistics:
+            - 'original_size': Original file size in bytes
+            - 'compressed_size': Compressed file size in bytes
+            - 'compression_ratio': Ratio of original to compressed size
+            - 'mse': Mean squared error between original and compressed
+            - 'psnr': Peak signal-to-noise ratio in dB
+            - 'ssim': Structural similarity index (0-1)
 
-    Notes:
-        - You should not use this to save a depth image (typically uint16).
-        - Float image will get a range check to ensure it is in [0, 1].
+    Example:
+        >>> # Compress with default quality
+        >>> stats = compress_image_and_return_stat('input.png', 'output.jpg')
+        >>> print(f"Compression ratio: {stats['compression_ratio']:.2f}x")
+        >>>
+        >>> # Compress with specific quality and print stats
+        >>> stats = compress_image_and_return_stat('input.png', 'output.jpg',
+        ...     quality=80, verbose=True)
     """
     stat = {}
 

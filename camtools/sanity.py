@@ -104,20 +104,31 @@ def assert_shape(x: np.ndarray, shape: tuple, name: Optional[str] = None):
     """
     Assert that an array has the expected shape.
 
-    The shape pattern can contain None values to indicate that dimension can be
-    any size. For example:
-        - (None, 3) matches any 2D array where the second dimension is 3
-        - (3, None, 3) matches any 3D array where first and last dimensions are 3
+    The shape can be specified in several ways:
+
+        1. Exact shape: (3, 4) matches only arrays with shape (3, 4)
+        2. Wildcard: (-1, 4) matches arrays with any first dimension and 4 columns
+        3. Multiple wildcards: (-1, -1, 3) matches any HxWx3 array
 
     Args:
-        x (np.ndarray): Array to validate.
-        shape (tuple): Tuple of expected dimensions (can contain None for flexible
-            dimensions).
-        name (Optional[str]): Optional name of the variable for error message.
-            Default: None.
+        array (np.ndarray): Input array to check.
+
+        expected_shape (Tuple[int, ...]): Expected shape tuple. Use -1 as a
+            wildcard to match any size in that dimension.
+
+        name (Optional[str]): Name of the array for error messages. If None,
+            uses 'array'. Default: None.
 
     Raises:
-        ValueError: If array dimensions don't match the expected shape pattern.
+        AssertionError: If the array shape does not match the expected shape.
+
+    Example:
+        >>> # Check exact shape
+        >>> assert_shape(array, (100, 3), 'points')
+        >>>
+        >>> # Check shape with wildcards
+        >>> assert_shape(image, (-1, -1, 3), 'image')  # Any HxWx3 array
+        >>> assert_shape(points, (-1, 3), 'points')    # Any Nx3 array
     """
     shape_valid = True
 

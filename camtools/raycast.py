@@ -77,7 +77,9 @@ def mesh_to_im_distance(
 
     The distance image contains the Euclidean distance from the camera center to
     the mesh surface for each pixel. The ray casting follows the equation:
+
         distance = ||C - P||
+
     where:
         - C is the camera center in world coordinates
         - P is the intersection point on the mesh surface
@@ -85,10 +87,14 @@ def mesh_to_im_distance(
 
     Args:
         mesh (o3d.geometry.TriangleMesh): Open3D TriangleMesh to be ray casted.
+
         K (Float[np.ndarray, "3 3"]): Camera intrinsic matrix.
+
         T (Float[np.ndarray, "4 4"]): Camera extrinsic matrix (world-to-camera
             transformation).
+
         height (int): Image height in pixels.
+
         width (int): Image width in pixels.
 
     Returns:
@@ -134,19 +140,25 @@ def mesh_to_im_distances(
     For each camera view, generates a distance image containing the Euclidean
     distance from the camera center to the mesh surface. The distances are
     calculated as:
-        distance = ||C_i - P_i||
+
+    distance = ||C_i - P_i||
+
     where:
-        - C_i is the camera center for view i
-        - P_i is the intersection point on the mesh surface for view i
-        - ||·|| denotes the Euclidean norm
+    - C_i is the camera center for view i
+    - P_i is the intersection point on the mesh surface for view i
+    - ||·|| denotes the Euclidean norm
 
     Args:
         mesh (o3d.geometry.TriangleMesh): Open3D TriangleMesh to be ray casted.
+
         Ks (Float[np.ndarray, "n 3 3"]): Array of camera intrinsic matrices for
             N views.
+
         Ts (Float[np.ndarray, "n 4 4"]): Array of camera extrinsic matrices
             (world-to-camera transformations) for N views.
+
         height (int): Image height in pixels.
+
         width (int): Image width in pixels.
 
     Returns:
@@ -203,40 +215,49 @@ def mesh_to_im_depth(
     width: int,
 ) -> Float[np.ndarray, "h w"]:
     """
-    Generate a depth image by ray casting a mesh from a given camera view.
+    Generate a depth image by ray casting a mesh from a camera view.
 
-    The depth image contains the z-coordinate of the mesh surface in the camera
-    coordinate system for each pixel. The depth is calculated as:
-        depth = (distance * f) / sqrt(u² + v² + f²)
+    The depth image contains the Euclidean distance from the camera center to
+    the mesh surface. The distances are calculated as:
+
+    depth = ||C - P||
+
     where:
-        - distance is the Euclidean distance from camera center to surface point
-        - f is the focal length from the intrinsic matrix K
-        - (u, v) are the pixel coordinates in the camera plane
+    - C is the camera center
+    - P is the intersection point on the mesh surface
+    - ||·|| denotes the Euclidean norm
 
     Args:
         mesh (o3d.geometry.TriangleMesh): Open3D TriangleMesh to be ray casted.
-        K (Float[np.ndarray, "3 3"]): Camera intrinsic matrix.
+
+        K (Float[np.ndarray, "3 3"]): Camera intrinsic matrix. Format:
+            [[fx, 0, cx],
+             [0, fy, cy],
+             [0, 0, 1]]
+            where fx, fy are focal lengths and cx, cy are principal points.
+
         T (Float[np.ndarray, "4 4"]): Camera extrinsic matrix (world-to-camera
-            transformation).
+            transformation). Format:
+            [[R | t],
+             [0 | 1]]
+            where R is a 3x3 rotation matrix and t is a 3D translation vector.
+
         height (int): Image height in pixels.
+
         width (int): Image width in pixels.
 
     Returns:
         Float[np.ndarray, "h w"]: Depth image as a float32 array with shape
-            (height, width). Each pixel contains the z-coordinate of the mesh
-            surface in camera space. Invalid depths (no intersection) are set
-            to np.inf.
+            (height, width). Each pixel contains the distance from the camera
+            center to the mesh surface. Invalid depths (no intersection) are
+            set to np.inf.
 
     Example:
-        >>> # Create depth image for a 640x480 view
-        >>> depth_image = ct.raycast.mesh_to_im_depth(mesh, K, T, 480, 640)
+        >>> # Create depth image from camera view
+        >>> depth = ct.raycast.mesh_to_im_depth(mesh, K, T, 480, 640)
         >>> # Visualize depths
-        >>> plt.imshow(depth_image)
+        >>> plt.imshow(depth)
         >>> plt.colorbar()
-
-    Note:
-        This function internally uses mesh_to_im_distance and converts the
-        distances to depths using the camera intrinsic parameters.
     """
     im_distance = mesh_to_im_distance(mesh, K, T, height, width)
     im_depth = convert.im_distance_to_im_depth(im_distance, K)
@@ -263,11 +284,15 @@ def mesh_to_im_depths(
 
     Args:
         mesh (o3d.geometry.TriangleMesh): Open3D TriangleMesh to be ray casted.
+
         Ks (Float[np.ndarray, "n 3 3"]): Array of camera intrinsic matrices for
             N views.
+
         Ts (Float[np.ndarray, "n 4 4"]): Array of camera extrinsic matrices
             (world-to-camera transformations) for N views.
+
         height (int): Image height in pixels.
+
         width (int): Image width in pixels.
 
     Returns:

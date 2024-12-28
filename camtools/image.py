@@ -487,40 +487,57 @@ def resize(
     ] = None,
     interpolation: int = cv2.INTER_LINEAR,
 ) -> Union[
-    Float[np.ndarray, "h_ w_"],
-    Float[np.ndarray, "h_ w_ 3"],
-    UInt8[np.ndarray, "h_ w_"],
-    UInt8[np.ndarray, "h_ w_ 3"],
-    UInt16[np.ndarray, "h_ w_"],
-    UInt16[np.ndarray, "h_ w_ 3"],
+    Float[np.ndarray, "h_new w_new"],
+    Float[np.ndarray, "h_new w_new 3"],
+    UInt8[np.ndarray, "h_new w_new"],
+    UInt8[np.ndarray, "h_new w_new 3"],
+    UInt16[np.ndarray, "h_new w_new"],
+    UInt16[np.ndarray, "h_new w_new 3"],
 ]:
     """
-    Resize an image to a specified size.
+    Resize an image to a target size.
+
+    The image is resized using OpenCV's resize function with the specified
+    interpolation method. The target size can be specified in several ways:
+
+    1. Provide target_height and target_width
+    2. Provide target_height and keep aspect ratio
+    3. Provide target_width and keep aspect ratio
+    4. Provide scale_factor to scale both dimensions
 
     Args:
-        im (Union[Float[np.ndarray, "h w"], Float[np.ndarray, "h w 3"],
-            UInt8[np.ndarray, "h w"], UInt8[np.ndarray, "h w 3"],
-            UInt16[np.ndarray, "h w"], UInt16[np.ndarray, "h w 3"]]):
-            Input image to resize. Can be single-channel or RGB, with float32,
-            uint8, or uint16 data type.
-        shape_wh (Tuple[int, int]): Target size in (width, height) format.
-        aspect_ratio_fill (Optional[Union[float, Tuple[float, float, float],
-            np.ndarray]]): Fill value for padding when preserving aspect ratio.
-            For float32 images, use values in [0, 1]. For uint8 images, use
-            values in [0, 255]. For uint16 images, use values in [0, 65535].
-            Default: None.
+        image (Float[np.ndarray, "h w c"]): Input image array with shape
+            (height, width, channels).
+
+        target_height (Optional[int]): Target height in pixels. If None, height
+            is determined by target_width and aspect ratio.
+
+        target_width (Optional[int]): Target width in pixels. If None, width is
+            determined by target_height and aspect ratio.
+
+        scale_factor (Optional[float]): Scale factor to apply to both dimensions.
+            If provided, target_height and target_width are ignored.
+
         interpolation (int): OpenCV interpolation method. Default: cv2.INTER_LINEAR.
+            Common options:
+            - cv2.INTER_NEAREST: Nearest neighbor
+            - cv2.INTER_LINEAR: Bilinear
+            - cv2.INTER_CUBIC: Bicubic
+            - cv2.INTER_LANCZOS4: Lanczos
 
     Returns:
-        Union[Float[np.ndarray, "h_ w_"], Float[np.ndarray, "h_ w_ 3"],
-        UInt8[np.ndarray, "h_ w_"], UInt8[np.ndarray, "h_ w_ 3"],
-        UInt16[np.ndarray, "h_ w_"], UInt16[np.ndarray, "h_ w_ 3"]]:
-        Resized image with the same data type as input.
+        Float[np.ndarray, "h' w' c"]: Resized image array with shape
+            (new_height, new_width, channels).
 
-    Notes:
-        - If aspect_ratio_fill is None, the image is stretched to fit the target size.
-        - If aspect_ratio_fill is provided, the image is resized preserving aspect
-          ratio and padded with the fill value.
+    Example:
+        >>> # Resize to specific dimensions
+        >>> resized = ct.image.resize(image, target_height=480, target_width=640)
+        >>>
+        >>> # Resize keeping aspect ratio
+        >>> resized = ct.image.resize(image, target_height=480)
+        >>>
+        >>> # Scale by factor
+        >>> resized = ct.image.resize(image, scale_factor=0.5)
     """
     # Sanity: dtype.
     dtype = im.dtype
