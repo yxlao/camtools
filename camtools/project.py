@@ -15,29 +15,42 @@ def points_to_pixels(
     T: Float[np.ndarray, "4 4"],
 ) -> Float[np.ndarray, "n 2"]:
     """
-    Project points in world coordinates to pixel coordinates.
+    Project 3D points in world coordinates to 2D pixel coordinates using the
+    camera intrinsic and extrinsic parameters.
+
+    The projection follows the standard pinhole camera model:
+        λ[x, y, 1]^T = K @ [R | t] @ [X, Y, Z, 1]^T
+    where:
+        - [X, Y, Z, 1]^T is a homogeneous 3D point in world coordinates
+        - [R | t] is the 3x4 extrinsic matrix (world-to-camera transformation)
+        - K is the 3x3 intrinsic matrix
+        - [x, y, 1]^T is the projected homogeneous 2D point in pixel coordinates
+        - λ is the depth value
 
     Example usage:
-        pixels = ct.project.point_cloud_to_pixel(points, K, T)
+        pixels = ct.project.points_to_pixels(points, K, T)
 
-        cols = pixels[:, 0]  # cols, width, x, top-left to top-right
-        rows = pixels[:, 1]  # rows, height, y, top-left to bottom-left
+        # Extract and round pixel coordinates
+        cols = pixels[:, 0]  # x-coordinates (width dimension)
+        rows = pixels[:, 1]  # y-coordinates (height dimension)
         cols = np.round(cols).astype(np.int32)
         rows = np.round(rows).astype(np.int32)
+
+        # Clamp to image boundaries
         cols[cols >= width] = width - 1
         cols[cols < 0] = 0
         rows[rows >= height] = height - 1
         rows[rows < 0] = 0
 
     Args:
-        K: (3, 3) array, camera intrinsic matrix.
-        T: (4, 4) array, camera extrinsic matrix, [R | t] with [0, 0, 0, 1]
-           below.
-        points: (N, 3) array, 3D points in world coordinates.
+        points: (N, 3) array of 3D points in world coordinates.
+        K: (3, 3) camera intrinsic matrix.
+        T: (4, 4) camera extrinsic matrix (world-to-camera transformation).
 
-    Return:
-        (N, 2) array, representing [cols, rows] by each column. N is the number
-        of points, which is not related to the image height and width.
+    Returns:
+        (N, 2) array of pixel coordinates, where each row contains [x, y]
+        coordinates. The x-coordinate corresponds to the image width (columns)
+        and the y-coordinate corresponds to the image height (rows).
     """
     sanity.assert_K(K)
     sanity.assert_T(T)
@@ -72,33 +85,42 @@ def im_depth_to_point_cloud(
     Tuple[Float[np.ndarray, "h w 3"], Float[np.ndarray, "h w 3"]],
 ]:
     """
-    Convert a depth image to a point cloud, optionally including color information.
-    Can return either a sparse (N, 3) point cloud or a dense one with the image
-    shape (H, W, 3).
+    Convert a depth image to a 3D point cloud in world coordinates, optionally
+    including color information. The point cloud can be returned in either a
+    sparse format (N, 3) or a dense format matching the input image dimensions
+    (H, W, 3).
+
+    The conversion follows the inverse projection formula:
+        [X, Y, Z]^T = pose @ (depth * inv(K) @ [u, v, 1]^T)
+    where:
+        - [u, v] are pixel coordinates
+        - K is the intrinsic matrix
+        - pose is the camera-to-world transformation matrix
+        - depth is the depth value at pixel (u, v)
 
     Args:
-        im_depth: Depth image (H, W), float32 or float64, in world scale.
-        K: Intrinsics matrix (3, 3).
-        T: Extrinsics matrix (4, 4).
-        im_color: Color image (H, W, 3), float32/float64, range [0, 1].
-        to_image: If True, returns a dense point cloud with the same shape as the
-            input depth image (H, W, 3), while ignore_invalid is ignored as the
-            invalid depths are not removed. If False, returns a sparse point cloud
-            of shape (N, 3) while respecting ignore_invalid flag.
-        ignore_invalid: If True, ignores invalid depths (<= 0 or >= inf).
-        scale_factor: scale the im_depth (and optionally im_color) images before
-            projecting to 3D points. When scale_factor == 0.5, the image size
-            is reduced to half.
+        im_depth: (H, W) depth image in world scale, float32 or float64.
+        K: (3, 3) camera intrinsic matrix.
+        T: (4, 4) camera extrinsic matrix (world-to-camera transformation).
+        im_color: Optional (H, W, 3) color image in range [0, 1], float32/float64.
+        to_image: If True, returns a dense point cloud with shape (H, W, 3).
+            If False, returns a sparse point cloud with shape (N, 3).
+        ignore_invalid: If True, filters out points with invalid depths
+            (<= 0 or >= inf).
+        scale_factor: Scaling factor for the input images. When scale_factor < 1,
+            the images are downsampled and the intrinsic matrix is adjusted
+            accordingly.
 
     Returns:
+        Depending on the input parameters, returns one of:
         - im_color == None, to_image == False:
-            - return: points (N, 3)
+            points: (N, 3) array of 3D points
         - im_color == None, to_image == True:
-            - return: im_points (H, W, 3)
+            im_points: (H, W, 3) array of 3D points
         - im_color != None, to_image == False:
-            - return: (points (N, 3), colors (N, 3))
+            (points, colors): Tuple of (N, 3) arrays for points and colors
         - im_color != None, to_image == True:
-            - return: (im_points (H, W, 3), im_colors (H, W, 3))
+            (im_points, im_colors): Tuple of (H, W, 3) arrays for points and colors
     """
     # Sanity checks
     sanity.assert_K(K)
