@@ -31,71 +31,7 @@ def crop_white_boarders(
     return im_dst
 
 
-def compute_cropping_v1(im: Float[np.ndarray, "h w n"]) -> Tuple[int, int, int, int]:
-    """
-    Compute white border sizes in pixels for multi-channel images.
-
-    This function calculates the number of white pixels on each edge of an image.
-    It can handle (H, W, N) images, including:
-    - 3-channel images: (H, W, 3)
-    - Concatenated 3-channel images: (H, W, 3 x num_im)
-
-    Args:
-        im: Input image as a float32 array with shape (height, width, num_channels).
-            Pixel values should be in range [0.0, 1.0].
-
-    Returns:
-        A tuple containing:
-            - crop_t: Number of white pixels on the top edge
-            - crop_b: Number of white pixels on the bottom edge
-            - crop_l: Number of white pixels on the left edge
-            - crop_r: Number of white pixels on the right edge
-
-    Raises:
-        ValueError: If input image has invalid dtype, dimensions, or is empty.
-    """
-    if not im.dtype == np.float32:
-        raise ValueError(f"im.dtype == {im.dtype} != np.float32")
-    if not im.ndim == 3:
-        raise ValueError(f"im must be (H, W, N), but got {im.shape}")
-    if im.shape[2] == 0:
-        raise ValueError(f"Empty image, got {im.shape}")
-
-    h, w, _ = im.shape
-
-    # Find the number of white pixels on each edge.
-    crop_t = 0
-    crop_b = 0
-    crop_l = 0
-    crop_r = 0
-
-    for t in range(h):
-        if np.allclose(im[t, :, :], 1.0):
-            crop_t += 1
-        else:
-            break
-    for b in range(h):
-        if np.allclose(im[h - b - 1, :, :], 1.0):
-            crop_b += 1
-        else:
-            break
-    for l in range(w):
-        if np.allclose(im[:, l, :], 1.0):
-            crop_l += 1
-        else:
-            break
-    for r in range(w):
-        if np.allclose(im[:, w - r - 1, :], 1.0):
-            crop_r += 1
-        else:
-            break
-
-    return crop_t, crop_b, crop_l, crop_r
-
-
-def compute_cropping(
-    im: Float[np.ndarray, "h w 3"], check_with_v1: bool = False
-) -> Tuple[int, int, int, int]:
+def compute_cropping(im: Float[np.ndarray, "h w 3"]) -> Tuple[int, int, int, int]:
     """
     Compute white border sizes in pixels for 3-channel RGB images.
 
@@ -105,8 +41,6 @@ def compute_cropping(
     Args:
         im: Input image as a float32 array with shape (height, width, 3).
             Pixel values should be in range [0.0, 1.0].
-        check_with_v1: If True, verifies results against compute_cropping_v1.
-            Defaults to False.
 
     Returns:
         A tuple containing:
@@ -116,7 +50,7 @@ def compute_cropping(
             - crop_r: Number of white pixels on the right edge
 
     Raises:
-        ValueError: If input image has invalid dtype, dimensions, or fails v1 check.
+        ValueError: If input image has invalid dtype or dimensions.
     """
     if not im.dtype == np.float32:
         raise ValueError(f"Expected im.dtype to be np.float32, but got {im.dtype}")
@@ -135,21 +69,6 @@ def compute_cropping(
     crop_b = im.shape[0] - rows_with_color[-1] - 1 if len(rows_with_color) else 0
     crop_l = cols_with_color[0] if len(cols_with_color) else 0
     crop_r = im.shape[1] - cols_with_color[-1] - 1 if len(cols_with_color) else 0
-
-    # Check the results against compute_cropping_v1 if requested
-    if check_with_v1:
-        crop_t_v1, crop_b_v1, crop_l_v1, crop_r_v1 = compute_cropping_v1(im)
-        if (
-            crop_t != crop_t_v1
-            or crop_b != crop_b_v1
-            or crop_l != crop_l_v1
-            or crop_r != crop_r_v1
-        ):
-            raise ValueError(
-                f"compute_cropping_v1 failed to compute the correct cropping: "
-                f"({crop_t}, {crop_b}, {crop_l}, {crop_r}) != "
-                f"({crop_t_v1}, {crop_b_v1}, {crop_l_v1}, {crop_r_v1})"
-            )
 
     return crop_t, crop_b, crop_l, crop_r
 
