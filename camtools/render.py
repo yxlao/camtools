@@ -37,19 +37,21 @@ def render_geometries(
         - [x, y, 1]^T is the projected homogeneous 2D point in pixel coordinates
         - λ is the depth value
 
-    Example usage:
-        # Create some geometries
-        mesh = o3d.geometry.TriangleMesh.create_box()
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(np.random.rand(100, 3))
+    Examples:
+        .. code-block:: python
 
-        # Render with default camera
-        image = render_geometries([mesh, pcd])
+            # Create some geometries
+            mesh = o3d.geometry.TriangleMesh.create_box()
+            pcd = o3d.geometry.PointCloud()
+            pcd.points = o3d.utility.Vector3dVector(np.random.rand(100, 3))
 
-        # Render with specific camera parameters
-        K = np.array([[1000, 0, 640], [0, 1000, 360], [0, 0, 1]])
-        T = np.eye(4)
-        depth_image = render_geometries([mesh], K=K, T=T, to_depth=True)
+            # Render with default camera
+            image = render_geometries([mesh, pcd])
+
+            # Render with specific camera parameters
+            K = np.array([[1000, 0, 640], [0, 1000, 360], [0, 0, 1]])
+            T = np.eye(4)
+            depth_image = render_geometries([mesh], K=K, T=T, to_depth=True)
 
     Args:
         geometries: List of Open3D geometries to render. Supported types include:
@@ -165,18 +167,20 @@ def get_render_view_status_str(
         - Zoom level
         - Other view control settings
 
-    Example usage:
-        # Get view status for default camera
-        view_str = get_render_view_status_str([mesh, pcd])
+    Examples:
+        .. code-block:: python
 
-        # Get view status for specific camera
-        K = np.array([[1000, 0, 640], [0, 1000, 360], [0, 0, 1]])
-        T = np.eye(4)
-        view_str = get_render_view_status_str([mesh], K=K, T=T)
+            # Get view status for default camera
+            view_str = get_render_view_status_str([mesh, pcd])
 
-        # Use view status for consistent rendering
-        image1 = render_geometries([mesh], view_status_str=view_str)
-        image2 = render_geometries([pcd], view_status_str=view_str)
+            # Get view status for specific camera
+            K = np.array([[1000, 0, 640], [0, 1000, 360], [0, 0, 1]])
+            T = np.eye(4)
+            view_str = get_render_view_status_str([mesh], K=K, T=T)
+
+            # Use view status for consistent rendering
+            image1 = render_geometries([mesh], view_status_str=view_str)
+            image2 = render_geometries([pcd], view_status_str=view_str)
 
     Args:
         geometries: List of Open3D geometries to set up the view. Supported types:
@@ -269,16 +273,18 @@ def get_render_K_T(
         - [x, y, 1]^T is the projected homogeneous 2D point in pixel coordinates
         - λ is the depth value
 
-    Example usage:
-        # Get camera matrices for default view
-        K, T = get_render_K_T([mesh, pcd])
+    Examples:
+        .. code-block:: python
 
-        # Get camera matrices for specific view
-        view_str = get_render_view_status_str([mesh])
-        K, T = get_render_K_T([mesh], view_status_str=view_str)
+            # Get camera matrices for default view
+            K, T = get_render_K_T([mesh, pcd])
 
-        # Use matrices for consistent rendering
-        image = render_geometries([mesh], K=K, T=T)
+            # Get camera matrices for specific view
+            view_str = get_render_view_status_str([mesh])
+            K, T = get_render_K_T([mesh], view_status_str=view_str)
+
+            # Use matrices for consistent rendering
+            image = render_geometries([mesh], K=K, T=T)
 
     Args:
         geometries: List of Open3D geometries to set up the view. Supported types:
