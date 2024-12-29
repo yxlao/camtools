@@ -51,13 +51,15 @@ def imwrite(
         - Color images are automatically converted from RGB to BGR format for OpenCV
 
     Examples:
-        >>> # Save a grayscale image
-        >>> grayscale = np.random.rand(256, 256).astype(np.float32)
-        >>> imwrite('output.jpg', grayscale)
+        .. code-block:: python
 
-        >>> # Save a color image with high quality
-        >>> color = np.random.rand(256, 256, 3).astype(np.uint8)
-        >>> imwrite('output.jpg', color, quality=100)
+            # Save a grayscale image
+            grayscale = np.random.rand(256, 256).astype(np.float32)
+            imwrite('output.jpg', grayscale)
+
+            # Save a color image with high quality
+            color = np.random.rand(256, 256, 3).astype(np.uint8)
+            imwrite('output.jpg', color, quality=100)
     """
     im_path = Path(im_path)
 
@@ -148,12 +150,14 @@ def imwrite_depth(
         practice is to use 0 as invalid depth.
 
     Examples:
-        >>> # Write depth map with 1mm precision
-        >>> depth = np.random.rand(256, 256).astype(np.float32) * 10  # 0-10 meters
-        >>> imwrite_depth('depth.png', depth, depth_scale=1000)
+        .. code-block:: python
 
-        >>> # Write depth map with 1cm precision
-        >>> imwrite_depth('depth.png', depth, depth_scale=100)
+            # Write depth map with 1mm precision
+            depth = np.random.rand(256, 256).astype(np.float32) * 10  # 0-10 meters
+            imwrite_depth('depth.png', depth, depth_scale=1000)
+
+            # Write depth map with 1cm precision
+            imwrite_depth('depth.png', depth, depth_scale=100)
     """
     im_path = Path(im_path)
 
@@ -221,17 +225,19 @@ def imread(
         - When alpha_mode is None, images with alpha channels will raise an error
 
     Examples:
-        >>> # Read grayscale image
-        >>> gray = imread('image.jpg')
+        .. code-block:: python
 
-        >>> # Read color image, ignore alpha if present
-        >>> rgb = imread('image.png', alpha_mode='ignore')
+            # Read grayscale image
+            gray = imread('image.jpg')
 
-        >>> # Read image with alpha channel preserved
-        >>> rgba = imread('image.png', alpha_mode='keep')
+            # Read color image, ignore alpha if present
+            rgb = imread('image.png', alpha_mode='ignore')
 
-        >>> # Read image with white background for transparency
-        >>> rgb_white = imread('image.png', alpha_mode='white')
+            # Read image with alpha channel preserved
+            rgba = imread('image.png', alpha_mode='keep')
+
+            # Read image with white background for transparency
+            rgb_white = imread('image.png', alpha_mode='white')
     """
     im_path = Path(im_path)
     assert util.is_jpg_path(im_path) or util.is_png_path(
