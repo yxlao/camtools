@@ -63,6 +63,30 @@ if not favicon_path.is_file():
     raise FileNotFoundError(f"Favicon not found at {favicon_path}")
 html_favicon = str(favicon_path)
 
+
+# Google Analytics configuration
+def add_ga_javascript(app, pagename, templatename, context, doctree):
+    """
+    Ref: https://github.com/sphinx-contrib/googleanalytics/blob/master/sphinxcontrib/googleanalytics.py
+    """
+    metatags = context.get("metatags", "")
+    metatags += """
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FG59NQBWRW"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FG59NQBWRW');
+    </script>
+    """
+    context["metatags"] = metatags
+
+
+def setup(app):
+    app.connect("html-page-context", add_ga_javascript)
+
+
 # Furo theme options
 html_theme_options = {
     "light_css_variables": {
