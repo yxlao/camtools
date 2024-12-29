@@ -10,6 +10,7 @@ import os
 import sys
 import subprocess
 import camtools as ct
+from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -52,6 +53,15 @@ language = "en"
 
 html_theme = "furo"
 html_static_path = ["_static"]
+
+# Favicon
+script_dir = Path(__file__).parent
+favicon_path = (
+    script_dir.parent / "camtools" / "assets" / "camtools_logo_squre_dark.png"
+)
+if not favicon_path.is_file():
+    raise FileNotFoundError(f"Favicon not found at {favicon_path}")
+html_favicon = str(favicon_path)
 
 # Furo theme options
 html_theme_options = {
