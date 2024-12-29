@@ -493,12 +493,12 @@ def recover_rotated_pixels(dst_pixels, src_wh, ccw_degrees):
 
 def resize(
     im: Union[
-        Float[np.ndarray, "h w"],
-        Float[np.ndarray, "h w 3"],
-        UInt8[np.ndarray, "h w"],
-        UInt8[np.ndarray, "h w 3"],
-        UInt16[np.ndarray, "h w"],
-        UInt16[np.ndarray, "h w 3"],
+        Float[np.ndarray, "h_src w_src"],
+        Float[np.ndarray, "h_src w_src 3"],
+        UInt8[np.ndarray, "h_src w_src"],
+        UInt8[np.ndarray, "h_src w_src 3"],
+        UInt16[np.ndarray, "h_src w_src"],
+        UInt16[np.ndarray, "h_src w_src 3"],
     ],
     shape_wh: Tuple[int, int],
     aspect_ratio_fill: Optional[
@@ -506,20 +506,20 @@ def resize(
     ] = None,
     interpolation: int = cv2.INTER_LINEAR,
 ) -> Union[
-    Float[np.ndarray, "h_ w_"],
-    Float[np.ndarray, "h_ w_ 3"],
-    UInt8[np.ndarray, "h_ w_"],
-    UInt8[np.ndarray, "h_ w_ 3"],
-    UInt16[np.ndarray, "h_ w_"],
-    UInt16[np.ndarray, "h_ w_ 3"],
+    Float[np.ndarray, "h_dst w_dst"],
+    Float[np.ndarray, "h_dst w_dst 3"],
+    UInt8[np.ndarray, "h_dst w_dst"],
+    UInt8[np.ndarray, "h_dst w_dst 3"],
+    UInt16[np.ndarray, "h_dst w_dst"],
+    UInt16[np.ndarray, "h_dst w_dst 3"],
 ]:
     """
     Resize an image to a specified width and height, optionally maintaining aspect ratio.
 
     Args:
-        im (Union[Float[np.ndarray, "h w"], Float[np.ndarray, "h w 3"],
-                 UInt8[np.ndarray, "h w"], UInt8[np.ndarray, "h w 3"],
-                 UInt16[np.ndarray, "h w"], UInt16[np.ndarray, "h w 3"]]):
+        im (Union[Float[np.ndarray, "h_src w_src"], Float[np.ndarray, "h_src w_src 3"],
+                 UInt8[np.ndarray, "h_src w_src"], UInt8[np.ndarray, "h_src w_src 3"],
+                 UInt16[np.ndarray, "h_src w_src"], UInt16[np.ndarray, "h_src w_src 3"]]):
             Input image as a numpy array with shape (height, width) or (height, width, 3).
             Supported dtypes: uint8, uint16, float32, float64.
         shape_wh (Tuple[int, int]): Target size as (width, height) in pixels.
@@ -530,9 +530,9 @@ def resize(
         interpolation (int): OpenCV interpolation method (e.g., cv2.INTER_LINEAR).
 
     Returns:
-        Union[Float[np.ndarray, "h_ w_"], Float[np.ndarray, "h_ w_ 3"],
-              UInt8[np.ndarray, "h_ w_"], UInt8[np.ndarray, "h_ w_ 3"],
-              UInt16[np.ndarray, "h_ w_"], UInt16[np.ndarray, "h_ w_ 3"]]:
+        Union[Float[np.ndarray, "h_dst w_dst"], Float[np.ndarray, "h_dst w_dst 3"],
+              UInt8[np.ndarray, "h_dst w_dst"], UInt8[np.ndarray, "h_dst w_dst 3"],
+              UInt16[np.ndarray, "h_dst w_dst"], UInt16[np.ndarray, "h_dst w_dst 3"]]:
             Resized image with the same dtype as input. Shape will be (height, width)
             or (height, width, 3) depending on input.
 
