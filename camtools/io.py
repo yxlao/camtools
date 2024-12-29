@@ -134,13 +134,15 @@ def imwrite_depth(
         The user is responsible for defining what is invalid depth. E.g.,
         invalid depth can represented as np.nan, np.inf, 0, -1, etc. This
         function simply multiplies the depth by depth_scale can convert to
-        uint16. For instance, with depth_scale = 1000,
+        uint16. For instance, with depth_scale = 1000:
+
+        .. code-block::
             - Input depths     : [np.nan, np.inf, -np.inf,   0,      -1,   3.14]
             - Written to ".png": [     0,      0,       0,   0,   64536,   3140]
             - Read from ".png" : [     0,      0,       0,   0,   64536,   3140]
             - Convert to float : [     0,      0,       0,   0,  64.536,   3.14]
                                                              ^
-                                                        Best practice.
+                                                        Best practice: Use 0 to represent invalid depth
         Note that -1 is converted to 64536 / 1000 = 64.536 meters, therefore,
         it is important to clip depth with min_depth and max_depth. The best
         practice is to use 0 as invalid depth.
@@ -342,13 +344,15 @@ def imread_depth(
         The user is responsible for defining what is invalid depth. E.g.,
         invalid depth can represented as np.nan, np.inf, 0, -1, etc. This
         function simply multiplies the depth by depth_scale can convert to
-        uint16. For instance, with depth_scale = 1000,
+        uint16. For instance, with depth_scale = 1000:
+
+        .. code-block::
             - Input depths     : [np.nan, np.inf, -np.inf,   0,      -1,   3.14]
             - Written to ".png": [     0,      0,       0,   0,   64536,   3140]
             - Read from ".png" : [     0,      0,       0,   0,   64536,   3140]
             - Convert to float : [     0,      0,       0,   0,  64.536,   3.14]
                                                              ^
-                                                        Best practice.
+                                                        Best practice: Use 0 to represent invalid depth
         Note that -1 is converted to 64536 / 1000 = 64.536 meters, therefore,
         it is important to clip depth with min_depth and max_depth. The best
         practice is to use 0 as invalid depth.
