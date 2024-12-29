@@ -1,3 +1,7 @@
+"""
+Functions for converting between different camera parameters and representations.
+"""
+
 import cv2
 import numpy as np
 import open3d as o3d

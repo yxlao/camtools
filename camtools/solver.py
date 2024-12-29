@@ -1,3 +1,7 @@
+"""
+Functions for solving problems related to camera calibration and 3D geometry.
+"""
+
 import numpy as np
 from typing import Tuple
 from jaxtyping import Float

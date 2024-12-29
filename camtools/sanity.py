@@ -1,3 +1,7 @@
+"""
+Functions for sanity checking inputs.
+"""
+
 import numpy as np
 from typing import Optional
 from jaxtyping import Float

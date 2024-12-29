@@ -1,3 +1,7 @@
+"""
+Functions for controlled rendering of 3D geometries to images or depth images.
+"""
+
 from typing import List, Tuple, Optional
 
 import numpy as np

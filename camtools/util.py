@@ -1,3 +1,7 @@
+"""
+Utility functions for camtools.
+"""
+
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Callable, Iterable

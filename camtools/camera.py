@@ -1,3 +1,7 @@
+"""
+Functions for creating camera frustums and related visualizations.
+"""
+
 import open3d as o3d
 import numpy as np
 from typing import List, Optional, Dict, Tuple

@@ -1,3 +1,7 @@
+"""
+Functions for raycasting meshes and generating rays.
+"""
+
 import numpy as np
 import open3d as o3d
 from typing import Tuple

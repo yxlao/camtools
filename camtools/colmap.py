@@ -1,3 +1,7 @@
+"""
+Functions for reading and writing COLMAP models.
+"""
+
 # Copyright (c) 2022, ETH Zurich and UNC Chapel Hill.
 # All rights reserved.
 #

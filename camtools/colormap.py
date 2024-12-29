@@ -1,3 +1,7 @@
+"""
+Functions for querying matplotlib's colormaps.
+"""
+
 import matplotlib
 import numpy as np
 from jaxtyping import Float

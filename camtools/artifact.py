@@ -1,3 +1,7 @@
+"""
+Functions for downloading artifacts from the camtools-artifacts repository.
+"""
+
 import requests
 from pathlib import Path
 

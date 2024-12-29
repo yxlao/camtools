@@ -1,3 +1,7 @@
+"""
+Functions for normalizing points and cameras.
+"""
+
 import numpy as np
 from jaxtyping import Float
 

@@ -1,3 +1,7 @@
+"""
+Functions for reading and writing images and depth images.
+"""
+
 import cv2
 import numpy as np
 from pathlib import Path
