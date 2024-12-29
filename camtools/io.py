@@ -143,6 +143,7 @@ def imwrite_depth(
         uint16. For instance, with depth_scale = 1000:
 
         .. code-block::
+
             - Input depths     : [np.nan, np.inf, -np.inf,   0,      -1,   3.14]
             - Written to ".png": [     0,      0,       0,   0,   64536,   3140]
             - Read from ".png" : [     0,      0,       0,   0,   64536,   3140]
@@ -357,6 +358,7 @@ def imread_depth(
         uint16. For instance, with depth_scale = 1000:
 
         .. code-block::
+
             - Input depths     : [np.nan, np.inf, -np.inf,   0,      -1,   3.14]
             - Written to ".png": [     0,      0,       0,   0,   64536,   3140]
             - Read from ".png" : [     0,      0,       0,   0,   64536,   3140]
