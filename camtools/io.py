@@ -354,14 +354,16 @@ def imread_depth(
         practice is to use 0 as invalid depth.
 
     Examples:
-        >>> # Read depth map with 1mm precision
-        >>> depth = imread_depth('depth.png', depth_scale=1000)
+        .. code-block:: python
 
-        >>> # Read depth map with 1cm precision
-        >>> depth = imread_depth('depth.png', depth_scale=100)
+            # Read depth map with 1mm precision
+            depth = imread_depth('depth.png', depth_scale=1000)
 
-        >>> # Read depth map with 1m precision
-        >>> depth = imread_depth('depth.png', depth_scale=1)
+            # Read depth map with 1cm precision
+            depth = imread_depth('depth.png', depth_scale=100)
+
+            # Read depth map with 1m precision
+            depth = imread_depth('depth.png', depth_scale=1)
     """
     im_path = Path(im_path)
     assert util.is_png_path(im_path), f"{im_path} is not a PNG file."
