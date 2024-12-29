@@ -155,7 +155,7 @@ def imwrite_depth(
     """
     im_path = Path(im_path)
 
-    assert is_png_path(im_path), f"{im_path} is not a PNG file."
+    assert util.is_png_path(im_path), f"{im_path} is not a PNG file."
     assert isinstance(im, np.ndarray)
     assert im.dtype in [np.float32, np.float64]
     assert im.ndim == 2
@@ -364,7 +364,7 @@ def imread_depth(
         >>> depth = imread_depth('depth.png', depth_scale=1)
     """
     im_path = Path(im_path)
-    assert is_png_path(im_path), f"{im_path} is not a PNG file."
+    assert util.is_png_path(im_path), f"{im_path} is not a PNG file."
     assert im_path.is_file(), f"{im_path} is not a file."
 
     im = cv2.imread(str(im_path), cv2.IMREAD_UNCHANGED)
