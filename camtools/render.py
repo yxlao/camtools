@@ -58,22 +58,9 @@ def render_geometries(
             - LineSet
         K: (3, 3) camera intrinsic matrix. If None, uses Open3D's default camera
             inferred from the geometries. Must be provided if T is provided.
-            The intrinsic matrix follows the format:
-                [[fx, 0, cx],
-                 [0, fy, cy],
-                 [0, 0, 1]]
-            where:
-                - fx, fy: focal lengths in pixels
-                - cx, cy: principal point coordinates
         T: (4, 4) camera extrinsic matrix (world-to-camera transformation).
             If None, uses Open3D's default camera inferred from the geometries.
-            Must be provided if K is provided. The extrinsic matrix follows the
-            format:
-                [[R | t],
-                 [0 | 1]]
-            where:
-                - R: (3, 3) rotation matrix
-                - t: (3,) translation vector
+            Must be provided if K is provided.
         view_status_str: JSON string containing viewing camera parameters from
             o3d.visualization.Visualizer.get_view_status(). This does not
             include window size or point size.
@@ -198,22 +185,9 @@ def get_render_view_status_str(
             - LineSet
         K: (3, 3) camera intrinsic matrix. If None, uses Open3D's default camera
             inferred from the geometries. Must be provided if T is provided.
-            The intrinsic matrix follows the format:
-                [[fx, 0, cx],
-                 [0, fy, cy],
-                 [0, 0, 1]]
-            where:
-                - fx, fy: focal lengths in pixels
-                - cx, cy: principal point coordinates
         T: (4, 4) camera extrinsic matrix (world-to-camera transformation).
             If None, uses Open3D's default camera inferred from the geometries.
-            Must be provided if K is provided. The extrinsic matrix follows the
-            format:
-                [[R | t],
-                 [0 | 1]]
-            where:
-                - R: (3, 3) rotation matrix
-                - t: (3,) translation vector
+            Must be provided if K is provided.
         height: Height of the view window in pixels.
         width: Width of the view window in pixels.
 
