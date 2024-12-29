@@ -1,4 +1,5 @@
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from pathlib import Path
 from typing import Any, Callable, Iterable
 
 from functools import lru_cache
@@ -149,3 +150,11 @@ def _safely_import_torch():
 
 
 _safe_torch = _safely_import_torch()
+
+
+def is_jpg_path(path):
+    return Path(path).suffix.lower() in [".jpg", ".jpeg"]
+
+
+def is_png_path(path):
+    return Path(path).suffix.lower() in [".png"]

@@ -4,13 +4,7 @@ from pathlib import Path
 from typing import Union, Optional
 from jaxtyping import UInt8, Float
 
-
-def is_jpg_path(path):
-    return Path(path).suffix.lower() in [".jpg", ".jpeg"]
-
-
-def is_png_path(path):
-    return Path(path).suffix.lower() in [".png"]
+from . import util
 
 
 def imwrite(
@@ -67,7 +61,7 @@ def imwrite(
     """
     im_path = Path(im_path)
 
-    assert is_jpg_path(im_path) or is_png_path(
+    assert util.is_jpg_path(im_path) or util.is_png_path(
         im_path
     ), f"{im_path} is not a JPG or PNG file."
     assert isinstance(im, np.ndarray)
@@ -94,7 +88,7 @@ def imwrite(
     # Write.
     im_dir = im_path.parent
     im_dir.mkdir(parents=True, exist_ok=True)
-    if is_jpg_path(im_path):
+    if util.is_jpg_path(im_path):
         cv2.imwrite(str(im_path), im, [cv2.IMWRITE_JPEG_QUALITY, quality])
     else:
         cv2.imwrite(str(im_path), im)
@@ -238,7 +232,7 @@ def imread(
         >>> rgb_white = imread('image.png', alpha_mode='white')
     """
     im_path = Path(im_path)
-    assert is_jpg_path(im_path) or is_png_path(
+    assert util.is_jpg_path(im_path) or util.is_png_path(
         im_path
     ), f"{im_path} is not a JPG or PNG file."
     assert im_path.is_file(), f"{im_path} is not a file."

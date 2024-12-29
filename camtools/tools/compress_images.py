@@ -66,12 +66,12 @@ def entry_point(parser, args):
     else:
         src_paths += args.input
     if args.png_only:
-        src_paths = [path for path in src_paths if ct.io.is_png_path(path)]
+        src_paths = [path for path in src_paths if ct.util.is_png_path(path)]
     else:
         src_paths = [
             path
             for path in src_paths
-            if ct.io.is_jpg_path(path) or ct.io.is_png_path(path)
+            if ct.util.is_jpg_path(path) or ct.util.is_png_path(path)
         ]
     src_paths = [path.resolve().absolute() for path in src_paths]
     missing_paths = [path for path in src_paths if not path.is_file()]
@@ -82,7 +82,9 @@ def entry_point(parser, args):
 
     # Handle PNG file's alpha channel.
     src_paths_with_alpha = []
-    png_paths = [src_path for src_path in src_paths if ct.io.is_png_path(src_path)]
+    png_paths = [
+        src_path for src_path in src_paths if ct.util.is_png_path(src_path)
+    ]
     for src_path in png_paths:
         im = ct.io.imread(src_path, alpha_mode="keep")
         if im.shape[2] == 4:
@@ -99,7 +101,7 @@ def entry_point(parser, args):
     # Compute dst_paths.
     dst_paths = []
     for src_path in src_paths:
-        if ct.io.is_jpg_path(src_path):
+        if ct.util.is_jpg_path(src_path):
             dst_path = src_path
         else:
             dst_path = src_path.with_suffix(".jpg")
@@ -280,7 +282,7 @@ def compress_image_and_return_stat(
 
     src_path = Path(src_path)
     dst_path = Path(dst_path)
-    if not ct.io.is_jpg_path(dst_path):
+    if not ct.util.is_jpg_path(dst_path):
         raise ValueError(f"dst_path must be a JPG file: {dst_path}")
     stat["src_path"] = src_path
     stat["dst_path"] = dst_path
@@ -297,7 +299,7 @@ def compress_image_and_return_stat(
 
         dst_path.parent.mkdir(parents=True, exist_ok=True)
         if (
-            ct.io.is_jpg_path(src_path)
+            ct.util.is_jpg_path(src_path)
             and compression_ratio > min_jpg_compression_ratio
         ):
             # The image is already compressed. Direct copy src_path to dst_path.
