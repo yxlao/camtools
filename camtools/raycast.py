@@ -232,11 +232,6 @@ def mesh_to_im_depths(
     For each camera view, generates a depth image containing the z-coordinate of
     the mesh surface in the camera coordinate system.
 
-    where:
-    - distance is the Euclidean distance from camera center to surface point
-    - f is the focal length from the intrinsic matrix K
-    - (u, v) are the pixel coordinates in the camera plane
-
     Args:
         mesh: Open3D TriangleMesh to be ray casted.
         Ks: (N, 3, 3) array of camera intrinsic matrices for N views.

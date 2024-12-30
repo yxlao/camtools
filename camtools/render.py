@@ -28,33 +28,6 @@ def render_geometries(
     Render Open3D geometries to an image using the specified camera parameters.
     This function may require a display.
 
-    The rendering follows the standard pinhole camera model:
-
-    λ[x, y, 1]^T = K @ [R | t] @ [X, Y, Z, 1]^T
-
-    where:
-    [X, Y, Z, 1]^T is a homogeneous 3D point in world coordinates
-    [R | t] is the 3x4 extrinsic matrix (world-to-camera transformation)
-    K is the 3x3 intrinsic matrix
-    [x, y, 1]^T is the projected homogeneous 2D point in pixel coordinates
-    λ is the depth value
-
-    Examples:
-        .. code-block:: python
-
-            # Create some geometries
-            mesh = o3d.geometry.TriangleMesh.create_box()
-            pcd = o3d.geometry.PointCloud()
-            pcd.points = o3d.utility.Vector3dVector(np.random.rand(100, 3))
-
-            # Render with default camera
-            image = render_geometries([mesh, pcd])
-
-            # Render with specific camera parameters
-            K = np.array([[1000, 0, 640], [0, 1000, 360], [0, 0, 1]])
-            T = np.eye(4)
-            depth_image = render_geometries([mesh], K=K, T=T, to_depth=True)
-
     Args:
         geometries: List of Open3D geometries to render. Supported types are
             TriangleMesh, PointCloud, and LineSet.
@@ -77,10 +50,27 @@ def render_geometries(
         visible: If True, shows the rendering window.
 
     Returns:
-        If to_depth is False:
-        (H, W, 3) float32 RGB image array with values in [0, 1]
-        If to_depth is True:
-        (H, W) float32 depth image array with depth values in world units
+        Float[np.ndarray, "h w 3"]:
+            - If to_depth is False: (H, W, 3) float32 RGB image array with
+              values in [0, 1].
+            - If to_depth is True: (H, W) float32 depth image array with depth
+              values in world units.
+
+    Examples:
+        .. code-block:: python
+
+            # Create some geometries
+            mesh = o3d.geometry.TriangleMesh.create_box()
+            pcd = o3d.geometry.PointCloud()
+            pcd.points = o3d.utility.Vector3dVector(np.random.rand(100, 3))
+
+            # Render with default camera
+            image = render_geometries([mesh, pcd])
+
+            # Render with specific camera parameters
+            K = np.array([[1000, 0, 640], [0, 1000, 360], [0, 0, 1]])
+            T = np.eye(4)
+            depth_image = render_geometries([mesh], K=K, T=T, to_depth=True)
     """
 
     if not isinstance(geometries, list):
@@ -168,20 +158,6 @@ def get_render_view_status_str(
     - Zoom level
     - Other view control settings
 
-    Examples:
-        .. code-block:: python
-
-            # Get view status for default camera
-            view_str = get_render_view_status_str([mesh, pcd])
-
-            # Get view status for specific camera
-            K = np.array([[1000, 0, 640], [0, 1000, 360], [0, 0, 1]])
-            T = np.eye(4)
-            view_str = get_render_view_status_str([mesh], K=K, T=T)
-
-            # Use view status for consistent rendering
-            image1 = render_geometries([mesh], view_status_str=view_str)
-            image2 = render_geometries([pcd], view_status_str=view_str)
 
     Args:
         geometries: List of Open3D geometries to set up the view. Supported types:
@@ -197,13 +173,29 @@ def get_render_view_status_str(
         width: Width of the view window in pixels.
 
     Returns:
-        JSON string containing camera view parameters from
+        str: JSON string containing camera view parameters from
         o3d.visualization.Visualizer.get_view_status(). This includes:
-        - Camera position and orientation
-        - Field of view
-        - Zoom level
-        - Other view control settings
-        Note: Does not include window size or point size.
+
+            - Camera position and orientation
+            - Field of view
+            - Zoom level
+            - Other view control settings
+            - Note: Does not include window size or point size.
+
+    Examples:
+        .. code-block:: python
+
+            # Get view status for default camera
+            view_str = get_render_view_status_str([mesh, pcd])
+
+            # Get view status for specific camera
+            K = np.array([[1000, 0, 640], [0, 1000, 360], [0, 0, 1]])
+            T = np.eye(4)
+            view_str = get_render_view_status_str([mesh], K=K, T=T)
+
+            # Use view status for consistent rendering
+            image1 = render_geometries([mesh], view_status_str=view_str)
+            image2 = render_geometries([pcd], view_status_str=view_str)
     """
     if not isinstance(geometries, list):
         raise TypeError("geometries must be a list of Open3D geometries.")
@@ -284,8 +276,9 @@ def get_render_K_T(
         width: Width of the view window in pixels.
 
     Returns:
-        - K: camera intrinsic matrix
-        - T: camera extrinsic matrix, world-to-camera transformation
+        Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "4 4"]]:
+            - K: camera intrinsic matrix
+            - T: camera extrinsic matrix, world-to-camera transformation
 
     Examples:
         .. code-block:: python
