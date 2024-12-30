@@ -87,18 +87,6 @@ def setup(app):
     app.connect("html-page-context", add_ga_javascript)
 
 
-# Furo theme options
-# html_theme_options = {
-#     "light_css_variables": {
-#         "color-brand-primary": "#2962ff",
-#         "color-brand-content": "#2962ff",
-#     },
-#     "dark_css_variables": {
-#         "color-brand-primary": "#5c85ff",
-#         "color-brand-content": "#5c85ff",
-#     },
-# }
-
 # Intersphinx configuration
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
