@@ -29,13 +29,15 @@ def render_geometries(
     This function may require a display.
 
     The rendering follows the standard pinhole camera model:
-        λ[x, y, 1]^T = K @ [R | t] @ [X, Y, Z, 1]^T
+
+    λ[x, y, 1]^T = K @ [R | t] @ [X, Y, Z, 1]^T
+
     where:
-        - [X, Y, Z, 1]^T is a homogeneous 3D point in world coordinates
-        - [R | t] is the 3x4 extrinsic matrix (world-to-camera transformation)
-        - K is the 3x3 intrinsic matrix
-        - [x, y, 1]^T is the projected homogeneous 2D point in pixel coordinates
-        - λ is the depth value
+    [X, Y, Z, 1]^T is a homogeneous 3D point in world coordinates
+    [R | t] is the 3x4 extrinsic matrix (world-to-camera transformation)
+    K is the 3x3 intrinsic matrix
+    [x, y, 1]^T is the projected homogeneous 2D point in pixel coordinates
+    λ is the depth value
 
     Examples:
         .. code-block:: python
@@ -54,10 +56,8 @@ def render_geometries(
             depth_image = render_geometries([mesh], K=K, T=T, to_depth=True)
 
     Args:
-        geometries: List of Open3D geometries to render. Supported types include:
-            - TriangleMesh
-            - PointCloud
-            - LineSet
+        geometries: List of Open3D geometries to render. Supported types are
+            TriangleMesh, PointCloud, and LineSet.
         K: (3, 3) camera intrinsic matrix. If None, uses Open3D's default camera
             inferred from the geometries. Must be provided if T is provided.
         T: (4, 4) camera extrinsic matrix (world-to-camera transformation).
@@ -78,9 +78,9 @@ def render_geometries(
 
     Returns:
         If to_depth is False:
-            (H, W, 3) float32 RGB image array with values in [0, 1]
+        (H, W, 3) float32 RGB image array with values in [0, 1]
         If to_depth is True:
-            (H, W) float32 depth image array with depth values in world units
+        (H, W) float32 depth image array with depth values in world units
     """
 
     if not isinstance(geometries, list):
@@ -162,10 +162,11 @@ def get_render_view_status_str(
     This function may require a display.
 
     The view status string contains camera parameters in JSON format, including:
-        - Camera position and orientation
-        - Field of view
-        - Zoom level
-        - Other view control settings
+
+    - Camera position and orientation
+    - Field of view
+    - Zoom level
+    - Other view control settings
 
     Examples:
         .. code-block:: python
@@ -184,9 +185,9 @@ def get_render_view_status_str(
 
     Args:
         geometries: List of Open3D geometries to set up the view. Supported types:
-            - TriangleMesh
-            - PointCloud
-            - LineSet
+        - TriangleMesh
+        - PointCloud
+        - LineSet
         K: (3, 3) camera intrinsic matrix. If None, uses Open3D's default camera
             inferred from the geometries. Must be provided if T is provided.
         T: (4, 4) camera extrinsic matrix (world-to-camera transformation).
@@ -198,10 +199,10 @@ def get_render_view_status_str(
     Returns:
         JSON string containing camera view parameters from
         o3d.visualization.Visualizer.get_view_status(). This includes:
-            - Camera position and orientation
-            - Field of view
-            - Zoom level
-            - Other view control settings
+        - Camera position and orientation
+        - Field of view
+        - Zoom level
+        - Other view control settings
         Note: Does not include window size or point size.
     """
     if not isinstance(geometries, list):

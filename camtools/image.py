@@ -125,26 +125,17 @@ def apply_croppings_paddings(
 
     Args:
         src_ims: list of images, float32.
-        croppings: list of 4-tuples
-            [
-                (crop_t, crop_b, crop_l, crop_r),
-                (crop_t, crop_b, crop_l, crop_r),
-                ...
-            ]
-        paddings: list of 4-tuples
-            [
-                (pad_t, pad_b, pad_l, pad_r),
-                (pad_t, pad_b, pad_l, pad_r),
-                ...
-            ]
+        croppings: list of 4-tuples: [(crop_t, crop_b, crop_l, crop_r), ...]
+        paddings: list of 4-tuples: [(pad_t, pad_b, pad_l, pad_r), ...]
 
     Returns:
-        List[Float[np.ndarray, "h_cropped w_cropped 3"]]: List of cropped and padded images
-            as float32 arrays with shape (height_cropped, width_cropped, 3).
+        List[Float[np.ndarray, "h_cropped w_cropped 3"]]: List of cropped and
+        padded images as float32 arrays with shape (height_cropped,
+        width_cropped, 3).
 
     Raises:
-        ValueError: If the number of croppings or paddings doesn't match the number of images,
-            or if any cropping tuple has invalid length.
+        ValueError: If the number of croppings or paddings doesn't match the
+        number of images, or if any cropping tuple has invalid length.
     """
     num_ims = len(src_ims)
     if not len(croppings) == num_ims:
@@ -173,22 +164,12 @@ def get_post_croppings_paddings_shapes(
 
     Args:
         src_shapes: list of source image shapes.
-        croppings: list of 4-tuples
-            [
-                (crop_t, crop_b, crop_l, crop_r),
-                (crop_t, crop_b, crop_l, crop_r),
-                ...
-            ]
-        paddings: list of 4-tuples
-            [
-                (pad_t, pad_b, pad_l, pad_r),
-                (pad_t, pad_b, pad_l, pad_r),
-                ...
-            ]
+        croppings: list of 4-tuples: [(crop_t, crop_b, crop_l, crop_r), ...]
+        paddings: list of 4-tuples: [(pad_t, pad_b, pad_l, pad_r), ...]
 
     Returns:
         List[Tuple[int, int, int]]: List of resulting image shapes after cropping and padding
-            in the format (height_cropped, width_cropped, channels).
+        in the format (height_cropped, width_cropped, channels).
     """
     dst_shapes = []
     for src_shape, cropping, padding in zip(src_shapes, croppings, paddings):
@@ -265,23 +246,26 @@ def ndc_coords_to_pixels(
             Most values shall be in [-1, 1], where (-1, -1) is the top left
             corner and (1, 1) is the bottom right corner.
         im_size_wh: Image size (width, height).
-        align_corners: Determines how NDC coordinates map to pixel coordinates:
-            - If True: -1 and 1 are aligned to the center of the corner pixels
-            - If False: -1 and 1 are aligned to the corner of the corner pixels
-            In general image interpolation:
-            - When align_corners=True: src and dst images are aligned by the center
-              point of their corner pixels
-            - When align_corners=False: src and dst images are aligned by the corner
-              points of the corner pixels
-            The NDC space does not have a "pixels size", so we precisely align the
-            extrema -1 and 1 to either the center or corner of the corner pixels.
+        align_corners: Determines how NDC coordinates map to pixel coordinates.
+            If True: -1 and 1 are aligned to the center of the corner pixels.
+            If False: -1 and 1 are aligned to the corner of the corner pixels.
 
     Returns:
-        Pixel coordinates as a float array with shape (num_points, 2). Out-of-bound values are not corrected.
+        Pixel coordinates as a float array with shape (num_points, 2).
+        Out-of-bound values are not corrected.
 
     Notes:
         This function is commonly used in computer graphics to map normalized
         coordinates to specific pixel locations in an image.
+
+        In general image interpolation:
+        When align_corners=True: src and dst images are aligned by the center
+        point of their corner pixels.
+        When align_corners=False: src and dst images are aligned by the corner
+        points of the corner pixels.
+
+        The NDC space does not have a "pixels size", so we precisely align the
+        extrema -1 and 1 to either the center or corner of the corner pixels.
     """
     sanity.assert_shape(ndc_coords, (None, 2), name="ndc_coords")
     w, h = im_size_wh[:2]
@@ -520,8 +504,8 @@ def recover_resized_pixels(
     Convert pixel coordinates from a resized image back to the original image space.
 
     Args:
-        dst_pixels: Pixel coordinates in the resized image as a float array with shape (num_points, 2).
-            Each row is (col, row).
+        dst_pixels: Pixel coordinates in the resized image as a float array with
+            shape (num_points, 2). Each row is (col, row).
         src_wh: Width and height of the original image.
         dst_wh: Width and height of the resized image.
         keep_aspect_ratio: Whether aspect ratio was maintained during resizing.
@@ -602,17 +586,19 @@ def make_corres_image(
     Args:
         im_src: Source float image with shape (h, w, 3), range 0-1.
         im_dst: Destination float image with shape (h, w, 3), range 0-1.
-        src_pixels: Source pixel coordinates with shape (n, 2), each row represents (x, y) or (c, r).
-        dst_pixels: Destination pixel coordinates with shape (n, 2), each row represents (x, y) or (c, r).
+        src_pixels: Source pixel coordinates with shape (n, 2), each row
+            represents (x, y) or (c, r).
+        dst_pixels: Destination pixel coordinates with shape (n, 2), each row
+            represents (x, y) or (c, r).
         confidences: Confidence values for each correspondence with shape (n,), range [0, 1].
         texts: List of texts to draw on the top-left of the image.
         point_color: RGB or RGBA color of the point, float, range 0-1.
-            - If point_color == None:
-                points will never be drawn.
-            - If point_color != None and confidences == None
-                point color will be determined by point_color.
-            - If point_color != None and confidences != None
-                point color will be determined by "viridis" colormap.
+        If point_color == None:
+            points will never be drawn.
+        If point_color != None and confidences == None:
+            point color will be determined by point_color.
+        If point_color != None and confidences != None:
+            point color will be determined by "viridis" colormap.
         line_color: RGB or RGBA color of the line, float, range 0-1.
         text_color: RGB color of the text, float, range 0-1.
         point_size: Size of the point.

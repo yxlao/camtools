@@ -81,11 +81,13 @@ def mesh_to_im_distance(
 
     The distance image contains the Euclidean distance from the camera center to
     the mesh surface for each pixel. The ray casting follows the equation:
-        distance = ||C - P||
+
+    distance = ||C - P||
+
     where:
-        - C is the camera center in world coordinates
-        - P is the intersection point on the mesh surface
-        - ||·|| denotes the Euclidean norm
+    - C is the camera center in world coordinates
+    - P is the intersection point on the mesh surface
+    - ||·|| denotes the Euclidean norm
 
     Example usage:
         # Create distance image for a 640x480 view
@@ -135,11 +137,13 @@ def mesh_to_im_distances(
     For each camera view, generates a distance image containing the Euclidean
     distance from the camera center to the mesh surface. The distances are
     calculated as:
-        distance = ||C_i - P_i||
+
+    distance = ||C_i - P_i||
+
     where:
-        - C_i is the camera center for view i
-        - P_i is the intersection point on the mesh surface for view i
-        - ||·|| denotes the Euclidean norm
+    - C_i is the camera center for view i
+    - P_i is the intersection point on the mesh surface for view i
+    - ||·|| denotes the Euclidean norm
 
     Example usage:
         # Create distance images for 3 different views
@@ -205,11 +209,13 @@ def mesh_to_im_depth(
 
     The depth image contains the z-coordinate of the mesh surface in the camera
     coordinate system for each pixel. The depth is calculated as:
-        depth = (distance * f) / sqrt(u² + v² + f²)
+
+    depth = (distance * f) / sqrt(u² + v² + f²)
+
     where:
-        - distance is the Euclidean distance from camera center to surface point
-        - f is the focal length from the intrinsic matrix K
-        - (u, v) are the pixel coordinates in the camera plane
+    - distance is the Euclidean distance from camera center to surface point
+    - f is the focal length from the intrinsic matrix K
+    - (u, v) are the pixel coordinates in the camera plane
 
     Example usage:
         # Create depth image for a 640x480 view
@@ -250,11 +256,13 @@ def mesh_to_im_depths(
 
     For each camera view, generates a depth image containing the z-coordinate of
     the mesh surface in the camera coordinate system. The depths are calculated as:
-        depth = (distance * f) / sqrt(u² + v² + f²)
+
+    depth = (distance * f) / sqrt(u² + v² + f²)
+
     where:
-        - distance is the Euclidean distance from camera center to surface point
-        - f is the focal length from the intrinsic matrix K
-        - (u, v) are the pixel coordinates in the camera plane
+    - distance is the Euclidean distance from camera center to surface point
+    - f is the focal length from the intrinsic matrix K
+    - (u, v) are the pixel coordinates in the camera plane
 
     Example usage:
         # Create depth images for 3 different views

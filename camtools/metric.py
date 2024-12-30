@@ -214,19 +214,22 @@ def load_im_pd_im_gt_im_mask_for_eval(
             same (h, w) as im_gt.
         alpha_mode: The mode on how to handle the alpha channel. Currently only
             "white" is supported.
-            - "white": If im_gt contains alpha channel, im_gt will be converted
-                       to RGB, the background will be rendered as white, the
-                       alpha channel will be then ignored.
-            - "keep" : If im_gt contains alpha channel, the alpha channel will
-                       be used as mask. This mask can be overwritten by
-                       im_mask_path if im_mask_path is not None.
-                       (This option is not implemented yet.)
+
+    The alpha_mode parameter can be:
+        - "white": If im_gt contains alpha channel, im_gt will be converted
+            to RGB, the background will be rendered as white, the
+            alpha channel will be then ignored.
+        - "keep": If im_gt contains alpha channel, the alpha channel will
+            be used as mask. This mask can be overwritten by
+            im_mask_path if im_mask_path is not None.
+            (This option is not implemented yet.)
 
     Returns:
-        im_pd: (h, w, 3), float32, value in [0, 1].
-        im_gt: (h, w, 3), float32, value in [0, 1].
-        im_mask: (h, w), float32, value only 0 or 1. Even if im_mask_path is
-            None, im_mask will be returned as all 1s.
+        A tuple containing:
+        - im_pd: (h, w, 3), float32, value in [0, 1].
+        - im_gt: (h, w, 3), float32, value in [0, 1].
+        - im_mask: (h, w), float32, value only 0 or 1. Even if im_mask_path is
+          None, im_mask will be returned as all 1s.
     """
     if alpha_mode != "white":
         raise NotImplementedError('Currently only alpha_mode="white" is supported.')

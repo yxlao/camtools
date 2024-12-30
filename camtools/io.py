@@ -150,6 +150,7 @@ def imwrite_depth(
             - Convert to float : [     0,      0,       0,   0,  64.536,   3.14]
                                                              ^
                                                         Best practice: Use 0 to represent invalid depth
+
         Note that -1 is converted to 64536 / 1000 = 64.536 meters, therefore,
         it is important to clip depth with min_depth and max_depth. The best
         practice is to use 0 as invalid depth.
@@ -365,6 +366,7 @@ def imread_depth(
             - Convert to float : [     0,      0,       0,   0,  64.536,   3.14]
                                                              ^
                                                         Best practice: Use 0 to represent invalid depth
+
         Note that -1 is converted to 64536 / 1000 = 64.536 meters, therefore,
         it is important to clip depth with min_depth and max_depth. The best
         practice is to use 0 as invalid depth.
