@@ -88,16 +88,16 @@ def setup(app):
 
 
 # Furo theme options
-html_theme_options = {
-    "light_css_variables": {
-        "color-brand-primary": "#2962ff",
-        "color-brand-content": "#2962ff",
-    },
-    "dark_css_variables": {
-        "color-brand-primary": "#5c85ff",
-        "color-brand-content": "#5c85ff",
-    },
-}
+# html_theme_options = {
+#     "light_css_variables": {
+#         "color-brand-primary": "#2962ff",
+#         "color-brand-content": "#2962ff",
+#     },
+#     "dark_css_variables": {
+#         "color-brand-primary": "#5c85ff",
+#         "color-brand-content": "#5c85ff",
+#     },
+# }
 
 # Intersphinx configuration
 intersphinx_mapping = {
