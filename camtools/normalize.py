@@ -15,17 +15,17 @@ def compute_normalize_mat(points: Float[np.ndarray, "n 3"]) -> Float[np.ndarray,
         Returns normalize_mat, where `normalize_mat @ points_homo` is centered
         at the origin and is scaled within the unit sphere (max norm equals 1).
 
-        You can check the correctness of compute_normalize_mat by:
+    Examples:
+
         .. code-block:: python
 
+            # You can check the correctness of compute_normalize_mat by:
             normalize_mat = ct.normalize.compute_normalize_mat(points)
             points_normalized = ct.transform.transform_points(points, normalize_mat)
             ct.stat.report_points_range(points_normalized)
 
-        Typically, we also scale the camera after normalizing points. Given
-        the camera parameter `K` and `T`, we can calculate `K_new` and `T_new`:
-        .. code-block:: python
-
+            # Typically, we also scale the camera after normalizing points. Given
+            # the camera parameter `K` and `T`, we can calculate `K_new` and `T_new`:
             K_new = K
             C = ct.convert.T_to_C(T)
             C_new = ct.transform.transform_points(C.reshape((-1, 3)), normalize_mat).flatten()

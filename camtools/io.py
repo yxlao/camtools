@@ -203,10 +203,12 @@ def imread(
 
     Args:
         im_path (Union[str, Path]): Path to the image file. Supported formats:
+
             - .jpg/.jpeg: JPEG format
             - .png: PNG format (may contain alpha channel)
 
         alpha_mode (Optional[str]): Specifies how to handle alpha channels:
+
             - None    : Default. Raise error if alpha channel is present
             - "keep"  : Preserve alpha channel (returns RGBA)
             - "ignore": Discard alpha channel (returns RGB)

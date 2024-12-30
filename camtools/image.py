@@ -502,8 +502,10 @@ def recover_resized_pixels(
     Notes:
         1. This function is paired with OpenCV's cv2.resize() function, where
            the *center* of the top-left pixel is considered to be (0, 0).
-           - Top-left     corner: (-0.5   , -0.5   )
-           - Bottom-right corner: (w - 0.5, h - 0.5)
+
+           - Top-left     corner: ``(-0.5, -0.5)``
+           - Bottom-right corner: ``(w - 0.5, h - 0.5)``
+
            However, most other implementations in computer graphics treat the
            *corner* of the top-left pixel to be (0, 0). For more discussions, see:
            https://www.realtimerendering.com/blog/the-center-of-the-pixel-is-0-50-5/
@@ -784,10 +786,13 @@ def vstack_images(
 
     Args:
         ims: List of RGB images in range [0.0, 1.0].
-        alignment: Horizontal alignment of images in the stack. Must be one of:
+        alignment: Horizontal alignment of images in the stack.
+            Must be one of:
+
             - "left": Align images to the left
             - "center": Center align images
             - "right": Align images to the right
+
             Defaults to "left".
         background_color: Background color for the stacked image as (R, G, B) values
             in range [0.0, 1.0]. Defaults to white (1.0, 1.0, 1.0).
