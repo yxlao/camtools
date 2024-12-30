@@ -1,4 +1,4 @@
-Camera Coordinates
+Camera Conventions
 ==================
 
 .. only:: not latex
