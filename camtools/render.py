@@ -548,7 +548,7 @@ def render_text(
     tight_layout: bool = False,
     multiline_alignment: str = "left",
     padding_tblr: Tuple[int, int, int, int] = (0, 0, 0, 0),
-) -> np.ndarray:
+) -> Float[np.ndarray, "h w"]:
     """
     Global function to render text using specified font settings.
 
@@ -566,7 +566,7 @@ def render_text(
             of the rendered text, in pixels.
 
     Returns:
-        The rendered text as a NumPy array (float32).
+        The rendered text image as a float32 NumPy array.
     """
     if (
         len(padding_tblr) != 4
@@ -610,7 +610,7 @@ def render_texts(
     same_height: bool = False,
     same_width: bool = False,
     padding_tblr: Tuple[int, int, int, int] = (0, 0, 0, 0),
-) -> List[np.ndarray]:
+) -> List[Float[np.ndarray, "h w"]]:
     """
     Render multiple text strings into images with consistent formatting options.
 
@@ -629,8 +629,7 @@ def render_texts(
             text in pixels. Default is (0, 0, 0, 0).
 
     Returns:
-        List[np.ndarray]: List of rendered text images as float32 NumPy arrays
-        with values in range [0, 1].
+        List of rendered text images as float32 NumPy arrays with values in range [0, 1].
     """
     if (
         len(padding_tblr) != 4
