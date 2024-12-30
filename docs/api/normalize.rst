@@ -1,5 +1,5 @@
 ct.normalize
-===========
+============
 
 .. currentmodule:: ct
 
