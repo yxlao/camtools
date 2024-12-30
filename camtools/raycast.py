@@ -19,23 +19,10 @@ def gen_rays(
     """
     Generate camera rays in world coordinates for given pixel coordinates.
 
-    The rays are generated using the pinhole camera model:
-        [X, Y, Z]^T = pose @ (inv(K) @ [u, v, 1]^T)
-    where:
-        - [u, v] are pixel coordinates
-        - K is the intrinsic matrix
-        - pose is the camera-to-world transformation matrix
-        - [X, Y, Z] is the ray direction in world coordinates
-
     Args:
         K: (3, 3) camera intrinsic matrix.
         T: (4, 4) camera extrinsic matrix (world-to-camera transformation).
         pixels: (N, 2) array of pixel coordinates in (col, row) order.
-
-    Returns:
-        A tuple of (centers, dirs). All camera centers are identical since they
-        originate from the same camera. The ray directions are in world
-        coordinates and normalized to unit length.
 
     Returns:
         A tuple of (centers, dirs). All camera centers are identical since they
@@ -85,14 +72,7 @@ def mesh_to_im_distance(
     Generate a distance image by ray casting a mesh from a given camera view.
 
     The distance image contains the Euclidean distance from the camera center to
-    the mesh surface for each pixel. The ray casting follows the equation:
-
-    distance = ||C - P||
-
-    where:
-    - C is the camera center in world coordinates
-    - P is the intersection point on the mesh surface
-    - ||·|| denotes the Euclidean norm
+    the mesh surface for each pixel.
 
     Args:
         mesh: Open3D TriangleMesh to be ray casted.
@@ -141,15 +121,7 @@ def mesh_to_im_distances(
     Generate multiple distance images by ray casting a mesh from different views.
 
     For each camera view, generates a distance image containing the Euclidean
-    distance from the camera center to the mesh surface. The distances are
-    calculated as:
-
-    distance = ||C_i - P_i||
-
-    where:
-    - C_i is the camera center for view i
-    - P_i is the intersection point on the mesh surface for view i
-    - ||·|| denotes the Euclidean norm
+    distance from the camera center to the mesh surface.
 
     Args:
         mesh: Open3D TriangleMesh to be ray casted.
@@ -217,14 +189,7 @@ def mesh_to_im_depth(
     Generate a depth image by ray casting a mesh from a given camera view.
 
     The depth image contains the z-coordinate of the mesh surface in the camera
-    coordinate system for each pixel. The depth is calculated as:
-
-    depth = (distance * f) / sqrt(u² + v² + f²)
-
-    where:
-    - distance is the Euclidean distance from camera center to surface point
-    - f is the focal length from the intrinsic matrix K
-    - (u, v) are the pixel coordinates in the camera plane
+    coordinate system for each pixel.
 
     Args:
         mesh: Open3D TriangleMesh to be ray casted.
@@ -265,9 +230,7 @@ def mesh_to_im_depths(
     Generate multiple depth images by ray casting a mesh from different views.
 
     For each camera view, generates a depth image containing the z-coordinate of
-    the mesh surface in the camera coordinate system. The depths are calculated as:
-
-    depth = (distance * f) / sqrt(u² + v² + f²)
+    the mesh surface in the camera coordinate system.
 
     where:
     - distance is the Euclidean distance from camera center to surface point

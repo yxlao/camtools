@@ -18,15 +18,6 @@ def points_to_pixels(
     Project 3D points in world coordinates to 2D pixel coordinates using the
     camera intrinsic and extrinsic parameters.
 
-    The projection follows the standard pinhole camera model:
-        λ[x, y, 1]^T = K @ [R | t] @ [X, Y, Z, 1]^T
-    where:
-        - [X, Y, Z, 1]^T is a homogeneous 3D point in world coordinates
-        - [R | t] is the 3x4 extrinsic matrix (world-to-camera transformation)
-        - K is the 3x3 intrinsic matrix
-        - [x, y, 1]^T is the projected homogeneous 2D point in pixel coordinates
-        - λ is the depth value
-
     Args:
         points: (N, 3) array of 3D points in world coordinates.
         K: (3, 3) camera intrinsic matrix.
@@ -91,14 +82,6 @@ def im_depth_to_point_cloud(
     including color information. The point cloud can be returned in either a
     sparse format (N, 3) or a dense format matching the input image dimensions
     (H, W, 3).
-
-    The conversion follows the inverse projection formula:
-        [X, Y, Z]^T = pose @ (depth * inv(K) @ [u, v, 1]^T)
-    where:
-        - [u, v] are pixel coordinates
-        - K is the intrinsic matrix
-        - pose is the camera-to-world transformation matrix
-        - depth is the depth value at pixel (u, v)
 
     Args:
         im_depth: (H, W) depth image in world scale, float32 or float64.
