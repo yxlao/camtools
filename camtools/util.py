@@ -3,7 +3,6 @@ Utility functions for camtools.
 """
 
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
-from pathlib import Path
 
 try:
     from typing import ModuleType  # Python <3.10
@@ -154,29 +153,3 @@ def _safely_import_torch() -> Optional[ModuleType]:
 
 
 _safe_torch = _safely_import_torch()
-
-
-def is_jpg_path(path: Union[str, Path]) -> bool:
-    """
-    Check if a path has a JPG/JPEG file extension.
-
-    Args:
-        path: Path to check, can be string or Path object.
-
-    Returns:
-        True if path ends with .jpg or .jpeg (case insensitive), False otherwise.
-    """
-    return Path(path).suffix.lower() in [".jpg", ".jpeg"]
-
-
-def is_png_path(path: Union[str, Path]) -> bool:
-    """
-    Check if a path has a PNG file extension.
-
-    Args:
-        path: Path to check, can be string or Path object.
-
-    Returns:
-        True if path ends with .png (case insensitive), False otherwise.
-    """
-    return Path(path).suffix.lower() in [".png"]

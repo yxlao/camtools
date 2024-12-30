@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Union, Optional
 from jaxtyping import UInt8, Float
 
-from . import util
+from . import sanity
 
 
 def imwrite(
@@ -69,7 +69,7 @@ def imwrite(
     """
     im_path = Path(im_path)
 
-    assert util.is_jpg_path(im_path) or util.is_png_path(
+    assert sanity.is_jpg_path(im_path) or sanity.is_png_path(
         im_path
     ), f"{im_path} is not a JPG or PNG file."
     assert isinstance(im, np.ndarray)
@@ -96,7 +96,7 @@ def imwrite(
     # Write.
     im_dir = im_path.parent
     im_dir.mkdir(parents=True, exist_ok=True)
-    if util.is_jpg_path(im_path):
+    if sanity.is_jpg_path(im_path):
         cv2.imwrite(str(im_path), im, [cv2.IMWRITE_JPEG_QUALITY, quality])
     else:
         cv2.imwrite(str(im_path), im)
@@ -171,7 +171,7 @@ def imwrite_depth(
     """
     im_path = Path(im_path)
 
-    assert util.is_png_path(im_path), f"{im_path} is not a PNG file."
+    assert sanity.is_png_path(im_path), f"{im_path} is not a PNG file."
     assert isinstance(im, np.ndarray)
     assert im.dtype in [np.float32, np.float64]
     assert im.ndim == 2
@@ -252,7 +252,7 @@ def imread(
             rgb_white = imread('image.png', alpha_mode='white')
     """
     im_path = Path(im_path)
-    assert util.is_jpg_path(im_path) or util.is_png_path(
+    assert sanity.is_jpg_path(im_path) or sanity.is_png_path(
         im_path
     ), f"{im_path} is not a JPG or PNG file."
     assert im_path.is_file(), f"{im_path} is not a file."
@@ -390,7 +390,7 @@ def imread_depth(
             depth = imread_depth('depth.png', depth_scale=1)
     """
     im_path = Path(im_path)
-    assert util.is_png_path(im_path), f"{im_path} is not a PNG file."
+    assert sanity.is_png_path(im_path), f"{im_path} is not a PNG file."
     assert im_path.is_file(), f"{im_path} is not a file."
 
     im = cv2.imread(str(im_path), cv2.IMREAD_UNCHANGED)

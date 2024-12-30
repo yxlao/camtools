@@ -2,8 +2,9 @@
 Functions for sanity checking inputs.
 """
 
+from pathlib import Path
 import numpy as np
-from typing import Optional
+from typing import Optional, Union
 from jaxtyping import Float
 
 
@@ -214,3 +215,29 @@ def assert_shape_3(x: np.ndarray, name: Optional[str] = None):
         name: Optional name of the variable for error message
     """
     assert_shape(x, (3,), name=name)
+
+
+def is_jpg_path(path: Union[str, Path]) -> bool:
+    """
+    Check if a path has a JPG/JPEG file extension.
+
+    Args:
+        path: Path to check, can be string or Path object.
+
+    Returns:
+        True if path ends with .jpg or .jpeg (case insensitive), False otherwise.
+    """
+    return Path(path).suffix.lower() in [".jpg", ".jpeg"]
+
+
+def is_png_path(path: Union[str, Path]) -> bool:
+    """
+    Check if a path has a PNG file extension.
+
+    Args:
+        path: Path to check, can be string or Path object.
+
+    Returns:
+        True if path ends with .png (case insensitive), False otherwise.
+    """
+    return Path(path).suffix.lower() in [".png"]
