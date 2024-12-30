@@ -1,5 +1,14 @@
+"""
+Utility functions for camtools.
+"""
+
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
-from typing import Any, Callable, Iterable
+
+try:
+    from typing import ModuleType  # Python <3.10
+except ImportError:
+    from types import ModuleType  # Python 3.10+
+from typing import Any, Callable, Iterable, Union, Optional
 
 from functools import lru_cache
 from tqdm import tqdm
@@ -14,14 +23,12 @@ def mt_loop(
     Applies a function to each item in the given list in parallel using multi-threading.
 
     Args:
-        func (Callable[[Any], Any]): The function to apply. Must accept a single
-            argument.
-        inputs (Iterable[Any]): An iterable of inputs to process with the
-            function.
-        **kwargs: Additional keyword arguments to pass to `func`.
+        func: Callable function that accepts a single argument.
+        inputs: Iterable of inputs to process with the function.
+        **kwargs: Additional keyword arguments to pass to ``func``.
 
     Returns:
-        list: A list of results from applying `func` to each item in `list_input`.
+        A list of results from applying ``func`` to each item in ``inputs``.
     """
     desc = f"[mt] {func.__name__}"
     with ThreadPoolExecutor() as executor:
@@ -43,14 +50,12 @@ def mp_loop(
     Applies a function to each item in the given list in parallel using multi-processing.
 
     Args:
-        func (Callable[[Any], Any]): The function to apply. Must accept a single
-            argument.
-        inputs (Iterable[Any]): An iterable of inputs to process with the
-            function.
-        **kwargs: Additional keyword arguments to pass to `func`.
+        func: Callable function that accepts a single argument.
+        inputs: Iterable of inputs to process with the function.
+        **kwargs: Additional keyword arguments to pass to ``func``.
 
     Returns:
-        list: A list of results from applying `func` to each item in `inputs`.
+        A list of results from applying ``func`` to each item in ``inputs``.
     """
     desc = f"[mp] {func.__name__}"
     with ProcessPoolExecutor() as executor:
@@ -63,33 +68,32 @@ def mp_loop(
     return results
 
 
-def query_yes_no(question, default=None):
-    """Ask a yes/no question via raw_input() and return their answer.
+def query_yes_no(question: str, default: Optional[bool] = None) -> bool:
+    """
+    Ask a yes/no question via raw_input() and return their answer.
 
     Args:
-        question: A string that is presented to the user.
-        default: The presumed answer if the user just hits <Enter>.
+        question: The question that is presented to the user.
+        default: Presumed answer if the user just hits <Enter>.
             - True: The answer is assumed to be yes.
             - False: The answer is assumed to be no.
             - None: The answer is required from the user.
 
     Returns:
-        Returns True for "yes" or False for "no".
+        True for "yes" or False for "no".
 
     Examples:
-        ```python
-        if query_yes_no("Continue?", default="yes"):
-            print("Proceeding.")
-        else:
-            print("Aborted.")
-        ```
+        .. code-block:: python
 
-        ```python
-        if not query_yes_no("Continue?", default="yes"):
-            print("Aborted.")
-            return  # Or exit(0)
-        print("Proceeding.")
-        ```
+            if query_yes_no("Continue?", default=True):
+                print("Proceeding.")
+            else:
+                print("Aborted.")
+
+            if not query_yes_no("Continue?", default=True):
+                print("Aborted.")
+                return  # Or exit(0)
+            print("Proceeding.")
     """
     if default is None:
         prompt = "[y/n]"
@@ -121,20 +125,20 @@ def query_yes_no(question, default=None):
 
 
 @lru_cache(maxsize=1)
-def _safely_import_torch():
+def _safely_import_torch() -> Optional[ModuleType]:
     """
     Open3D has an issue where it must be imported before torch. If Open3D is
     installed, this function will import Open3D before torch. Otherwise, it
     will return simply import and return torch.
 
     Use this function to import torch within camtools to handle the Open3D
-    import order issue. That is, within camtools, we shall avoid `import torch`,
-    and instead use `from camtools.backend import torch`. As torch is an
+    import order issue. That is, within camtools, we shall avoid ``import torch``,
+    and instead use ``from camtools.backend import torch``. As torch is an
     optional dependency for camtools, this function will return None if torch
     is not available.
 
     Returns:
-        module: The torch module if available, otherwise None.
+        Optional[ModuleType]: The torch module if available, otherwise None.
     """
     try:
         __import__("open3d")

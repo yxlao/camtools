@@ -1,5 +1,10 @@
+"""
+Functions for sanity checking inputs.
+"""
+
+from pathlib import Path
 import numpy as np
-from typing import Optional
+from typing import Optional, Union
 from jaxtyping import Float
 
 
@@ -24,9 +29,13 @@ def assert_K(K: Float[np.ndarray, "3 3"]):
     Assert that K is a valid 3x3 camera intrinsic matrix.
 
     The intrinsic matrix K follows the standard form:
+
+    .. code-block::
+
         [[fx,  s, cx],
          [ 0, fy, cy],
          [ 0,  0,  1]]
+
     where:
         - fx, fy: focal lengths in pixels
         - cx, cy: principal point coordinates
@@ -46,16 +55,6 @@ def assert_T(T: Float[np.ndarray, "4 4"]):
     """
     Assert that T is a valid 4x4 camera extrinsic matrix (world-to-camera transformation).
 
-    The extrinsic matrix T follows the standard form:
-        [[R00, R01, R02, t0],
-         [R10, R11, R12, t1],
-         [R20, R21, R22, t2],
-         [  0,   0,   0,  1]]
-    where:
-        - R is a 3x3 rotation matrix
-        - t is a 3x1 translation vector
-        - Bottom row must be [0, 0, 0, 1]
-
     Args:
         T: Camera extrinsic matrix to validate
 
@@ -72,17 +71,6 @@ def assert_T(T: Float[np.ndarray, "4 4"]):
 def assert_pose(pose: Float[np.ndarray, "4 4"]):
     """
     Assert that pose is a valid 4x4 camera pose matrix (camera-to-world transformation).
-
-    The pose matrix follows the standard form:
-        [[R00, R01, R02, t0],
-         [R10, R11, R12, t1],
-         [R20, R21, R22, t2],
-         [  0,   0,   0,  1]]
-    where:
-        - R is a 3x3 rotation matrix
-        - t is a 3x1 translation vector
-        - Bottom row must be [0, 0, 0, 1]
-    The pose matrix is the inverse of the extrinsic matrix T.
 
     Args:
         pose: Camera pose matrix to validate
@@ -105,8 +93,9 @@ def assert_shape(x: np.ndarray, shape: tuple, name: Optional[str] = None):
 
     The shape pattern can contain None values to indicate that dimension can be
     any size. For example:
-        - (None, 3) matches any 2D array where the second dimension is 3
-        - (3, None, 3) matches any 3D array where first and last dimensions are 3
+
+    - (None, 3) matches any 2D array where the second dimension is 3
+    - (3, None, 3) matches any 3D array where first and last dimensions are 3
 
     Args:
         x: Array to validate
@@ -226,3 +215,29 @@ def assert_shape_3(x: np.ndarray, name: Optional[str] = None):
         name: Optional name of the variable for error message
     """
     assert_shape(x, (3,), name=name)
+
+
+def is_jpg_path(path: Union[str, Path]) -> bool:
+    """
+    Check if a path has a JPG/JPEG file extension.
+
+    Args:
+        path: Path to check, can be string or Path object.
+
+    Returns:
+        True if path ends with .jpg or .jpeg (case insensitive), False otherwise.
+    """
+    return Path(path).suffix.lower() in [".jpg", ".jpeg"]
+
+
+def is_png_path(path: Union[str, Path]) -> bool:
+    """
+    Check if a path has a PNG file extension.
+
+    Args:
+        path: Path to check, can be string or Path object.
+
+    Returns:
+        True if path ends with .png (case insensitive), False otherwise.
+    """
+    return Path(path).suffix.lower() in [".png"]

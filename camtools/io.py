@@ -1,16 +1,14 @@
+"""
+Functions for reading and writing images and depth images.
+"""
+
 import cv2
 import numpy as np
 from pathlib import Path
 from typing import Union, Optional
 from jaxtyping import UInt8, Float
 
-
-def is_jpg_path(path):
-    return Path(path).suffix.lower() in [".jpg", ".jpeg"]
-
-
-def is_png_path(path):
-    return Path(path).suffix.lower() in [".png"]
+from . import sanity
 
 
 def imwrite(
@@ -27,22 +25,24 @@ def imwrite(
     Write an image, with no surprises.
 
     This function handles common image writing tasks including:
-    - Automatic directory creation
-    - Image format detection based on file extension
-    - Input validation and type conversion
-    - Color space conversion (RGB to BGR for OpenCV)
+        - Automatic directory creation
+        - Image format detection based on file extension
+        - Input validation and type conversion
+        - Color space conversion (RGB to BGR for OpenCV)
 
     Args:
-        im_path (Union[str, Path]): Path to save the image. Supported extensions:
-            - .jpg/.jpeg: JPEG format with configurable quality
-            - .png: PNG format with lossless compression
-            Note: Parent directories will be created automatically if they don't exist.
+        im_path (Union[str, Path]): Path to save the image. Supported
+            extensions: ``.jpg``, ``.jpeg``, ``.png``. Parent directories will
+            be created automatically if they don't exist.
 
         im (Union[UInt8[np.ndarray], Float[np.ndarray]]): Image data as a numpy array.
             Supported formats:
+
             - Grayscale: 2D array (height x width)
             - Color: 3D array (height x width x 3)
+
             Supported data types:
+
             - uint8: Values in range [0, 255]
             - float32/float64: Values in range [0.0, 1.0] (will be scaled to uint8)
 
@@ -57,17 +57,19 @@ def imwrite(
         - Color images are automatically converted from RGB to BGR format for OpenCV
 
     Examples:
-        >>> # Save a grayscale image
-        >>> grayscale = np.random.rand(256, 256).astype(np.float32)
-        >>> imwrite('output.jpg', grayscale)
+        .. code-block:: python
 
-        >>> # Save a color image with high quality
-        >>> color = np.random.rand(256, 256, 3).astype(np.uint8)
-        >>> imwrite('output.jpg', color, quality=100)
+            # Save a grayscale image
+            grayscale = np.random.rand(256, 256).astype(np.float32)
+            imwrite('output.jpg', grayscale)
+
+            # Save a color image with high quality
+            color = np.random.rand(256, 256, 3).astype(np.uint8)
+            imwrite('output.jpg', color, quality=100)
     """
     im_path = Path(im_path)
 
-    assert is_jpg_path(im_path) or is_png_path(
+    assert sanity.is_jpg_path(im_path) or sanity.is_png_path(
         im_path
     ), f"{im_path} is not a JPG or PNG file."
     assert isinstance(im, np.ndarray)
@@ -94,7 +96,7 @@ def imwrite(
     # Write.
     im_dir = im_path.parent
     im_dir.mkdir(parents=True, exist_ok=True)
-    if is_jpg_path(im_path):
+    if sanity.is_jpg_path(im_path):
         cv2.imwrite(str(im_path), im, [cv2.IMWRITE_JPEG_QUALITY, quality])
     else:
         cv2.imwrite(str(im_path), im)
@@ -109,16 +111,17 @@ def imwrite_depth(
     Write depth map to a 16-bit PNG file with depth scaling.
 
     This function handles depth map storage by:
-    - Scaling depth values by depth_scale
-    - Converting to 16-bit unsigned integer format
-    - Creating necessary directories
-    - Validating input data
+        - Scaling depth values by depth_scale
+        - Converting to 16-bit unsigned integer format
+        - Creating necessary directories
+        - Validating input data
 
     Args:
         im_path (Union[str, Path]): Output file path. Must have .png extension.
             Parent directories will be created automatically if they don't exist.
 
         im (Float[np.ndarray]): Depth map as a 2D numpy array. Must be:
+
             - Shape: (height, width)
             - Data type: float32 or float64
             - Values: Depth values in meters (or other consistent units)
@@ -126,6 +129,7 @@ def imwrite_depth(
         depth_scale (float, optional): Scaling factor to apply before converting
             to uint16. Defaults to 1000.0. This determines the precision of
             stored depth values. For example:
+
             - depth_scale=1000: 1mm precision
             - depth_scale=100: 1cm precision
             - depth_scale=1: 1m precision
@@ -140,28 +144,34 @@ def imwrite_depth(
         The user is responsible for defining what is invalid depth. E.g.,
         invalid depth can represented as np.nan, np.inf, 0, -1, etc. This
         function simply multiplies the depth by depth_scale can convert to
-        uint16. For instance, with depth_scale = 1000,
+        uint16. For instance, with depth_scale = 1000:
+
+        .. code-block::
+
             - Input depths     : [np.nan, np.inf, -np.inf,   0,      -1,   3.14]
             - Written to ".png": [     0,      0,       0,   0,   64536,   3140]
             - Read from ".png" : [     0,      0,       0,   0,   64536,   3140]
             - Convert to float : [     0,      0,       0,   0,  64.536,   3.14]
                                                              ^
-                                                        Best practice.
+                                                        Best practice: Use 0 to represent invalid depth
+
         Note that -1 is converted to 64536 / 1000 = 64.536 meters, therefore,
         it is important to clip depth with min_depth and max_depth. The best
         practice is to use 0 as invalid depth.
 
     Examples:
-        >>> # Write depth map with 1mm precision
-        >>> depth = np.random.rand(256, 256).astype(np.float32) * 10  # 0-10 meters
-        >>> imwrite_depth('depth.png', depth, depth_scale=1000)
+        .. code-block:: python
 
-        >>> # Write depth map with 1cm precision
-        >>> imwrite_depth('depth.png', depth, depth_scale=100)
+            # Write depth map with 1mm precision
+            depth = np.random.rand(256, 256).astype(np.float32) * 10  # 0-10 meters
+            imwrite_depth('depth.png', depth, depth_scale=1000)
+
+            # Write depth map with 1cm precision
+            imwrite_depth('depth.png', depth, depth_scale=100)
     """
     im_path = Path(im_path)
 
-    assert is_png_path(im_path), f"{im_path} is not a PNG file."
+    assert sanity.is_png_path(im_path), f"{im_path} is not a PNG file."
     assert isinstance(im, np.ndarray)
     assert im.dtype in [np.float32, np.float64]
     assert im.ndim == 2
@@ -186,17 +196,19 @@ def imread(
     Guaranteed to return float32 arrays in range [0, 1] with RGB(A) color space.
 
     This function handles image reading by:
-    - Automatically converting to float32 in range [0, 1]
-    - Supporting both grayscale and color images
-    - Providing multiple options for handling alpha channels
-    - Converting color space from BGR to RGB
+        - Automatically converting to float32 in range [0, 1]
+        - Supporting both grayscale and color images
+        - Providing multiple options for handling alpha channels
+        - Converting color space from BGR to RGB
 
     Args:
         im_path (Union[str, Path]): Path to the image file. Supported formats:
+
             - .jpg/.jpeg: JPEG format
             - .png: PNG format (may contain alpha channel)
 
         alpha_mode (Optional[str]): Specifies how to handle alpha channels:
+
             - None    : Default. Raise error if alpha channel is present
             - "keep"  : Preserve alpha channel (returns RGBA)
             - "ignore": Discard alpha channel (returns RGB)
@@ -225,20 +237,22 @@ def imread(
         - When alpha_mode is None, images with alpha channels will raise an error
 
     Examples:
-        >>> # Read grayscale image
-        >>> gray = imread('image.jpg')
+        .. code-block:: python
 
-        >>> # Read color image, ignore alpha if present
-        >>> rgb = imread('image.png', alpha_mode='ignore')
+            # Read grayscale image
+            gray = imread('image.jpg')
 
-        >>> # Read image with alpha channel preserved
-        >>> rgba = imread('image.png', alpha_mode='keep')
+            # Read color image, ignore alpha if present
+            rgb = imread('image.png', alpha_mode='ignore')
 
-        >>> # Read image with white background for transparency
-        >>> rgb_white = imread('image.png', alpha_mode='white')
+            # Read image with alpha channel preserved
+            rgba = imread('image.png', alpha_mode='keep')
+
+            # Read image with white background for transparency
+            rgb_white = imread('image.png', alpha_mode='white')
     """
     im_path = Path(im_path)
-    assert is_jpg_path(im_path) or is_png_path(
+    assert sanity.is_jpg_path(im_path) or sanity.is_png_path(
         im_path
     ), f"{im_path} is not a JPG or PNG file."
     assert im_path.is_file(), f"{im_path} is not a file."
@@ -320,10 +334,10 @@ def imread_depth(
     Read and normalize a 16-bit depth map from a PNG file.
 
     This function handles depth map reading by:
-    - Loading 16-bit depth values from PNG
-    - Converting to float32
-    - Applying depth scale normalization
-    - Validating input data
+        - Loading 16-bit depth values from PNG
+        - Converting to float32
+        - Applying depth scale normalization
+        - Validating input data
 
     Args:
         im_path (Union[str, Path]): Path to the depth map file. Must be a 16-bit PNG.
@@ -348,29 +362,35 @@ def imread_depth(
         The user is responsible for defining what is invalid depth. E.g.,
         invalid depth can represented as np.nan, np.inf, 0, -1, etc. This
         function simply multiplies the depth by depth_scale can convert to
-        uint16. For instance, with depth_scale = 1000,
+        uint16. For instance, with depth_scale = 1000:
+
+        .. code-block::
+
             - Input depths     : [np.nan, np.inf, -np.inf,   0,      -1,   3.14]
             - Written to ".png": [     0,      0,       0,   0,   64536,   3140]
             - Read from ".png" : [     0,      0,       0,   0,   64536,   3140]
             - Convert to float : [     0,      0,       0,   0,  64.536,   3.14]
                                                              ^
-                                                        Best practice.
+                                                        Best practice: Use 0 to represent invalid depth
+
         Note that -1 is converted to 64536 / 1000 = 64.536 meters, therefore,
         it is important to clip depth with min_depth and max_depth. The best
         practice is to use 0 as invalid depth.
 
     Examples:
-        >>> # Read depth map with 1mm precision
-        >>> depth = imread_depth('depth.png', depth_scale=1000)
+        .. code-block:: python
 
-        >>> # Read depth map with 1cm precision
-        >>> depth = imread_depth('depth.png', depth_scale=100)
+            # Read depth map with 1mm precision
+            depth = imread_depth('depth.png', depth_scale=1000)
 
-        >>> # Read depth map with 1m precision
-        >>> depth = imread_depth('depth.png', depth_scale=1)
+            # Read depth map with 1cm precision
+            depth = imread_depth('depth.png', depth_scale=100)
+
+            # Read depth map with 1m precision
+            depth = imread_depth('depth.png', depth_scale=1)
     """
     im_path = Path(im_path)
-    assert is_png_path(im_path), f"{im_path} is not a PNG file."
+    assert sanity.is_png_path(im_path), f"{im_path} is not a PNG file."
     assert im_path.is_file(), f"{im_path} is not a file."
 
     im = cv2.imread(str(im_path), cv2.IMREAD_UNCHANGED)

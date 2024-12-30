@@ -1,5 +1,5 @@
 ct.transform
-===========
+============
 
 .. currentmodule:: ct
 

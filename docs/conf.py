@@ -10,6 +10,8 @@ import os
 import sys
 import subprocess
 import camtools as ct
+from pathlib import Path
+import shutil
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -51,19 +53,51 @@ language = "en"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "furo"
-html_static_path = ["_static"]
+html_static_path = ["_static", "../camtools/assets"]
 
-# Furo theme options
+# Get script directory
+script_dir = Path(__file__).parent
+
+# Theme options
 html_theme_options = {
-    "light_css_variables": {
-        "color-brand-primary": "#2962ff",
-        "color-brand-content": "#2962ff",
-    },
-    "dark_css_variables": {
-        "color-brand-primary": "#5c85ff",
-        "color-brand-content": "#5c85ff",
-    },
+    "light_logo": "camtools_logo_light.png",
+    "dark_logo": "camtools_logo_dark.png",
 }
+
+# Set the title with version and git hash
+html_title = f"CamTools Documentation ({release})"
+
+# Favicon
+favicon_path = (
+    script_dir.parent / "camtools" / "assets" / "camtools_logo_squre_dark.png"
+)
+if not favicon_path.is_file():
+    raise FileNotFoundError(f"Favicon not found at {favicon_path}")
+html_favicon = str(favicon_path)
+
+
+# Google Analytics configuration
+def add_ga_javascript(app, pagename, templatename, context, doctree):
+    """
+    Ref: https://github.com/sphinx-contrib/googleanalytics/blob/master/sphinxcontrib/googleanalytics.py
+    """
+    metatags = context.get("metatags", "")
+    metatags += """
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FG59NQBWRW"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FG59NQBWRW');
+    </script>
+    """
+    context["metatags"] = metatags
+
+
+def setup(app):
+    app.connect("html-page-context", add_ga_javascript)
+
 
 # Intersphinx configuration
 intersphinx_mapping = {

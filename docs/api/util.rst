@@ -1,9 +1,9 @@
-ct.normalize
-============
+ct.util
+=======
 
 .. currentmodule:: ct
 
-.. automodule:: ct.normalize
+.. automodule:: ct.util
    :members:
    :undoc-members:
    :show-inheritance:

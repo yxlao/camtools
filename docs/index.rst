@@ -1,5 +1,6 @@
-CamTools Documentation
-======================
+.. raw:: html
+
+   <div style="height: 1em"></div>
 
 .. only:: not latex
 
@@ -19,8 +20,12 @@ CamTools Documentation
 
    <p align="center">
      <a href="https://camtools.readthedocs.io/"><strong>Docs</strong></a> |
-     <a href="https://github.com/yxlao/camtools"><strong>Repo</strong></a>
+     <a href="https://github.com/yxlao/camtools"><strong>Code</strong></a> |
+     <a href="https://pypi.org/project/camtools/"><strong>PyPI</strong></a>
    </p>
+
+CamTools Documentation
+======================
 
 CamTools is a collection of tools for handling cameras in computer vision. It
 can be used for plotting, converting, projecting, ray casting, and doing more

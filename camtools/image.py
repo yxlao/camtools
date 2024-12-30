@@ -1,3 +1,7 @@
+"""
+Functions for manipulating images.
+"""
+
 import numpy as np
 import cv2
 from . import sanity
@@ -13,85 +17,19 @@ def crop_white_boarders(
     Crop white borders from an image and apply optional padding.
 
     Args:
-        im (Float[np.ndarray, "h w 3"]): Input image as a float32 array with shape
-            (height, width, 3). Pixel values should be in range [0.0, 1.0].
-        padding (Tuple[int, int, int, int]): Padding to apply after cropping in the
-            format (top, bottom, left, right). Defaults to (0, 0, 0, 0).
+        im: Input float image in range [0.0, 1.0].
+        padding: Padding to apply after cropping in the format
+            (top, bottom, left, right). Defaults to (0, 0, 0, 0).
 
     Returns:
-        Float[np.ndarray, "h_cropped w_cropped 3"]: Cropped and padded image as a
-            float32 array with shape (height_cropped, width_cropped, 3).
+        Cropped and padded image.
     """
     tblr = compute_cropping(im)
     im_dst = apply_cropping_padding(im, tblr, padding)
     return im_dst
 
 
-def compute_cropping_v1(im: Float[np.ndarray, "h w n"]) -> Tuple[int, int, int, int]:
-    """
-    Compute white border sizes in pixels for multi-channel images.
-
-    This function calculates the number of white pixels on each edge of an image.
-    It can handle (H, W, N) images, including:
-    - 3-channel images: (H, W, 3)
-    - Concatenated 3-channel images: (H, W, 3 x num_im)
-
-    Args:
-        im (Float[np.ndarray, "h w n"]): Input image as a float32 array with shape
-            (height, width, num_channels). Pixel values should be in range [0.0, 1.0].
-
-    Returns:
-        Tuple[int, int, int, int]: A tuple containing:
-            - crop_t: Number of white pixels on the top edge
-            - crop_b: Number of white pixels on the bottom edge
-            - crop_l: Number of white pixels on the left edge
-            - crop_r: Number of white pixels on the right edge
-
-    Raises:
-        ValueError: If input image has invalid dtype, dimensions, or is empty.
-    """
-    if not im.dtype == np.float32:
-        raise ValueError(f"im.dtype == {im.dtype} != np.float32")
-    if not im.ndim == 3:
-        raise ValueError(f"im must be (H, W, N), but got {im.shape}")
-    if im.shape[2] == 0:
-        raise ValueError(f"Empty image, got {im.shape}")
-
-    h, w, _ = im.shape
-
-    # Find the number of white pixels on each edge.
-    crop_t = 0
-    crop_b = 0
-    crop_l = 0
-    crop_r = 0
-
-    for t in range(h):
-        if np.allclose(im[t, :, :], 1.0):
-            crop_t += 1
-        else:
-            break
-    for b in range(h):
-        if np.allclose(im[h - b - 1, :, :], 1.0):
-            crop_b += 1
-        else:
-            break
-    for l in range(w):
-        if np.allclose(im[:, l, :], 1.0):
-            crop_l += 1
-        else:
-            break
-    for r in range(w):
-        if np.allclose(im[:, w - r - 1, :], 1.0):
-            crop_r += 1
-        else:
-            break
-
-    return crop_t, crop_b, crop_l, crop_r
-
-
-def compute_cropping(
-    im: Float[np.ndarray, "h w 3"], check_with_v1: bool = False
-) -> Tuple[int, int, int, int]:
+def compute_cropping(im: Float[np.ndarray, "h w 3"]) -> Tuple[int, int, int, int]:
     """
     Compute white border sizes in pixels for 3-channel RGB images.
 
@@ -99,20 +37,17 @@ def compute_cropping(
     RGB image. White pixels are defined as having values of (1.0, 1.0, 1.0).
 
     Args:
-        im (Float[np.ndarray, "h w 3"]): Input image as a float32 array with shape
-            (height, width, 3). Pixel values should be in range [0.0, 1.0].
-        check_with_v1 (bool): If True, verifies results against compute_cropping_v1.
-            Defaults to False.
+        im: Input float image in range [0.0, 1.0].
 
     Returns:
-        Tuple[int, int, int, int]: A tuple containing:
+        Tuple[int, int, int, int]:
             - crop_t: Number of white pixels on the top edge
             - crop_b: Number of white pixels on the bottom edge
             - crop_l: Number of white pixels on the left edge
             - crop_r: Number of white pixels on the right edge
 
     Raises:
-        ValueError: If input image has invalid dtype, dimensions, or fails v1 check.
+        ValueError: If input image has invalid dtype or dimensions.
     """
     if not im.dtype == np.float32:
         raise ValueError(f"Expected im.dtype to be np.float32, but got {im.dtype}")
@@ -132,21 +67,6 @@ def compute_cropping(
     crop_l = cols_with_color[0] if len(cols_with_color) else 0
     crop_r = im.shape[1] - cols_with_color[-1] - 1 if len(cols_with_color) else 0
 
-    # Check the results against compute_cropping_v1 if requested
-    if check_with_v1:
-        crop_t_v1, crop_b_v1, crop_l_v1, crop_r_v1 = compute_cropping_v1(im)
-        if (
-            crop_t != crop_t_v1
-            or crop_b != crop_b_v1
-            or crop_l != crop_l_v1
-            or crop_r != crop_r_v1
-        ):
-            raise ValueError(
-                f"compute_cropping_v1 failed to compute the correct cropping: "
-                f"({crop_t}, {crop_b}, {crop_l}, {crop_r}) != "
-                f"({crop_t_v1}, {crop_b_v1}, {crop_l_v1}, {crop_r_v1})"
-            )
-
     return crop_t, crop_b, crop_l, crop_r
 
 
@@ -159,16 +79,12 @@ def apply_cropping_padding(
     Apply cropping and padding to an RGB image.
 
     Args:
-        im_src (Float[np.ndarray, "h w 3"]): Source image as a float32 array with
-            shape (height, width, 3). Pixel values should be in range [0.0, 1.0].
-        cropping (Tuple[int, int, int, int]): Cropping values in the format
-            (crop_top, crop_bottom, crop_left, crop_right).
-        padding (Tuple[int, int, int, int]): Padding values in the format
-            (pad_top, pad_bottom, pad_left, pad_right).
+        im_src: Source float image in range [0.0, 1.0].
+        cropping: Cropping values in the format (crop_top, crop_bottom, crop_left, crop_right).
+        padding: Padding values in the format (pad_top, pad_bottom, pad_left, pad_right).
 
     Returns:
-        Float[np.ndarray, "h_cropped w_cropped 3"]: Cropped and padded image as a
-            float32 array with shape (height_cropped, width_cropped, 3).
+        Cropped and padded image.
 
     Raises:
         ValueError: If input image has invalid dtype or dimensions.
@@ -204,27 +120,16 @@ def apply_croppings_paddings(
     Apply cropping and padding to a list of RGB images.
 
     Args:
-        src_ims: list of images, float32.
-        croppings: list of 4-tuples
-            [
-                (crop_t, crop_b, crop_l, crop_r),
-                (crop_t, crop_b, crop_l, crop_r),
-                ...
-            ]
-        paddings: list of 4-tuples
-            [
-                (pad_t, pad_b, pad_l, pad_r),
-                (pad_t, pad_b, pad_l, pad_r),
-                ...
-            ]
+        src_ims: List of source images.
+        croppings: List of 4-tuples: [(crop_t, crop_b, crop_l, crop_r), ...]
+        paddings: List of 4-tuples: [(pad_t, pad_b, pad_l, pad_r), ...]
 
     Returns:
-        List[Float[np.ndarray, "h_cropped w_cropped 3"]]: List of cropped and padded images
-            as float32 arrays with shape (height_cropped, width_cropped, 3).
+        List of cropped and padded images.
 
     Raises:
-        ValueError: If the number of croppings or paddings doesn't match the number of images,
-            or if any cropping tuple has invalid length.
+        ValueError: If the number of croppings or paddings doesn't match the
+        number of images, or if any cropping tuple has invalid length.
     """
     num_ims = len(src_ims)
     if not len(croppings) == num_ims:
@@ -252,23 +157,12 @@ def get_post_croppings_paddings_shapes(
     Compute the shapes of images after applying cropping and padding.
 
     Args:
-        src_shapes: list of source image shapes.
-        croppings: list of 4-tuples
-            [
-                (crop_t, crop_b, crop_l, crop_r),
-                (crop_t, crop_b, crop_l, crop_r),
-                ...
-            ]
-        paddings: list of 4-tuples
-            [
-                (pad_t, pad_b, pad_l, pad_r),
-                (pad_t, pad_b, pad_l, pad_r),
-                ...
-            ]
+        src_shapes: List of source image shapes.
+        croppings: List of 4-tuples: [(crop_t, crop_b, crop_l, crop_r), ...]
+        paddings: List of 4-tuples: [(pad_t, pad_b, pad_l, pad_r), ...]
 
     Returns:
-        List[Tuple[int, int, int]]: List of resulting image shapes after cropping and padding
-            in the format (height_cropped, width_cropped, channels).
+        List of resulting image shapes in format (height_cropped, width_cropped, channels).
     """
     dst_shapes = []
     for src_shape, cropping, padding in zip(src_shapes, croppings, paddings):
@@ -293,17 +187,15 @@ def overlay_mask_on_rgb(
     Overlay a mask on top of an RGB image with specified transparency and color.
 
     Args:
-        im_rgb (Float[np.ndarray, "h w 3"]): RGB image as a float32/float64 array with shape
-            (height, width, 3). Pixel values should be in range [0.0, 1.0].
-        im_mask (Float[np.ndarray, "h w"]): Mask image as a float32/float64 array with shape
-            (height, width). Pixel values should be in range [0.0, 1.0].
-        overlay_alpha (float): Transparency level for the overlay, in range [0.0, 1.0].
+        im_rgb: RGB image in range [0.0, 1.0].
+        im_mask: Mask image in range [0.0, 1.0].
+        overlay_alpha: Transparency level for the overlay, in range [0.0, 1.0].
             Defaults to 0.4.
-        overlay_color (Float[np.ndarray, "3"]): Color for the overlay as a float array with
-            3 channels (R, G, B). Values should be in range [0.0, 1.0]. Defaults to blue.
+        overlay_color: Color for the overlay as a 3-channel array in range [0.0, 1.0].
+            Defaults to blue.
 
     Returns:
-        Float[np.ndarray, "h w 3"]: Resulting image with mask overlay applied.
+        Resulting image with mask overlay applied.
 
     Raises:
         AssertionError: If input images have invalid shapes, dtypes, or value ranges.
@@ -345,24 +237,23 @@ def ndc_coords_to_pixels(
             Most values shall be in [-1, 1], where (-1, -1) is the top left
             corner and (1, 1) is the bottom right corner.
         im_size_wh: Image size (width, height).
-        align_corners: Determines how NDC coordinates map to pixel coordinates:
-            - If True: -1 and 1 are aligned to the center of the corner pixels
-            - If False: -1 and 1 are aligned to the corner of the corner pixels
-            In general image interpolation:
-            - When align_corners=True: src and dst images are aligned by the center
-              point of their corner pixels
-            - When align_corners=False: src and dst images are aligned by the corner
-              points of the corner pixels
-            The NDC space does not have a "pixels size", so we precisely align the
-            extrema -1 and 1 to either the center or corner of the corner pixels.
+        align_corners: Determines how NDC coordinates map to pixel coordinates.
+            If True: -1 and 1 are aligned to the center of the corner pixels.
+            If False: -1 and 1 are aligned to the corner of the corner pixels.
 
     Returns:
-        Float[np.ndarray, "n 2"]: Pixel coordinates as a float array with shape
-            (num_points, 2). Out-of-bound values are not corrected.
+        Pixel coordinates as a float array.
 
     Notes:
         This function is commonly used in computer graphics to map normalized
         coordinates to specific pixel locations in an image.
+
+        When align_corners is True, src and dst images are aligned by the center
+        point of their corner pixels; when align_corners is False, src and dst
+        images are aligned by the corner points of the corner pixels.
+
+        The NDC space does not have a "pixels size", so we precisely align the
+        extrema -1 and 1 to either the center or corner of the corner pixels.
     """
     sanity.assert_shape(ndc_coords, (None, 2), name="ndc_coords")
     w, h = im_size_wh[:2]
@@ -395,14 +286,12 @@ def rotate(
     Rotate an image by a specified counter-clockwise angle.
 
     Args:
-        im (Float[np.ndarray, "h w c"]): Input image as a float array with shape
-            (height, width, channels).
-        ccw_degrees (int): Counter-clockwise rotation angle in degrees. Must be
-            one of: 0, 90, 180, or 270.
+        im: Input image.
+        ccw_degrees: Counter-clockwise rotation angle in degrees. Must be one
+            of: 0, 90, 180, or 270.
 
     Returns:
-        Float[np.ndarray, "h_rotated w_rotated c"]: Rotated image as a float array.
-            The shape will depend on the rotation angle:
+        Rotated image. The shape will depend on the rotation angle:
             - 0 or 180 degrees: (height, width, channels)
             - 90 or 270 degrees: (width, height, channels)
 
@@ -428,22 +317,20 @@ def recover_rotated_pixels(dst_pixels, src_wh, ccw_degrees):
     Convert pixel coordinates from a rotated image back to the original image space.
 
     Args:
-        dst_pixels (Float[np.ndarray, "n 2"]): Pixel coordinates in the rotated image
-            as a float array with shape (num_points, 2). Each row is (col, row).
-        src_wh (Tuple[int, int]): Width and height of the original image.
-        ccw_degrees (int): Counter-clockwise rotation angle in degrees that was applied
+        dst_pixels: Pixel coordinates in the rotated image. Each row is (col, row).
+        src_wh: Width and height of the original image.
+        ccw_degrees: Counter-clockwise rotation angle in degrees that was applied
             to create the rotated image. Must be one of: 0, 90, 180, or 270.
 
     Returns:
-        Float[np.ndarray, "n 2"]: Pixel coordinates in the original image space as a
-            float array with shape (num_points, 2).
+        Pixel coordinates in the original image space.
 
     Raises:
         ValueError: If ccw_degrees is not one of the allowed values.
 
     Notes:
-        This function is the inverse operation of image rotation. It maps coordinates
-        from the rotated image back to the original image space.
+        This function is the inverse operation of image rotation. It maps
+        coordinates from the rotated image back to the original image space.
     """
     # - src:
     #   - src_wh    : (w    ,     h)
@@ -489,12 +376,12 @@ def recover_rotated_pixels(dst_pixels, src_wh, ccw_degrees):
 
 def resize(
     im: Union[
-        Float[np.ndarray, "h w"],
-        Float[np.ndarray, "h w 3"],
-        UInt8[np.ndarray, "h w"],
-        UInt8[np.ndarray, "h w 3"],
-        UInt16[np.ndarray, "h w"],
-        UInt16[np.ndarray, "h w 3"],
+        Float[np.ndarray, "h_src w_src"],
+        Float[np.ndarray, "h_src w_src 3"],
+        UInt8[np.ndarray, "h_src w_src"],
+        UInt8[np.ndarray, "h_src w_src 3"],
+        UInt16[np.ndarray, "h_src w_src"],
+        UInt16[np.ndarray, "h_src w_src 3"],
     ],
     shape_wh: Tuple[int, int],
     aspect_ratio_fill: Optional[
@@ -502,35 +389,26 @@ def resize(
     ] = None,
     interpolation: int = cv2.INTER_LINEAR,
 ) -> Union[
-    Float[np.ndarray, "h_ w_"],
-    Float[np.ndarray, "h_ w_ 3"],
-    UInt8[np.ndarray, "h_ w_"],
-    UInt8[np.ndarray, "h_ w_ 3"],
-    UInt16[np.ndarray, "h_ w_"],
-    UInt16[np.ndarray, "h_ w_ 3"],
+    Float[np.ndarray, "h_dst w_dst"],
+    Float[np.ndarray, "h_dst w_dst 3"],
+    UInt8[np.ndarray, "h_dst w_dst"],
+    UInt8[np.ndarray, "h_dst w_dst 3"],
+    UInt16[np.ndarray, "h_dst w_dst"],
+    UInt16[np.ndarray, "h_dst w_dst 3"],
 ]:
     """
     Resize an image to a specified width and height, optionally maintaining aspect ratio.
 
     Args:
-        im (Union[Float[np.ndarray, "h w"], Float[np.ndarray, "h w 3"],
-                 UInt8[np.ndarray, "h w"], UInt8[np.ndarray, "h w 3"],
-                 UInt16[np.ndarray, "h w"], UInt16[np.ndarray, "h w 3"]]):
-            Input image as a numpy array with shape (height, width) or (height, width, 3).
-            Supported dtypes: uint8, uint16, float32, float64.
-        shape_wh (Tuple[int, int]): Target size as (width, height) in pixels.
-        aspect_ratio_fill (Optional[Union[float, Tuple[float, float, float], np.ndarray]]):
-            Value(s) to use for padding when maintaining aspect ratio. If None, image is
-            directly resized without maintaining aspect ratio. If provided, must match
-            the number of channels in the input image.
-        interpolation (int): OpenCV interpolation method (e.g., cv2.INTER_LINEAR).
+        im: Input image.
+        shape_wh: Target size as (width, height) in pixels.
+        aspect_ratio_fill: Value(s) to use for padding when maintaining aspect ratio.
+            If None, image is directly resized without maintaining aspect ratio.
+            If provided, must match the number of channels in the input image.
+        interpolation: OpenCV interpolation method (e.g., cv2.INTER_LINEAR).
 
     Returns:
-        Union[Float[np.ndarray, "h_ w_"], Float[np.ndarray, "h_ w_ 3"],
-              UInt8[np.ndarray, "h_ w_"], UInt8[np.ndarray, "h_ w_ 3"],
-              UInt16[np.ndarray, "h_ w_"], UInt16[np.ndarray, "h_ w_ 3"]]:
-            Resized image with the same dtype as input. Shape will be (height, width)
-            or (height, width, 3) depending on input.
+        Resized image.
 
     Notes:
         - When maintaining aspect ratio, the image is resized to fit within the target
@@ -612,22 +490,22 @@ def recover_resized_pixels(
     Convert pixel coordinates from a resized image back to the original image space.
 
     Args:
-        dst_pixels (Float[np.ndarray, "n 2"]): Pixel coordinates in the resized image
-            as a float array with shape (num_points, 2). Each row is (col, row).
-        src_wh (Tuple[int, int]): Width and height of the original image.
-        dst_wh (Tuple[int, int]): Width and height of the resized image.
-        keep_aspect_ratio (bool): Whether aspect ratio was maintained during resizing.
+        dst_pixels: Pixel coordinates in the resized image. Each row is (col, row).
+        src_wh: Width and height of the original image.
+        dst_wh: Width and height of the resized image.
+        keep_aspect_ratio: Whether aspect ratio was maintained during resizing.
             If True, accounts for any padding that was added to maintain aspect ratio.
 
     Returns:
-        Float[np.ndarray, "n 2"]: Pixel coordinates in the original image space as a
-            float array with shape (num_points, 2).
+        Pixel coordinates in the original image space.
 
     Notes:
         1. This function is paired with OpenCV's cv2.resize() function, where
            the *center* of the top-left pixel is considered to be (0, 0).
-           - Top-left     corner: (-0.5   , -0.5   )
-           - Bottom-right corner: (w - 0.5, h - 0.5)
+
+           - Top-left     corner: ``(-0.5, -0.5)``
+           - Bottom-right corner: ``(w - 0.5, h - 0.5)``
+
            However, most other implementations in computer graphics treat the
            *corner* of the top-left pixel to be (0, 0). For more discussions, see:
            https://www.realtimerendering.com/blog/the-center-of-the-pixel-is-0-50-5/
@@ -693,27 +571,27 @@ def make_corres_image(
     Make correspondence image.
 
     Args:
-        im_src: (h, w, 3) float image, range 0-1.
-        im_dst: (h, w, 3) float image, range 0-1.
-        src_pixels: (n, 2) int array, each row represents (x, y) or (c, r).
-        dst_pixels: (n, 2) int array, each row represents (x, y) or (c, r).
-        confidences: (n,) float array, confidence of each corres, range [0, 1].
+        im_src: Source image in range [0, 1].
+        im_dst: Destination image in range [0, 1].
+        src_pixels: Source pixel coordinates. Each row represents (x, y) or (c, r).
+        dst_pixels: Destination pixel coordinates. Each row represents (x, y) or (c, r).
+        confidences: Confidence values for each correspondence in range [0, 1].
         texts: List of texts to draw on the top-left of the image.
-        point_color: RGB or RGBA color of the point, float, range 0-1.
-            - If point_color == None:
-                points will never be drawn.
-            - If point_color != None and confidences == None
-                point color will be determined by point_color.
-            - If point_color != None and confidences != None
-                point color will be determined by "viridis" colormap.
-        line_color: RGB or RGBA color of the line, float, range 0-1.
-        text_color: RGB color of the text, float, range 0-1.
+        point_color: RGB or RGBA color of the point in range [0, 1].
+        If point_color == None:
+            points will never be drawn.
+        If point_color != None and confidences == None:
+            point color will be determined by point_color.
+        If point_color != None and confidences != None:
+            point color will be determined by "viridis" colormap.
+        line_color: RGB or RGBA color of the line in range [0, 1].
+        text_color: RGB color of the text in range [0, 1].
         point_size: Size of the point.
         line_width: Width of the line.
         sample_ratio: Float value from 0-1. If None, all points are drawn.
 
     Returns:
-        Correspondence image with shape (h, 2*w, 3).
+        Correspondence image.
     """
     assert im_src.shape == im_dst.shape
     assert im_src.ndim == 3 and im_src.shape[2] == 3
@@ -907,18 +785,20 @@ def vstack_images(
     Vertically stack multiple images with optional alignment and background color.
 
     Args:
-        ims (List[Float[np.ndarray, "h w 3"]]): List of RGB images as float32/float64
-            arrays with shape (height, width, 3). Pixel values should be in range [0.0, 1.0].
-        alignment (str): Horizontal alignment of images in the stack. Must be one of:
+        ims: List of RGB images in range [0.0, 1.0].
+        alignment: Horizontal alignment of images in the stack.
+            Must be one of:
+
             - "left": Align images to the left
             - "center": Center align images
             - "right": Align images to the right
+
             Defaults to "left".
-        background_color (Tuple[float, float, float]): Background color for the stacked
-            image as (R, G, B) values in range [0.0, 1.0]. Defaults to white (1.0, 1.0, 1.0).
+        background_color: Background color for the stacked image as (R, G, B) values
+            in range [0.0, 1.0]. Defaults to white (1.0, 1.0, 1.0).
 
     Returns:
-        Float[np.ndarray, "h_stacked w_stacked 3"]: Stacked image as a float32 array.
+        Stacked image.
 
     Raises:
         ValueError: If images have invalid shapes, dtypes, or value ranges, or if

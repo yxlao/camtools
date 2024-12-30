@@ -1,3 +1,7 @@
+"""
+Functions for solving problems related to camera calibration and 3D geometry.
+"""
+
 import numpy as np
 from typing import Tuple
 from jaxtyping import Float
@@ -17,7 +21,7 @@ def line_intersection_3d(
         dst_points: (N, 3) matrix containing end point of N lines
 
     Returns:
-        intersection: (3,) Estimated intersection point.
+        Estimated intersection point.
 
     Ref:
         https://math.stackexchange.com/a/1762491/209055
@@ -84,9 +88,9 @@ def closest_points_of_line_pair(
         dst_d: (3,), direction of the dst line
 
     Returns:
-        (src_p, dst_p), where
-        - src_p: (3,), closest point of the src line
-        - dst_p: (3,), closest point of the dst line
+        Tuple[Float[np.ndarray, "3"], Float[np.ndarray, "3"]]:
+            - src_p: (3,), closest point of the src line
+            - dst_p: (3,), closest point of the dst line
     """
     sanity.assert_shape_3(src_o, "src_o")
     sanity.assert_shape_3(src_d, "src_d")
@@ -120,9 +124,9 @@ def closest_points_of_line_pairs(
         dst_ds: (N, 3), direction of the dst line
 
     Returns:
-        (src_ps, dst_s), where
-        - src_ps: (N, 3), closest point of the src line
-        - dst_ps: (N, 3), closest point of the dst line
+        Tuple[Float[np.ndarray, "n 3"], Float[np.ndarray, "n 3"]]:
+            - src_ps: (N, 3), closest point of the src line
+            - dst_ps: (N, 3), closest point of the dst line
     """
     sanity.assert_shape_nx3(src_os, "src_os")
     sanity.assert_shape_nx3(src_ds, "src_ds")
@@ -170,6 +174,9 @@ def point_plane_distance_three_points(
     Args:
         point: (3,), point
         plane_points: (3, 3), three points on the plane
+
+    Returns:
+        Distance between the point and the plane.
     """
     if isinstance(point, list):
         point = np.array(point)
@@ -205,7 +212,7 @@ def points_to_mesh_distances(
         mesh (o3d.geometry.TriangleMesh): The input mesh.
 
     Returns:
-        np.ndarray: Array of distances with shape (N,).
+        Array of distances with shape (N,).
     """
     if not points.ndim == 2 or points.shape[1] != 3:
         raise ValueError(f"Expected points of shape (N, 3), but got {points.shape}.")

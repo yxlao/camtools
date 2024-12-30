@@ -1,3 +1,7 @@
+"""
+Functions for converting between different camera parameters and representations.
+"""
+
 import cv2
 import numpy as np
 import open3d as o3d
@@ -159,7 +163,7 @@ def T_to_C(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "3"]:
         T: Extrinsic matrix (world-to-camera) of shape (4, 4).
 
     Returns:
-        C: Camera center in world coordinates of shape (3,).
+        Camera center in world coordinates of shape (3,).
     """
     sanity.assert_T(T)
     R, t = T[:3, :3], T[:3, 3]
@@ -174,7 +178,7 @@ def pose_to_C(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "3"]:
         pose: Pose matrix (camera-to-world) of shape (4, 4).
 
     Returns:
-        C: Camera center in world coordinates of shape (3,).
+        Camera center in world coordinates of shape (3,).
     """
     sanity.assert_pose(pose)
     C = pose[:3, 3]
@@ -189,8 +193,7 @@ def T_to_pose(T):
         T: Extrinsic matrix (world-to-camera) of shape (4, 4).
 
     Returns:
-        pose: Pose matrix (camera-to-world) of shape (4, 4),
-              which is the inverse of T.
+        Pose matrix (camera-to-world) of shape (4, 4), which is the inverse of T.
     """
     sanity.assert_T(T)
     return np.linalg.inv(T)
@@ -204,8 +207,8 @@ def pose_to_T(pose):
         pose: Pose matrix (camera-to-world) of shape (4, 4).
 
     Returns:
-        T: Extrinsic matrix (world-to-camera) of shape (4, 4),
-           which is the inverse of pose.
+        Extrinsic matrix (world-to-camera) of shape (4, 4), which is the inverse
+        of pose.
     """
     sanity.assert_T(pose)
     return np.linalg.inv(pose)
@@ -227,6 +230,12 @@ def T_opengl_to_opencv(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
         - -Z: The view direction
         - Used in: OpenGL, Blender, Nerfstudio
           https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
+
+    Args:
+        T: Extrinsic matrix (world-to-camera) of shape (4, 4) in OpenCV convention.
+
+    Returns:
+        Extrinsic matrix (world-to-camera) of shape (4, 4) in OpenGL convention.
     """
     sanity.assert_T(T)
     # pose = T_to_pose(T)
@@ -255,6 +264,12 @@ def T_opencv_to_opengl(T: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "4 4"]:
         - -Z: The view direction
         - Used in: OpenGL, Blender, Nerfstudio
           https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
+
+    Args:
+        T: Extrinsic matrix (world-to-camera) of shape (4, 4) in OpenCV convention.
+
+    Returns:
+        Extrinsic matrix (world-to-camera) of shape (4, 4) in OpenGL convention.
     """
     sanity.assert_T(T)
     # pose = T_to_pose(T)
@@ -283,6 +298,12 @@ def pose_opengl_to_opencv(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "
         - -Z: The view direction
         - Used in: OpenGL, Blender, Nerfstudio
           https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
+
+    Args:
+        pose: Pose matrix (camera-to-world) of shape (4, 4) in OpenGL convention.
+
+    Returns:
+        Pose matrix (camera-to-world) of shape (4, 4) in OpenCV convention.
     """
     sanity.assert_pose(pose)
     pose = np.copy(pose)
@@ -308,6 +329,12 @@ def pose_opencv_to_opengl(pose: Float[np.ndarray, "4 4"]) -> Float[np.ndarray, "
         - -Z: The view direction
         - Used in: OpenGL, Blender, Nerfstudio
           https://docs.nerf.studio/quickstart/data_conventions.html#coordinate-conventions
+
+    Args:
+        pose: Pose matrix (camera-to-world) of shape (4, 4) in OpenCV convention.
+
+    Returns:
+        Pose matrix (camera-to-world) of shape (4, 4) in OpenGL convention.
     """
     sanity.assert_pose(pose)
     pose = np.copy(pose)
@@ -329,7 +356,7 @@ def R_t_to_C(
         t: Translation vector of shape (3,).
 
     Returns:
-        C: Camera center in world coordinates of shape (3,).
+        Camera center in world coordinates of shape (3,).
     """
     # Equivalently,
     # C = - R.T @ t
@@ -354,7 +381,7 @@ def R_C_to_t(
         C: Camera center in world coordinates of shape (3,) or (N, 3).
 
     Returns:
-        t: Translation vector of shape (3,) or (N, 3).
+        Translation vector of shape (3,) or (N, 3).
     """
     # https://github.com/isl-org/StableViewSynthesis/blob/main/data/create_custom_track.py
     C = C.reshape(-1, 3, 1)
@@ -416,7 +443,7 @@ def R_t_to_T(
         t: Translation vector of shape (3,).
 
     Returns:
-        T: Extrinsic matrix (world-to-camera) of shape (4, 4).
+        Extrinsic matrix (world-to-camera) of shape (4, 4).
     """
     T = np.eye(4)
     T[:3, :3] = R
@@ -434,9 +461,9 @@ def T_to_R_t(
         T: Extrinsic matrix (world-to-camera) of shape (4, 4).
 
     Returns:
-        Tuple containing:
-        - R: Rotation matrix of shape (3, 3)
-        - t: Translation vector of shape (3,)
+        Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "3"]]:
+            - R: Rotation matrix of shape (3, 3)
+            - t: Translation vector of shape (3,)
     """
     sanity.assert_T(T)
     R = T[:3, :3]
@@ -455,10 +482,10 @@ def P_to_K_R_t(
         P: Projection matrix of shape (3, 4).
 
     Returns:
-        Tuple containing:
-        - K: Intrinsic matrix of shape (3, 3)
-        - R: Rotation matrix of shape (3, 3)
-        - t: Translation vector of shape (3,)
+        Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "3 3"], Float[np.ndarray, "3"]]:
+            - K: Intrinsic matrix of shape (3, 3)
+            - R: Rotation matrix of shape (3, 3)
+            - t: Translation vector of shape (3,)
     """
     (
         camera_matrix,
@@ -488,9 +515,9 @@ def P_to_K_T(
         P: Projection matrix of shape (3, 4).
 
     Returns:
-        Tuple containing:
-        - K: Intrinsic matrix of shape (3, 3)
-        - T: Extrinsic matrix (world-to-camera) of shape (4, 4)
+        Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "4 4"]]:
+            - K: Intrinsic matrix of shape (3, 3)
+            - T: Extrinsic matrix (world-to-camera) of shape (4, 4)
     """
     K, R, t = P_to_K_R_t(P)
     T = R_t_to_T(R, t)
@@ -509,7 +536,7 @@ def K_T_to_P(
         T: Extrinsic matrix (world-to-camera) of shape (4, 4).
 
     Returns:
-        P: Projection matrix of shape (3, 4).
+        Projection matrix of shape (3, 4).
     """
     return K @ T[:3, :]
 
@@ -647,11 +674,11 @@ def K_to_fx_fy_cx_cy(
         K: Intrinsic matrix of shape (3, 3).
 
     Returns:
-        Tuple containing:
-        - fx: Focal length in x direction
-        - fy: Focal length in y direction
-        - cx: Principal point x coordinate
-        - cy: Principal point y coordinate
+        Tuple[float, float, float, float]:
+            - fx: Focal length in x direction
+            - fy: Focal length in y direction
+            - cx: Principal point x coordinate
+            - cy: Principal point y coordinate
     """
     fx = K[0, 0]
     fy = K[1, 1]

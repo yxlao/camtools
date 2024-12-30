@@ -1,4 +1,4 @@
-Camera Coordinates
+Camera Conventions
 ==================
 
 .. only:: not latex
@@ -44,8 +44,8 @@ following equation:
 We follow the standard OpenCV-style camera coordinate system as illustrated at
 the beginning of the documentation.
 
-Camera Coordinate
------------------
+Camera Coordinates
+------------------
 
 Right-handed, with :math:`Z` pointing away from the camera towards the view direction
 and :math:`Y` axis pointing down. Note that the OpenCV convention (camtools' default)
@@ -60,8 +60,8 @@ use the conversion functions:
 - ``ct.convert.pose_opencv_to_opengl()``
 - ``ct.convert.pose_opengl_to_opencv()``
 
-Image Coordinate
-----------------
+Image Coordinates
+-----------------
 
 Starts from the top-left corner of the image, with :math:`x` pointing right
 (corresponding to the image width) and :math:`y` pointing down (corresponding to
@@ -76,7 +76,7 @@ and the 1st dimension is the width (i.e., :math:`x`). That is:
 Matrix Definitions
 ------------------
 
-Camera Intrinsic Matrix (K)
+Camera Intrinsic (K)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``K`` is a ``(3, 3)`` camera intrinsic matrix:
@@ -87,7 +87,7 @@ Camera Intrinsic Matrix (K)
         [ 0, fy, cy],
         [ 0,  0,  1]]
 
-Camera Extrinsic Matrix (T or W2C)
+Camera Extrinsic (T or W2C)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``T`` is a ``(4, 4)`` camera extrinsic matrix:
@@ -131,8 +131,8 @@ Translation Vector (t)
 
 - ``t``'s shape is ``(3,)``, not ``(3, 1)``.
 
-Camera Pose Matrix (pose or C2W)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Camera Pose (pose or C2W)
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``pose`` is a ``(4, 4)`` camera pose matrix. It is the inverse of ``T``.
 

@@ -1,3 +1,7 @@
+"""
+Functions for controlled rendering of 3D geometries to images or depth images.
+"""
+
 from typing import List, Tuple, Optional
 
 import numpy as np
@@ -24,52 +28,14 @@ def render_geometries(
     Render Open3D geometries to an image using the specified camera parameters.
     This function may require a display.
 
-    The rendering follows the standard pinhole camera model:
-        λ[x, y, 1]^T = K @ [R | t] @ [X, Y, Z, 1]^T
-    where:
-        - [X, Y, Z, 1]^T is a homogeneous 3D point in world coordinates
-        - [R | t] is the 3x4 extrinsic matrix (world-to-camera transformation)
-        - K is the 3x3 intrinsic matrix
-        - [x, y, 1]^T is the projected homogeneous 2D point in pixel coordinates
-        - λ is the depth value
-
-    Example usage:
-        # Create some geometries
-        mesh = o3d.geometry.TriangleMesh.create_box()
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(np.random.rand(100, 3))
-
-        # Render with default camera
-        image = render_geometries([mesh, pcd])
-
-        # Render with specific camera parameters
-        K = np.array([[1000, 0, 640], [0, 1000, 360], [0, 0, 1]])
-        T = np.eye(4)
-        depth_image = render_geometries([mesh], K=K, T=T, to_depth=True)
-
     Args:
-        geometries: List of Open3D geometries to render. Supported types include:
-            - TriangleMesh
-            - PointCloud
-            - LineSet
-        K: (3, 3) camera intrinsic matrix. If None, uses Open3D's default camera
+        geometries: List of Open3D geometries to render. Supported types are
+            TriangleMesh, PointCloud, and LineSet.
+        K: Camera intrinsic matrix. If None, uses Open3D's default camera
             inferred from the geometries. Must be provided if T is provided.
-            The intrinsic matrix follows the format:
-                [[fx, 0, cx],
-                 [0, fy, cy],
-                 [0, 0, 1]]
-            where:
-                - fx, fy: focal lengths in pixels
-                - cx, cy: principal point coordinates
-        T: (4, 4) camera extrinsic matrix (world-to-camera transformation).
+        T: Camera extrinsic matrix (world-to-camera transformation).
             If None, uses Open3D's default camera inferred from the geometries.
-            Must be provided if K is provided. The extrinsic matrix follows the
-            format:
-                [[R | t],
-                 [0 | 1]]
-            where:
-                - R: (3, 3) rotation matrix
-                - t: (3,) translation vector
+            Must be provided if K is provided.
         view_status_str: JSON string containing viewing camera parameters from
             o3d.visualization.Visualizer.get_view_status(). This does not
             include window size or point size.
@@ -84,10 +50,27 @@ def render_geometries(
         visible: If True, shows the rendering window.
 
     Returns:
-        If to_depth is False:
-            (H, W, 3) float32 RGB image array with values in [0, 1]
-        If to_depth is True:
-            (H, W) float32 depth image array with depth values in world units
+        Float[np.ndarray, "h w 3"]:
+            - If to_depth is False: (H, W, 3) float32 RGB image array with
+              values in [0, 1].
+            - If to_depth is True: (H, W) float32 depth image array with depth
+              values in world units.
+
+    Examples:
+        .. code-block:: python
+
+            # Create some geometries
+            mesh = o3d.geometry.TriangleMesh.create_box()
+            pcd = o3d.geometry.PointCloud()
+            pcd.points = o3d.utility.Vector3dVector(np.random.rand(100, 3))
+
+            # Render with default camera
+            image = render_geometries([mesh, pcd])
+
+            # Render with specific camera parameters
+            K = np.array([[1000, 0, 640], [0, 1000, 360], [0, 0, 1]])
+            T = np.eye(4)
+            depth_image = render_geometries([mesh], K=K, T=T, to_depth=True)
     """
 
     if not isinstance(geometries, list):
@@ -169,58 +152,50 @@ def get_render_view_status_str(
     This function may require a display.
 
     The view status string contains camera parameters in JSON format, including:
-        - Camera position and orientation
-        - Field of view
-        - Zoom level
-        - Other view control settings
 
-    Example usage:
-        # Get view status for default camera
-        view_str = get_render_view_status_str([mesh, pcd])
+    - Camera position and orientation
+    - Field of view
+    - Zoom level
+    - Other view control settings
 
-        # Get view status for specific camera
-        K = np.array([[1000, 0, 640], [0, 1000, 360], [0, 0, 1]])
-        T = np.eye(4)
-        view_str = get_render_view_status_str([mesh], K=K, T=T)
-
-        # Use view status for consistent rendering
-        image1 = render_geometries([mesh], view_status_str=view_str)
-        image2 = render_geometries([pcd], view_status_str=view_str)
 
     Args:
         geometries: List of Open3D geometries to set up the view. Supported types:
-            - TriangleMesh
-            - PointCloud
-            - LineSet
-        K: (3, 3) camera intrinsic matrix. If None, uses Open3D's default camera
+        - TriangleMesh
+        - PointCloud
+        - LineSet
+        K: Camera intrinsic matrix. If None, uses Open3D's default camera
             inferred from the geometries. Must be provided if T is provided.
-            The intrinsic matrix follows the format:
-                [[fx, 0, cx],
-                 [0, fy, cy],
-                 [0, 0, 1]]
-            where:
-                - fx, fy: focal lengths in pixels
-                - cx, cy: principal point coordinates
-        T: (4, 4) camera extrinsic matrix (world-to-camera transformation).
+        T: Camera extrinsic matrix (world-to-camera transformation).
             If None, uses Open3D's default camera inferred from the geometries.
-            Must be provided if K is provided. The extrinsic matrix follows the
-            format:
-                [[R | t],
-                 [0 | 1]]
-            where:
-                - R: (3, 3) rotation matrix
-                - t: (3,) translation vector
+            Must be provided if K is provided.
         height: Height of the view window in pixels.
         width: Width of the view window in pixels.
 
     Returns:
-        JSON string containing camera view parameters from
+        str: JSON string containing camera view parameters from
         o3d.visualization.Visualizer.get_view_status(). This includes:
+
             - Camera position and orientation
             - Field of view
             - Zoom level
             - Other view control settings
-        Note: Does not include window size or point size.
+            - Note: Does not include window size or point size.
+
+    Examples:
+        .. code-block:: python
+
+            # Get view status for default camera
+            view_str = get_render_view_status_str([mesh, pcd])
+
+            # Get view status for specific camera
+            K = np.array([[1000, 0, 640], [0, 1000, 360], [0, 0, 1]])
+            T = np.eye(4)
+            view_str = get_render_view_status_str([mesh], K=K, T=T)
+
+            # Use view status for consistent rendering
+            image1 = render_geometries([mesh], view_status_str=view_str)
+            image2 = render_geometries([pcd], view_status_str=view_str)
     """
     if not isinstance(geometries, list):
         raise TypeError("geometries must be a list of Open3D geometries.")
@@ -291,22 +266,9 @@ def get_render_K_T(
         - [x, y, 1]^T is the projected homogeneous 2D point in pixel coordinates
         - λ is the depth value
 
-    Example usage:
-        # Get camera matrices for default view
-        K, T = get_render_K_T([mesh, pcd])
-
-        # Get camera matrices for specific view
-        view_str = get_render_view_status_str([mesh])
-        K, T = get_render_K_T([mesh], view_status_str=view_str)
-
-        # Use matrices for consistent rendering
-        image = render_geometries([mesh], K=K, T=T)
-
     Args:
-        geometries: List of Open3D geometries to set up the view. Supported types:
-            - TriangleMesh
-            - PointCloud
-            - LineSet
+        geometries: List of Open3D geometries to set up the view. Supported types
+            include TriangleMesh, PointCloud, and LineSet.
         view_status_str: Optional JSON string containing camera parameters from
             o3d.visualization.Visualizer.get_view_status(). If provided, uses
             these parameters to set up the view.
@@ -314,21 +276,23 @@ def get_render_K_T(
         width: Width of the view window in pixels.
 
     Returns:
-        Tuple containing:
-        - K: (3, 3) camera intrinsic matrix following the format:
-            [[fx, 0, cx],
-             [0, fy, cy],
-             [0, 0, 1]]
-            where:
-                - fx, fy: focal lengths in pixels
-                - cx, cy: principal point coordinates
-        - T: (4, 4) camera extrinsic matrix (world-to-camera transformation)
-            following the format:
-                [[R | t],
-                 [0 | 1]]
-            where:
-                - R: (3, 3) rotation matrix
-                - t: (3,) translation vector
+        Tuple[Float[np.ndarray, "3 3"], Float[np.ndarray, "4 4"]]:
+            - K: camera intrinsic matrix
+            - T: camera extrinsic matrix, world-to-camera transformation
+
+    Examples:
+        .. code-block:: python
+
+            # Get camera matrices for default view
+            K, T = get_render_K_T([mesh, pcd])
+
+            # Get camera matrices for specific view
+            view_str = get_render_view_status_str([mesh])
+            K, T = get_render_K_T([mesh], view_status_str=view_str)
+
+            # Use matrices for consistent rendering
+            image = render_geometries([mesh], K=K, T=T)
+
     """
     if not isinstance(geometries, list):
         raise TypeError("geometries must be a list of Open3D geometries.")
@@ -486,9 +450,11 @@ class _TextRenderer:
             font: The font used for the text.
 
         Returns:
-            A tuple containing the full width and height of the text box,
-            as well as the tight width and height of the content within the
-            text box.
+            Tuple[int, int, int, int]:
+                - full_w: Full width of the text box.
+                - full_h: Full height of the text box.
+                - tight_w: Tight width of the content within the text box.
+                - tight_h: Tight height of the content within the text box.
         """
         im = Image.new(mode="RGB", size=(1, 1))
         draw = ImageDraw.Draw(im)
@@ -582,7 +548,7 @@ def render_text(
     tight_layout: bool = False,
     multiline_alignment: str = "left",
     padding_tblr: Tuple[int, int, int, int] = (0, 0, 0, 0),
-) -> np.ndarray:
+) -> Float[np.ndarray, "h w"]:
     """
     Global function to render text using specified font settings.
 
@@ -600,7 +566,7 @@ def render_text(
             of the rendered text, in pixels.
 
     Returns:
-        The rendered text as a NumPy array (float32).
+        The rendered text image as a float32 NumPy array.
     """
     if (
         len(padding_tblr) != 4
@@ -644,7 +610,27 @@ def render_texts(
     same_height: bool = False,
     same_width: bool = False,
     padding_tblr: Tuple[int, int, int, int] = (0, 0, 0, 0),
-) -> List[np.ndarray]:
+) -> List[Float[np.ndarray, "h w"]]:
+    """
+    Render multiple text strings into images with consistent formatting options.
+
+    Args:
+        texts: List of text strings to render.
+        font_size: Font size in points. Default is 72.
+        font_type: Type of font to use. Default is "tex".
+        font_color: Font color as RGB tuple in range [0, 1]. Default is black (0, 0, 0).
+        multiline_alignment: Text alignment for multi-line text. Can be "left",
+            "center", or "right". Default is "center".
+        same_height: If True, makes all rendered images the same height by padding.
+            Default is False.
+        same_width: If True, makes all rendered images the same width by padding.
+            Default is False.
+        padding_tblr: Padding to add to top, bottom, left, and right of rendered
+            text in pixels. Default is (0, 0, 0, 0).
+
+    Returns:
+        List of rendered text images as float32 NumPy arrays with values in range [0, 1].
+    """
     if (
         len(padding_tblr) != 4
         or not all(p >= 0 for p in padding_tblr)

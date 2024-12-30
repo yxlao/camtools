@@ -1,9 +1,9 @@
-ct.normalize
-============
+ct.sanity
+=========
 
 .. currentmodule:: ct
 
-.. automodule:: ct.normalize
+.. automodule:: ct.sanity
    :members:
    :undoc-members:
    :show-inheritance:
