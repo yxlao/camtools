@@ -39,11 +39,9 @@ def gen_rays(
         pixels: (N, 2) array of pixel coordinates in (col, row) order.
 
     Returns:
-        Tuple containing:
-        - centers: (N, 3) array of camera centers in world coordinates. All
-          centers are identical since they originate from the same camera.
-        - dirs: (N, 3) array of ray directions in world coordinates, normalized
-          to unit length.
+        A tuple of (centers, dirs). All camera centers are identical since they
+        originate from the same camera. The ray directions are in world
+        coordinates and normalized to unit length.
     """
     sanity.assert_K(K)
     sanity.assert_T(T)
