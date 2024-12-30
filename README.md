@@ -184,7 +184,7 @@ $$
 We follow the standard OpenCV-style camera coordinate system as illustrated at
 the beginning of the README.
 
-- **Camera coordinate:** right-handed, with $Z$ pointing away from the camera
+- **Camera Coordinates:** right-handed, with $Z$ pointing away from the camera
   towards the view direction and $Y$ axis pointing down. Note that the OpenCV
   convention (camtools' default) is different from the OpenGL/Blender
   convention, where $Z$ points towards the opposite view direction, $Y$ points
@@ -194,20 +194,20 @@ the beginning of the README.
   - `ct.convert.T_opengl_to_opencv()`
   - `ct.convert.pose_opencv_to_opengl()`
   - `ct.convert.pose_opengl_to_opencv()`
-- **Image coordinate:** starts from the top-left corner of the image, with $x$
+- **Image Coordinates:** starts from the top-left corner of the image, with $x$
   pointing right (corresponding to the image width) and $y$ pointing down
   (corresponding to the image height). This is consistent with OpenCV. Pay
   attention that the 0th dimension in the image array is the height (i.e., $y$)
   and the 1st dimension is the width (i.e., $x$). That is:
   - $x$ <=> $u$ <=> width <=> column <=> the 1st dimension
   - $y$ <=> $v$ <=> height <=> row <=> the 0th dimension
-- `K`: `(3, 3)` camera intrinsic matrix.
+- `K`: `(3, 3)` camera intrinsic.
   ```python
   K = [[fx,  s, cx],
        [ 0, fy, cy],
        [ 0,  0,  1]]
   ```
-- `T` or `W2C`: `(4, 4)` camera extrinsic matrix.
+- `T` or `W2C`: `(4, 4)` camera extrinsic.
   ```python
   T = [[R  | t   = [[R00, R01, R02, t0],
         0  | 1]]    [R10, R11, R12, t1],
@@ -234,7 +234,7 @@ the beginning of the README.
   t = T[:3, 3]
   ```
   - `t`'s shape is `(3,)`, not `(3, 1)`.
-- `pose` or `C2W`: `(4, 4)` camera pose matrix. It is the inverse of `T`.
+- `pose` or `C2W`: `(4, 4)` camera pose. It is the inverse of `T`.
   - `pose` is also known as the camera-to-world `C2W` matrix, which transforms a
     point in the camera coordinate to the world coordinate.
   - `pose` is the inverse of `T`, i.e., `pose == np.linalg.inv(T)`.
