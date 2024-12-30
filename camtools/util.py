@@ -26,10 +26,10 @@ def mt_loop(
     Args:
         func: Callable function that accepts a single argument.
         inputs: Iterable of inputs to process with the function.
-        **kwargs: Additional keyword arguments to pass to `func`.
+        **kwargs: Additional keyword arguments to pass to ``func``.
 
     Returns:
-        A list of results from applying `func` to each item in `inputs`.
+        A list of results from applying ``func`` to each item in ``inputs``.
     """
     desc = f"[mt] {func.__name__}"
     with ThreadPoolExecutor() as executor:
@@ -53,10 +53,10 @@ def mp_loop(
     Args:
         func: Callable function that accepts a single argument.
         inputs: Iterable of inputs to process with the function.
-        **kwargs: Additional keyword arguments to pass to `func`.
+        **kwargs: Additional keyword arguments to pass to ``func``.
 
     Returns:
-        A list of results from applying `func` to each item in `inputs`.
+        A list of results from applying ``func`` to each item in ``inputs``.
     """
     desc = f"[mp] {func.__name__}"
     with ProcessPoolExecutor() as executor:
@@ -133,8 +133,8 @@ def _safely_import_torch() -> Optional[ModuleType]:
     will return simply import and return torch.
 
     Use this function to import torch within camtools to handle the Open3D
-    import order issue. That is, within camtools, we shall avoid `import torch`,
-    and instead use `from camtools.backend import torch`. As torch is an
+    import order issue. That is, within camtools, we shall avoid ``import torch``,
+    and instead use ``from camtools.backend import torch``. As torch is an
     optional dependency for camtools, this function will return None if torch
     is not available.
 
