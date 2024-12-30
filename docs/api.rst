@@ -15,12 +15,12 @@ API Reference
    api/project
    api/raycast
    api/render
+   api/sanity
    api/solver
    api/transform
+   api/util
 
 
-.. Not included in the docs website:
+.. To be included in the docs website in the future:
 ..    api/artifact
 ..    api/colmap
-..    api/sanity
-..    api/util
