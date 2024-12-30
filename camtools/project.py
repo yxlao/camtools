@@ -27,21 +27,6 @@ def points_to_pixels(
         - [x, y, 1]^T is the projected homogeneous 2D point in pixel coordinates
         - λ is the depth value
 
-    Example usage:
-        pixels = ct.project.points_to_pixels(points, K, T)
-
-        # Extract and round pixel coordinates
-        cols = pixels[:, 0]  # x-coordinates (width dimension)
-        rows = pixels[:, 1]  # y-coordinates (height dimension)
-        cols = np.round(cols).astype(np.int32)
-        rows = np.round(rows).astype(np.int32)
-
-        # Clamp to image boundaries
-        cols[cols >= width] = width - 1
-        cols[cols < 0] = 0
-        rows[rows >= height] = height - 1
-        rows[rows < 0] = 0
-
     Args:
         points: (N, 3) array of 3D points in world coordinates.
         K: (3, 3) camera intrinsic matrix.
@@ -51,6 +36,23 @@ def points_to_pixels(
         (N, 2) array of pixel coordinates, where each row contains [x, y]
         coordinates. The x-coordinate corresponds to the image width (columns)
         and the y-coordinate corresponds to the image height (rows).
+
+    Examples:
+        .. code-block:: python
+
+            pixels = ct.project.points_to_pixels(points, K, T)
+
+            # Extract and round pixel coordinates
+            cols = pixels[:, 0]  # x-coordinates (width dimension)
+            rows = pixels[:, 1]  # y-coordinates (height dimension)
+            cols = np.round(cols).astype(np.int32)
+            rows = np.round(rows).astype(np.int32)
+
+            # Clamp to image boundaries
+            cols[cols >= width] = width - 1
+            cols[cols < 0] = 0
+            rows[rows >= height] = height - 1
+            rows[rows < 0] = 0
     """
     sanity.assert_K(K)
     sanity.assert_T(T)
@@ -112,15 +114,15 @@ def im_depth_to_point_cloud(
             accordingly.
 
     Returns:
-        Depending on the input parameters, returns one of:
-        - im_color == None, to_image == False:
-            points: (N, 3) array of 3D points
-        - im_color == None, to_image == True:
-            im_points: (H, W, 3) array of 3D points
-        - im_color != None, to_image == False:
-            (points, colors): Tuple of (N, 3) arrays for points and colors
-        - im_color != None, to_image == True:
-            (im_points, im_colors): Tuple of (H, W, 3) arrays for points and colors
+        Single array or a tuple of two arrays:
+            - ``im_color == None``, ``to_image == False``:
+              returns (N, 3) array of 3D points
+            - ``im_color == None``, ``to_image == True``:
+              returns (H, W, 3) array of 3D points
+            - ``im_color != None``, ``to_image == False``:
+              returns (N, 3) array of 3D points and (N, 3) array of colors
+            - ``im_color != None``, ``to_image == True``:
+              returns (H, W, 3) array of 3D points and (H, W, 3) array of colors
     """
     # Sanity checks
     sanity.assert_K(K)

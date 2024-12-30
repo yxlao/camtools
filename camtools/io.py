@@ -25,22 +25,24 @@ def imwrite(
     Write an image, with no surprises.
 
     This function handles common image writing tasks including:
-    - Automatic directory creation
-    - Image format detection based on file extension
-    - Input validation and type conversion
-    - Color space conversion (RGB to BGR for OpenCV)
+        - Automatic directory creation
+        - Image format detection based on file extension
+        - Input validation and type conversion
+        - Color space conversion (RGB to BGR for OpenCV)
 
     Args:
-        im_path (Union[str, Path]): Path to save the image. Supported extensions:
-            - .jpg/.jpeg: JPEG format with configurable quality
-            - .png: PNG format with lossless compression
-            Note: Parent directories will be created automatically if they don't exist.
+        im_path (Union[str, Path]): Path to save the image. Supported
+            extensions: ``.jpg``, ``.jpeg``, ``.png``. Parent directories will
+            be created automatically if they don't exist.
 
         im (Union[UInt8[np.ndarray], Float[np.ndarray]]): Image data as a numpy array.
             Supported formats:
+
             - Grayscale: 2D array (height x width)
             - Color: 3D array (height x width x 3)
+
             Supported data types:
+
             - uint8: Values in range [0, 255]
             - float32/float64: Values in range [0.0, 1.0] (will be scaled to uint8)
 
@@ -109,16 +111,17 @@ def imwrite_depth(
     Write depth map to a 16-bit PNG file with depth scaling.
 
     This function handles depth map storage by:
-    - Scaling depth values by depth_scale
-    - Converting to 16-bit unsigned integer format
-    - Creating necessary directories
-    - Validating input data
+        - Scaling depth values by depth_scale
+        - Converting to 16-bit unsigned integer format
+        - Creating necessary directories
+        - Validating input data
 
     Args:
         im_path (Union[str, Path]): Output file path. Must have .png extension.
             Parent directories will be created automatically if they don't exist.
 
         im (Float[np.ndarray]): Depth map as a 2D numpy array. Must be:
+
             - Shape: (height, width)
             - Data type: float32 or float64
             - Values: Depth values in meters (or other consistent units)
@@ -126,6 +129,7 @@ def imwrite_depth(
         depth_scale (float, optional): Scaling factor to apply before converting
             to uint16. Defaults to 1000.0. This determines the precision of
             stored depth values. For example:
+
             - depth_scale=1000: 1mm precision
             - depth_scale=100: 1cm precision
             - depth_scale=1: 1m precision
@@ -192,10 +196,10 @@ def imread(
     Guaranteed to return float32 arrays in range [0, 1] with RGB(A) color space.
 
     This function handles image reading by:
-    - Automatically converting to float32 in range [0, 1]
-    - Supporting both grayscale and color images
-    - Providing multiple options for handling alpha channels
-    - Converting color space from BGR to RGB
+        - Automatically converting to float32 in range [0, 1]
+        - Supporting both grayscale and color images
+        - Providing multiple options for handling alpha channels
+        - Converting color space from BGR to RGB
 
     Args:
         im_path (Union[str, Path]): Path to the image file. Supported formats:
@@ -328,10 +332,10 @@ def imread_depth(
     Read and normalize a 16-bit depth map from a PNG file.
 
     This function handles depth map reading by:
-    - Loading 16-bit depth values from PNG
-    - Converting to float32
-    - Applying depth scale normalization
-    - Validating input data
+        - Loading 16-bit depth values from PNG
+        - Converting to float32
+        - Applying depth scale normalization
+        - Validating input data
 
     Args:
         im_path (Union[str, Path]): Path to the depth map file. Must be a 16-bit PNG.
