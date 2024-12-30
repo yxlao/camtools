@@ -611,6 +611,27 @@ def render_texts(
     same_width: bool = False,
     padding_tblr: Tuple[int, int, int, int] = (0, 0, 0, 0),
 ) -> List[np.ndarray]:
+    """
+    Render multiple text strings into images with consistent formatting options.
+
+    Args:
+        texts: List of text strings to render.
+        font_size: Font size in points. Default is 72.
+        font_type: Type of font to use. Default is "tex".
+        font_color: Font color as RGB tuple in range [0, 1]. Default is black (0, 0, 0).
+        multiline_alignment: Text alignment for multi-line text. Can be "left",
+            "center", or "right". Default is "center".
+        same_height: If True, makes all rendered images the same height by padding.
+            Default is False.
+        same_width: If True, makes all rendered images the same width by padding.
+            Default is False.
+        padding_tblr: Padding to add to top, bottom, left, and right of rendered
+            text in pixels. Default is (0, 0, 0, 0).
+
+    Returns:
+        List[np.ndarray]: List of rendered text images as float32 NumPy arrays
+        with values in range [0, 1].
+    """
     if (
         len(padding_tblr) != 4
         or not all(p >= 0 for p in padding_tblr)
