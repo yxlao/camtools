@@ -4,7 +4,12 @@ Utility functions for camtools.
 
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Callable, Iterable, Union, Optional, ModuleType
+
+try:
+    from typing import ModuleType  # Python <3.10
+except ImportError:
+    from types import ModuleType  # Python 3.10+
+from typing import Any, Callable, Iterable, Union, Optional
 
 from functools import lru_cache
 from tqdm import tqdm
@@ -77,6 +82,19 @@ def query_yes_no(question: str, default: Optional[bool] = None) -> bool:
 
     Returns:
         True for "yes" or False for "no".
+
+    Examples:
+        .. code-block:: python
+
+            if query_yes_no("Continue?", default=True):
+                print("Proceeding.")
+            else:
+                print("Aborted.")
+
+            if not query_yes_no("Continue?", default=True):
+                print("Aborted.")
+                return  # Or exit(0)
+            print("Proceeding.")
     """
     if default is None:
         prompt = "[y/n]"
@@ -146,7 +164,7 @@ def is_jpg_path(path: Union[str, Path]) -> bool:
         path: Path to check, can be string or Path object.
 
     Returns:
-        bool: True if path ends with .jpg or .jpeg (case insensitive), False otherwise.
+        True if path ends with .jpg or .jpeg (case insensitive), False otherwise.
     """
     return Path(path).suffix.lower() in [".jpg", ".jpeg"]
 
@@ -159,6 +177,6 @@ def is_png_path(path: Union[str, Path]) -> bool:
         path: Path to check, can be string or Path object.
 
     Returns:
-        bool: True if path ends with .png (case insensitive), False otherwise.
+        True if path ends with .png (case insensitive), False otherwise.
     """
     return Path(path).suffix.lower() in [".png"]
