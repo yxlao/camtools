@@ -31,9 +31,9 @@ def render_geometries(
     Args:
         geometries: List of Open3D geometries to render. Supported types are
             TriangleMesh, PointCloud, and LineSet.
-        K: (3, 3) camera intrinsic matrix. If None, uses Open3D's default camera
+        K: Camera intrinsic matrix. If None, uses Open3D's default camera
             inferred from the geometries. Must be provided if T is provided.
-        T: (4, 4) camera extrinsic matrix (world-to-camera transformation).
+        T: Camera extrinsic matrix (world-to-camera transformation).
             If None, uses Open3D's default camera inferred from the geometries.
             Must be provided if K is provided.
         view_status_str: JSON string containing viewing camera parameters from
@@ -164,9 +164,9 @@ def get_render_view_status_str(
         - TriangleMesh
         - PointCloud
         - LineSet
-        K: (3, 3) camera intrinsic matrix. If None, uses Open3D's default camera
+        K: Camera intrinsic matrix. If None, uses Open3D's default camera
             inferred from the geometries. Must be provided if T is provided.
-        T: (4, 4) camera extrinsic matrix (world-to-camera transformation).
+        T: Camera extrinsic matrix (world-to-camera transformation).
             If None, uses Open3D's default camera inferred from the geometries.
             Must be provided if K is provided.
         height: Height of the view window in pixels.
