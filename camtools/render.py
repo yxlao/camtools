@@ -457,9 +457,11 @@ class _TextRenderer:
             font: The font used for the text.
 
         Returns:
-            A tuple containing the full width and height of the text box,
-            as well as the tight width and height of the content within the
-            text box.
+            Tuple[int, int, int, int]:
+                - full_w: Full width of the text box.
+                - full_h: Full height of the text box.
+                - tight_w: Tight width of the content within the text box.
+                - tight_h: Tight height of the content within the text box.
         """
         im = Image.new(mode="RGB", size=(1, 1))
         draw = ImageDraw.Draw(im)
