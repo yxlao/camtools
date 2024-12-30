@@ -11,6 +11,7 @@ import sys
 import subprocess
 import camtools as ct
 from pathlib import Path
+import shutil
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -52,10 +53,18 @@ language = "en"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "furo"
-html_static_path = ["_static"]
+html_static_path = ["_static", "../camtools/assets"]
+
+# Get script directory
+script_dir = Path(__file__).parent
+
+# Theme options
+html_theme_options = {
+    "light_logo": "camtools_logo_light.png",
+    "dark_logo": "camtools_logo_dark.png",
+}
 
 # Favicon
-script_dir = Path(__file__).parent
 favicon_path = (
     script_dir.parent / "camtools" / "assets" / "camtools_logo_squre_dark.png"
 )
