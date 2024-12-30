@@ -168,8 +168,9 @@ def get_post_croppings_paddings_shapes(
         paddings: list of 4-tuples: [(pad_t, pad_b, pad_l, pad_r), ...]
 
     Returns:
-        List[Tuple[int, int, int]]: List of resulting image shapes after cropping and padding
-        in the format (height_cropped, width_cropped, channels).
+        List[Tuple[int, int, int]]: List of resulting image shapes after
+        cropping and padding in the format (height_cropped, width_cropped,
+        channels).
     """
     dst_shapes = []
     for src_shape, cropping, padding in zip(src_shapes, croppings, paddings):
@@ -258,11 +259,9 @@ def ndc_coords_to_pixels(
         This function is commonly used in computer graphics to map normalized
         coordinates to specific pixel locations in an image.
 
-        In general image interpolation:
-        When align_corners=True: src and dst images are aligned by the center
-        point of their corner pixels.
-        When align_corners=False: src and dst images are aligned by the corner
-        points of the corner pixels.
+        When align_corners is True, src and dst images are aligned by the center
+        point of their corner pixels; when align_corners is False, src and dst
+        images are aligned by the corner points of the corner pixels.
 
         The NDC space does not have a "pixels size", so we precisely align the
         extrema -1 and 1 to either the center or corner of the corner pixels.
@@ -299,7 +298,8 @@ def rotate(
 
     Args:
         im: Input image as a float array with shape (height, width, channels).
-        ccw_degrees: Counter-clockwise rotation angle in degrees. Must be one of: 0, 90, 180, or 270.
+        ccw_degrees: Counter-clockwise rotation angle in degrees. Must be one
+            of: 0, 90, 180, or 270.
 
     Returns:
         Rotated image as a float array. The shape will depend on the rotation angle:
@@ -328,21 +328,22 @@ def recover_rotated_pixels(dst_pixels, src_wh, ccw_degrees):
     Convert pixel coordinates from a rotated image back to the original image space.
 
     Args:
-        dst_pixels: Pixel coordinates in the rotated image as a float array with shape (num_points, 2).
-            Each row is (col, row).
+        dst_pixels: Pixel coordinates in the rotated image as a float array with
+            shape (num_points, 2). Each row is (col, row).
         src_wh: Width and height of the original image.
         ccw_degrees: Counter-clockwise rotation angle in degrees that was applied
             to create the rotated image. Must be one of: 0, 90, 180, or 270.
 
     Returns:
-        Pixel coordinates in the original image space as a float array with shape (num_points, 2).
+        Pixel coordinates in the original image space as a float array with
+        shape (num_points, 2).
 
     Raises:
         ValueError: If ccw_degrees is not one of the allowed values.
 
     Notes:
-        This function is the inverse operation of image rotation. It maps coordinates
-        from the rotated image back to the original image space.
+        This function is the inverse operation of image rotation. It maps
+        coordinates from the rotated image back to the original image space.
     """
     # - src:
     #   - src_wh    : (w    ,     h)
