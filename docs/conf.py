@@ -64,6 +64,9 @@ html_theme_options = {
     "dark_logo": "camtools_logo_dark.png",
 }
 
+# Set the title with version and git hash
+html_title = f"CamTools Documentation ({release})"
+
 # Favicon
 favicon_path = (
     script_dir.parent / "camtools" / "assets" / "camtools_logo_squre_dark.png"
