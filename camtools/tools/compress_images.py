@@ -82,9 +82,7 @@ def entry_point(parser, args):
 
     # Handle PNG file's alpha channel.
     src_paths_with_alpha = []
-    png_paths = [
-        src_path for src_path in src_paths if ct.util.is_png_path(src_path)
-    ]
+    png_paths = [src_path for src_path in src_paths if ct.util.is_png_path(src_path)]
     for src_path in png_paths:
         im = ct.io.imread(src_path, alpha_mode="keep")
         if im.shape[2] == 4:
