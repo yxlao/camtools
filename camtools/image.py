@@ -40,11 +40,10 @@ def compute_cropping(im: Float[np.ndarray, "h w 3"]) -> Tuple[int, int, int, int
         im: Input float image in range [0.0, 1.0].
 
     Returns:
-        A tuple containing:
-            - crop_t: Number of white pixels on the top edge
-            - crop_b: Number of white pixels on the bottom edge
-            - crop_l: Number of white pixels on the left edge
-            - crop_r: Number of white pixels on the right edge
+        - crop_t: Number of white pixels on the top edge
+        - crop_b: Number of white pixels on the bottom edge
+        - crop_l: Number of white pixels on the left edge
+        - crop_r: Number of white pixels on the right edge
 
     Raises:
         ValueError: If input image has invalid dtype or dimensions.

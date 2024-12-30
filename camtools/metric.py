@@ -225,7 +225,6 @@ def load_im_pd_im_gt_im_mask_for_eval(
             (This option is not implemented yet.)
 
     Returns:
-        A tuple containing:
         - im_pd: (h, w, 3), float32, value in [0, 1].
         - im_gt: (h, w, 3), float32, value in [0, 1].
         - im_mask: (h, w), float32, value only 0 or 1. Even if im_mask_path is

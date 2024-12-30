@@ -438,9 +438,9 @@ def T_to_R_t(
         T: Extrinsic matrix (world-to-camera) of shape (4, 4).
 
     Returns:
-        Tuple containing:
         - R: Rotation matrix of shape (3, 3)
         - t: Translation vector of shape (3,)
+
     """
     sanity.assert_T(T)
     R = T[:3, :3]
@@ -459,8 +459,7 @@ def P_to_K_R_t(
         P: Projection matrix of shape (3, 4).
 
     Returns:
-        Tuple containing:
-        - K: Intrinsic matrix of shape (3, 3)
+        - K  Intrinsic matrix of shape (3, 3)
         - R: Rotation matrix of shape (3, 3)
         - t: Translation vector of shape (3,)
     """
@@ -492,7 +491,6 @@ def P_to_K_T(
         P: Projection matrix of shape (3, 4).
 
     Returns:
-        Tuple containing:
         - K: Intrinsic matrix of shape (3, 3)
         - T: Extrinsic matrix (world-to-camera) of shape (4, 4)
     """
@@ -651,7 +649,6 @@ def K_to_fx_fy_cx_cy(
         K: Intrinsic matrix of shape (3, 3).
 
     Returns:
-        Tuple containing:
         - fx: Focal length in x direction
         - fy: Focal length in y direction
         - cx: Principal point x coordinate

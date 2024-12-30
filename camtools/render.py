@@ -274,6 +274,19 @@ def get_render_K_T(
         - [x, y, 1]^T is the projected homogeneous 2D point in pixel coordinates
         - λ is the depth value
 
+    Args:
+        geometries: List of Open3D geometries to set up the view. Supported types
+            include TriangleMesh, PointCloud, and LineSet.
+        view_status_str: Optional JSON string containing camera parameters from
+            o3d.visualization.Visualizer.get_view_status(). If provided, uses
+            these parameters to set up the view.
+        height: Height of the view window in pixels.
+        width: Width of the view window in pixels.
+
+    Returns:
+        - K: camera intrinsic matrix
+        - T: camera extrinsic matrix, world-to-camera transformation
+
     Examples:
         .. code-block:: python
 
@@ -287,33 +300,6 @@ def get_render_K_T(
             # Use matrices for consistent rendering
             image = render_geometries([mesh], K=K, T=T)
 
-    Args:
-        geometries: List of Open3D geometries to set up the view. Supported types:
-            - TriangleMesh
-            - PointCloud
-            - LineSet
-        view_status_str: Optional JSON string containing camera parameters from
-            o3d.visualization.Visualizer.get_view_status(). If provided, uses
-            these parameters to set up the view.
-        height: Height of the view window in pixels.
-        width: Width of the view window in pixels.
-
-    Returns:
-        Tuple containing:
-        - K: (3, 3) camera intrinsic matrix following the format:
-            [[fx, 0, cx],
-             [0, fy, cy],
-             [0, 0, 1]]
-            where:
-                - fx, fy: focal lengths in pixels
-                - cx, cy: principal point coordinates
-        - T: (4, 4) camera extrinsic matrix (world-to-camera transformation)
-            following the format:
-                [[R | t],
-                 [0 | 1]]
-            where:
-                - R: (3, 3) rotation matrix
-                - t: (3,) translation vector
     """
     if not isinstance(geometries, list):
         raise TypeError("geometries must be a list of Open3D geometries.")
