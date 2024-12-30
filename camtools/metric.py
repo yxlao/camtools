@@ -225,10 +225,11 @@ def load_im_pd_im_gt_im_mask_for_eval(
             (This option is not implemented yet.)
 
     Returns:
-        - im_pd: (h, w, 3), float32, value in [0, 1].
-        - im_gt: (h, w, 3), float32, value in [0, 1].
-        - im_mask: (h, w), float32, value only 0 or 1. Even if im_mask_path is
-          None, im_mask will be returned as all 1s.
+        [Float[np.ndarray, "h w 3"], Float[np.ndarray, "h w 3"], Float[np.ndarray, "h w"]]:
+            - im_pd: (h, w, 3), float32, value in [0, 1].
+            - im_gt: (h, w, 3), float32, value in [0, 1].
+            - im_mask: (h, w), float32, value only 0 or 1. Even if im_mask_path is
+              None, im_mask will be returned as all 1s.
     """
     if alpha_mode != "white":
         raise NotImplementedError('Currently only alpha_mode="white" is supported.')
