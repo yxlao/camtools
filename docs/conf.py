@@ -68,7 +68,6 @@ html_theme_options = {
     "light_logo": "camtools_logo_light.png",
     "dark_logo": "camtools_logo_dark.png",
     "sidebar_hide_name": False,
-    "announcement": "<div style='text-align: left'>Hello</div>",
     "navigation_with_keys": True,
 }
 
