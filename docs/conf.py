@@ -55,6 +55,11 @@ language = "en"
 html_theme = "furo"
 html_static_path = ["_static", "../camtools/assets"]
 
+# Add custom CSS
+html_css_files = [
+    "custom.css",
+]
+
 # Get script directory
 script_dir = Path(__file__).parent
 
@@ -64,6 +69,7 @@ html_theme_options = {
     "dark_logo": "camtools_logo_dark.png",
     "sidebar_hide_name": False,
     "announcement": "<div style='text-align: left'>Hello</div>",
+    "navigation_with_keys": True,
 }
 
 # Set the title with version and git hash

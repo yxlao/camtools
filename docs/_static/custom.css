@@ -1,0 +1,18 @@
+/* Force toctree to stay expanded */
+.toctree-checkbox {
+    display: none !important;
+}
+
+.toctree-l1 ul {
+    display: block !important;
+}
+
+/* Hide the expand/collapse arrows */
+label[for^="toctree-checkbox-"] {
+    display: none !important;
+}
+
+/* Always show nested items */
+.sidebar-tree .toctree-l1>ul {
+    display: block !important;
+}
