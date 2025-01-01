@@ -55,6 +55,11 @@ language = "en"
 html_theme = "furo"
 html_static_path = ["_static", "../camtools/assets"]
 
+# Add custom CSS
+html_css_files = [
+    "custom.css",
+]
+
 # Get script directory
 script_dir = Path(__file__).parent
 
@@ -62,10 +67,13 @@ script_dir = Path(__file__).parent
 html_theme_options = {
     "light_logo": "camtools_logo_light.png",
     "dark_logo": "camtools_logo_dark.png",
+    "sidebar_hide_name": False,
+    "navigation_with_keys": True,
 }
 
-# Set the title with version and git hash
-html_title = f"CamTools Documentation ({release})"
+# Set the title without version
+# This is the tab name in the browser
+html_title = "CamTools Documentation"
 
 # Favicon
 favicon_path = (
@@ -76,13 +84,13 @@ if not favicon_path.is_file():
 html_favicon = str(favicon_path)
 
 
-# Google Analytics configuration
 def add_ga_javascript(app, pagename, templatename, context, doctree):
     """
     Ref: https://github.com/sphinx-contrib/googleanalytics/blob/master/sphinxcontrib/googleanalytics.py
     """
     metatags = context.get("metatags", "")
-    metatags += """
+    metatags += (
+        """
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-FG59NQBWRW"></script>
     <script>
@@ -91,7 +99,18 @@ def add_ga_javascript(app, pagename, templatename, context, doctree):
         gtag('js', new Date());
         gtag('config', 'G-FG59NQBWRW');
     </script>
+    <!-- Update sidebar text -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarText = document.querySelector('.sidebar-brand-text');
+            if (sidebarText) {
+                sidebarText.textContent = 'CamTools Documentation (%s)';
+            }
+        });
+    </script>
     """
+        % release
+    )
     context["metatags"] = metatags
 
 
