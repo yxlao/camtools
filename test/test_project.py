@@ -11,8 +11,6 @@ def test_points_to_pixels():
             [0, 0, 1],
         ]
     )
-    # Place camera 2 units away from origin, looking towards origin
-    # with a slight rotation for testing
     R = ct.convert.roll_pitch_yaw_to_R(
         roll=np.pi / 6,
         pitch=-np.pi / 4,
@@ -20,20 +18,14 @@ def test_points_to_pixels():
     )
     # Position camera closer to origin
     t = np.array([0.1, 0.2, 0.3])
-
     T = ct.convert.R_t_to_T(R, t)
 
     # Plot cameras
-    # Create coordinate frame at world origin
-    world_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0)
-
-    # Create camera frustum visualization
+    coords = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0)
     frustum = ct.camera.create_camera_frustums(
         Ks=[K],
         Ts=[T],
         size=0.2,
         up_triangle=True,
     )
-
-    # Visualize everything
-    o3d.visualization.draw_geometries([world_frame, frustum])
+    o3d.visualization.draw_geometries([coords, frustum])
