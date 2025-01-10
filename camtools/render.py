@@ -2,7 +2,7 @@
 Functions for controlled rendering of 3D geometries to images or depth images.
 """
 
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Literal
 
 import numpy as np
 import open3d as o3d
@@ -422,7 +422,7 @@ class _TextRenderer:
         "mono": None,
     }
 
-    def __init__(self, font_type: str = "tex"):
+    def __init__(self, font_type: Literal["tex", "serif", "sans", "mono"] = "tex"):
         """
         Initializes the renderer with a specific font type.
         """
