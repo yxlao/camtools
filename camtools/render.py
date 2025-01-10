@@ -604,9 +604,9 @@ def render_text(
 def render_texts(
     texts: List[str],
     font_size: int = 72,
-    font_type: str = "tex",
+    font_type: Literal["tex", "serif", "sans", "mono"] = "tex",
     font_color: Tuple[float, float, float] = (0.0, 0.0, 0.0),
-    multiline_alignment: str = "center",
+    multiline_alignment: Literal["left", "center", "right"] = "center",
     same_height: bool = False,
     same_width: bool = False,
     padding_tblr: Tuple[int, int, int, int] = (0, 0, 0, 0),
