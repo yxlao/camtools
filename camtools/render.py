@@ -546,7 +546,7 @@ def render_text(
     font_type: Literal["tex", "serif", "sans", "mono"] = "tex",
     font_color: Tuple[float, float, float] = (0, 0, 0),
     tight_layout: bool = False,
-    multiline_alignment: str = "left",
+    multiline_alignment: Literal["left", "center", "right"] = "left",
     padding_tblr: Tuple[int, int, int, int] = (0, 0, 0, 0),
 ) -> Float[np.ndarray, "h w"]:
     """
