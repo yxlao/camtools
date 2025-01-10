@@ -543,7 +543,7 @@ class _TextRenderer:
 def render_text(
     text: str,
     font_size: int = 72,
-    font_type: str = "tex",
+    font_type: Literal["tex", "serif", "sans", "mono"] = "tex",
     font_color: Tuple[float, float, float] = (0, 0, 0),
     tight_layout: bool = False,
     multiline_alignment: str = "left",
