@@ -5,7 +5,7 @@ Functions for reading and writing images and depth images.
 import cv2
 import numpy as np
 from pathlib import Path
-from typing import Union, Optional
+from typing import Union, Optional, Literal
 from jaxtyping import UInt8, Float
 
 from . import sanity
@@ -185,7 +185,7 @@ def imwrite_depth(
 
 def imread(
     im_path: Union[str, Path],
-    alpha_mode: Optional[str] = None,
+    alpha_mode: Optional[Literal["keep", "ignore", "white", "black"]] = None,
 ) -> Union[
     Float[np.ndarray, "h w"],
     Float[np.ndarray, "h w 3"],

@@ -6,7 +6,7 @@ import numpy as np
 from skimage.metrics import peak_signal_noise_ratio
 from skimage.metrics import structural_similarity
 from pathlib import Path
-from typing import Tuple, Optional, Union
+from typing import Tuple, Optional, Union, Literal
 from jaxtyping import Float
 
 from . import image
@@ -200,7 +200,7 @@ def load_im_pd_im_gt_im_mask_for_eval(
     im_pd_path: Union[str, Path],
     im_gt_path: Union[str, Path],
     im_mask_path: Optional[Union[str, Path]] = None,
-    alpha_mode: str = "white",
+    alpha_mode: Literal["white", "keep"] = "white",
 ) -> Tuple[
     Float[np.ndarray, "h w 3"], Float[np.ndarray, "h w 3"], Float[np.ndarray, "h w"]
 ]:
