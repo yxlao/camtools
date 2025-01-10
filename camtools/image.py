@@ -6,7 +6,7 @@ import numpy as np
 import cv2
 from . import sanity
 from . import colormap
-from typing import Tuple, List, Optional, Union
+from typing import Tuple, List, Optional, Union, Literal
 from jaxtyping import Float, UInt8, UInt16, Int
 
 
@@ -778,7 +778,7 @@ def make_corres_image(
 
 def vstack_images(
     ims: List[Float[np.ndarray, "h w 3"]],
-    alignment: str = "left",
+    alignment: Literal["left", "center", "right"] = "left",
     background_color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
 ) -> Float[np.ndarray, "h_stacked w_stacked 3"]:
     """
