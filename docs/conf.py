@@ -18,16 +18,45 @@ sys.path.insert(0, os.path.abspath(".."))
 # Get version from camtools package
 version = ct.__version__
 
-# Get git commit hash
+# When building a version-tagged commit, only use the version as "release". Otherwise,
+# use the version number and the git hash as "release".
+print("[Detecting docs version]")
 try:
     git_hash = (
         subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
         .decode("ascii")
         .strip()
     )
-    release = f"{version}+{git_hash}"
+    all_tags = (
+        subprocess.check_output(["git", "tag", "--list"])
+        .decode("ascii")
+        .strip()
+        .split()
+    )
+    head_tags = (
+        subprocess.check_output(["git", "tag", "--points-at", "HEAD"])
+        .decode("ascii")
+        .strip()
+        .split()
+    )
+
+    print(f"- Version     : {version}")
+    print(f"- Git hash    : {git_hash}")
+    print(f"- All tags    : {all_tags}")
+    print(f"- HEAD tags   : {head_tags}")
+
+    # Check if current commit has a version tag
+    if f"v{version}" in head_tags:
+        release = version
+        status = f"(commit {git_hash} is version tagged as v{version})"
+    else:
+        release = f"{version}+{git_hash}"
+        status = f"(commit {git_hash} is not version tagged)"
+    print(f"- Docs version: {release} {status}")
+
 except subprocess.CalledProcessError:
     release = version
+    print(f"- Docs version  : {release} (cannot detect git information)")
 
 project = "CamTools"
 copyright = "2024, Yixing Lao"
