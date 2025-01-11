@@ -39,6 +39,7 @@ __version__ = _get_package_version("camtools")
 
 
 # Check open3d and numpy compatibility
+# https://github.com/isl-org/Open3D/issues/6840
 try:
     logging.basicConfig(format="%(message)s")
     _logger = logging.getLogger(__name__)
