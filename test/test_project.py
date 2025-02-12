@@ -13,10 +13,10 @@ def test_points_to_depths(visualize=True):
     K = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
 
     # Create points on a plane z units away from origin
-    num_points = 1000
-    z = 3.0
-    x = np.random.uniform(-4, 4, num_points)
-    y = np.random.uniform(-4, 4, num_points)
+    num_points = 5000
+    z = 2.0
+    x = np.random.uniform(-2, 2, num_points)
+    y = np.random.uniform(-1.5, 1.5, num_points)
     points = np.column_stack([x, y, np.full(num_points, z)])
 
     # Test depths are all close to z
@@ -28,7 +28,7 @@ def test_points_to_depths(visualize=True):
     if visualize:
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(points)
-        pcd.paint_uniform_color([1, 0, 0])  # Red points
+        pcd.paint_uniform_color([1, 0, 0])
         frustum = ct.camera.create_camera_frustums(
             Ks=[K],
             Ts=[T],
