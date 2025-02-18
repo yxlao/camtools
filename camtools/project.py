@@ -63,6 +63,37 @@ def points_to_pixels(
     return pixels
 
 
+def points_to_depths(
+    points: Float[np.ndarray, "n 3"],
+    T: Float[np.ndarray, "4 4"],
+) -> Float[np.ndarray, "n"]:
+    """
+    Convert 3D points in world coordinates to z-depths in camera coordinates.
+
+    Args:
+        points: (N, 3) array of 3D points in world coordinates.
+        T: (4, 4) camera extrinsic matrix (world-to-camera transformation).
+
+    Returns:
+        (N,) array of z-depths in camera coordinates. Positive values indicate
+        points in front of the camera, negative values indicate points behind
+        the camera.
+
+    Note: The depth is z-depth instead of distance to the camera center.
+    """
+    sanity.assert_T(T)
+    sanity.assert_shape_nx3(points, name="points")
+
+    # (N, 3) -> (N, 4)
+    points_homo = convert.to_homo(points)
+    # Transform to camera coordinates: (N, 4)
+    points_camera = (T @ points_homo.T).T
+    # Extract z-coordinate: (N,)
+    depths = points_camera[:, 2]
+
+    return depths
+
+
 def im_depth_to_point_cloud(
     im_depth: Float[np.ndarray, "h w"],
     K: Float[np.ndarray, "3 3"],
