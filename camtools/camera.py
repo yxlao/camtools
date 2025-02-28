@@ -70,7 +70,7 @@ def create_camera_frustums(
             )
         for image_wh in image_whs:
             # Must be 2D.
-            sanity.assert_shape_ndim(image_wh, nd=2)
+            sanity.assert_shape_ndim(image_wh, ndim=2)
             # Must be integer.
             w, h = image_wh
             if not isinstance(w, (int, np.integer)) or not isinstance(
