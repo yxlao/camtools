@@ -5,30 +5,31 @@ ct compress-images *.png *.jpg
 
 # --format and --inplace
 # Notes:
-# - When --inplace is specified, the original file will be deleted, even for
-#   png -> jpg conversion.
-# - When converting png -> jpg or jpg -> png, the output extension is always
-#   ".jpg" or ".png".
-# - When converting jpg -> jpg or png -> png, the output extension is the same as
-#   the original file. E.g. ".JPG" -> ".JPG", ".jpeg" -> ".jpeg".
-# png -> jpg (image.jpg created, image.png unchanged)
+# - When --inplace is specified, the original file will be deleted (format conversion)
+#   or replaced (same format compression).
+# - Format conversion (PNG <-> JPG): Output uses standard extension (.jpg or .png),
+#   no "processed_" prefix needed since extensions differ.
+# - Same format compression: Original extension preserved (e.g., .JPG -> .JPG, .jpeg -> .jpeg).
+#   Without --inplace, "processed_" prefix is added.
+# 
+# png -> jpg (image.jpg created, image.png kept)
 ct compress-images image.png --format jpg
-# jpeg -> png (image.png created, image.jpeg unchanged)
+# jpeg -> png (image.png created, image.jpeg kept)
 ct compress-images image.jpeg --format png
-# jpg -> jpg (processed_image.jpg created, image.jpg unchanged)
+# jpg -> jpg (processed_image.jpg created, image.jpg kept)
 ct compress-images image.jpg --format jpg
 # png -> jpg inplace (image.jpg created, image.png deleted)
 ct compress-images image.png --format jpg --inplace
-# jpg (.jpeg extension) -> jpg inplace (image.jpeg is updated)
+# jpg (.jpeg extension) -> jpg inplace (image.jpeg is replaced)
 ct compress-images image.jpeg --format jpg --inplace
 
 # --quality
 # Notes:
 # - Quality only works for JPG formats, not when output format is PNG. The flag will raise an exception.
-# Compress with quality 80 (processed_image.png created, image.png unchanged)
-ct compress-images image.png --quality 80
-# Compress with quality 90 (processed_image.jpeg created, image.jpeg unchanged)
-ct compress-images image.jpeg --quality 90
+# Convert PNG to JPG with quality 80 (image.jpg created, image.png kept)
+ct compress-images image.png --format jpg --quality 80
+# Compress JPG to JPG with quality 90 (processed_image.jpeg created, image.jpeg kept)
+ct compress-images image.jpeg --format jpg --quality 90
 
 # --skip_compression_ratio
 # Notes:

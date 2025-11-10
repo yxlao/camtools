@@ -18,13 +18,16 @@ def instantiate_parser(parser):
         "  - PNG -> JPG: Alpha channel is removed (flattened to white background).\n"
         "  - PNG -> PNG: Alpha channel is preserved.\n"
         "  - JPG -> JPG or PNG -> PNG: Original extension is preserved (e.g., .JPG, .jpeg).\n"
-        "  - Format conversion (PNG -> JPG or JPG -> PNG): Standard extension is used (.jpg or .png).\n\n"
+        "  - Format conversion (PNG <-> JPG): Standard extension is used (.jpg or .png).\n\n"
         "Output file naming:\n"
-        "  - Without --inplace: 'processed_<filename>' is created, original file is kept.\n"
-        "  - With --inplace: Original file is replaced/deleted.\n\n"
+        "  - Format conversion without --inplace: Same name, different extension (e.g., image.png -> image.jpg).\n"
+        "  - Same format compression without --inplace: 'processed_<filename>' prefix added.\n"
+        "  - With --inplace: Original file is replaced (same format) or deleted (format conversion).\n\n"
         "Examples:\n"
-        "  # Convert PNG to JPG with quality 90\n"
+        "  # Convert PNG to JPG with quality 90 (creates image.jpg, keeps image.png)\n"
         "  ct compress-images image.png --format jpg --quality 90\n\n"
+        "  # Compress JPG to JPG (creates processed_image.jpg, keeps image.jpg)\n"
+        "  ct compress-images image.jpg --format jpg --quality 90\n\n"
         "  # Compress JPG inplace, skip if compression ratio > 0.9\n"
         "  ct compress-images image.jpg --format jpg --quality 90 --skip_compression_ratio 0.9 --inplace\n\n"
         "  # Convert recursively all PNG to JPG\n"
@@ -133,11 +136,11 @@ def print_file_table(console, file_ops, stats=None, show_results=False):
     else:
         console.print("\n[bold cyan]Expected File Operations[/bold cyan]\n")
         table = Table(box=box.ROUNDED, show_header=True, header_style="bold magenta")
-        table.add_column("Input File", style="cyan", no_wrap=False, overflow="fold")
+        table.add_column("Input", style="cyan", no_wrap=False, overflow="fold")
         table.add_column("Output", style="green", no_wrap=False, overflow="fold")
         table.add_column("Operation", justify="center", style="yellow")
         table.add_column("Size", justify="right", style="blue")
-        table.add_column("Action", justify="center")
+        table.add_column("Source File", justify="center")
 
         for op in file_ops:
             table.add_row(
@@ -145,7 +148,7 @@ def print_file_table(console, file_ops, stats=None, show_results=False):
                 op["dst_rel"],
                 op["operation"],
                 f"{op['src_size_mb']:.2f} MB",
-                op["action"],
+                op["source_file"],
             )
 
     console.print(table)
@@ -189,16 +192,20 @@ def entry_point(_parser, args):
         src_is_jpg = ct.sanity.is_jpg_path(src_path)
 
         # Determine destination path.
-        if (src_is_jpg and args.format == "jpg") or (
+        is_same_format = (src_is_jpg and args.format == "jpg") or (
             src_is_png and args.format == "png"
-        ):
+        )
+
+        if is_same_format:
             # Same format: preserve extension.
             dst_path = src_path
         else:
             # Format conversion: use standard extension.
             dst_path = src_path.with_suffix(".jpg" if args.format == "jpg" else ".png")
 
-        if not args.inplace:
+        # Add prefix only for same-format compression without inplace.
+        # Format conversions don't need prefix since extensions differ.
+        if not args.inplace and is_same_format:
             dst_path = dst_path.parent / f"processed_{dst_path.name}"
 
         dst_paths.append(dst_path)
@@ -209,13 +216,13 @@ def entry_point(_parser, args):
         operation = get_operation_string(src_is_png, args.format, args.quality)
 
         if args.inplace:
-            action = (
-                "[red]Delete[/red]"
+            source_file = (
+                "[red]Deleted[/red]"
                 if src_path != dst_path
-                else "[yellow]Replace[/yellow]"
+                else "[yellow]Replaced[/yellow]"
             )
         else:
-            action = "[green]Keep[/green]"
+            source_file = "[green]Kept[/green]"
 
         file_ops.append(
             {
@@ -225,7 +232,7 @@ def entry_point(_parser, args):
                 "dst_rel": dst_rel,
                 "operation": operation,
                 "src_size_mb": src_path.stat().st_size / 1024 / 1024,
-                "action": action,
+                "source_file": source_file,
             }
         )
 

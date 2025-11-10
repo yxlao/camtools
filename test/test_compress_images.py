@@ -109,8 +109,8 @@ def test_compress_images_png_to_jpg():
         # Original file should still exist
         assert src_path.exists()
 
-        # Output file should be created with processed_ prefix
-        dst_path = tmpdir / "processed_image.jpg"
+        # Output file should be created without prefix (format conversion)
+        dst_path = tmpdir / "image.jpg"
         assert dst_path.exists()
 
         # Check file is valid JPG
@@ -171,8 +171,8 @@ def test_compress_images_jpeg_to_png():
         # Original file should still exist
         assert src_path.exists()
 
-        # Output file should be created with processed_ prefix and .png extension
-        dst_path = tmpdir / "processed_image.png"
+        # Output file should be created without prefix (format conversion)
+        dst_path = tmpdir / "image.png"
         assert dst_path.exists()
 
         # Check file is valid PNG
@@ -261,8 +261,8 @@ def test_compress_images_quality():
         # Should succeed
         assert proc.returncode == 0
 
-        # Output file should be created
-        dst_path = tmpdir / "processed_image.jpg"
+        # Output file should be created without prefix (format conversion)
+        dst_path = tmpdir / "image.jpg"
         assert dst_path.exists()
 
 
@@ -330,9 +330,11 @@ def test_compress_images_multiple_files():
         # Should succeed
         assert proc.returncode == 0
 
-        # All processed files should be created
-        assert (tmpdir / "processed_image1.jpg").exists()
-        assert (tmpdir / "processed_image2.jpg").exists()
+        # Check output files:
+        # PNG->JPG conversions: no prefix (different extensions)
+        assert (tmpdir / "image1.jpg").exists()  # From png1
+        assert (tmpdir / "image2.jpg").exists()  # From png2
+        # JPG->JPG compression: has prefix (same format)
         assert (tmpdir / "processed_image1.jpg").exists()  # From jpg1
 
 
@@ -428,8 +430,8 @@ def test_compress_images_yes_flag():
         assert proc.returncode == 0
         assert b"--yes specified" in proc.stdout or b"Processing" in proc.stdout
 
-        # Output file should be created
-        dst_path = tmpdir / "processed_image.jpg"
+        # Output file should be created without prefix (format conversion)
+        dst_path = tmpdir / "image.jpg"
         assert dst_path.exists()
 
 
