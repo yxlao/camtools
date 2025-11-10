@@ -9,19 +9,15 @@ def instantiate_parser(parser):
     parser.add_argument(
         "input",
         type=Path,
-        help="One or more image path(s), or one directory. Supporting PNG and JPG.",
+        help="One or more image path(s). Supporting PNG and JPG.",
         nargs="+",
     )
     parser.add_argument(
-        "--png_only",
-        action="store_true",
-        help="If specified, only PNG files will be processed.",
-    )
-    parser.add_argument(
-        "--flatten_alpha_channel",
-        "-f",
-        action="store_true",
-        help="If specified, the alpha channel will be flattened to white.",
+        "--format",
+        type=str,
+        choices=["jpg", "png"],
+        default=None,
+        help="Output format (jpg or png). If not specified, no processing is done.",
     )
     parser.add_argument(
         "--inplace",
@@ -34,45 +30,43 @@ def instantiate_parser(parser):
         "-q",
         type=int,
         default=95,
-        help="Quality of the output JPEG image, 1-100. Default is 95.",
+        help="Quality of the output JPEG image, 1-100. Default is 95. Only works for JPG output format.",
     )
     parser.add_argument(
-        "--update_texts_in_dir",
-        "-u",
-        type=Path,
-        help="Update text files (.txt, .md, .tex) in the directory to reflect the new image paths.",
-    )
-    parser.add_argument(
-        "--min_jpg_compression_ratio",
+        "--skip_compression_ratio",
         type=float,
-        default=0.9,
-        help="Minimum compression ratio for jpg->jpg compression. "
-        "If the compression ratio is above this value, the image will not be compressed. "
-        "This avoids compressing an image that is already compressed.",
+        default=1.0,
+        help="Skip compression if the compression ratio is above this value (default: 1.0). "
+        "Only applies to JPG->JPG compression to avoid recompressing already compressed images. "
+        "Default is 1.0 to process all files (no skipping).",
     )
     return parser
 
 
-def entry_point(parser, args):
+def entry_point(_parser, args):
     """
     This is used by sub_parser.set_defaults(func=entry_point).
     The parser argument is not used.
     """
+    # If no format is specified, do nothing.
+    if args.format is None:
+        print("No --format specified. No changes made to any files.")
+        return 0
+
+    # Validate quality flag only works for JPG format.
+    if args.quality != 95 and args.format == "png":
+        raise ValueError(
+            "The --quality flag only works for JPG output format, not PNG."
+        )
+
     # Collect all src_paths.
     src_paths = []
-    if len(args.input) == 1 and args.input[0].is_dir():
-        src_dir = args.input[0]
-        src_paths += list(src_dir.glob("**/*"))
-    else:
-        src_paths += args.input
-    if args.png_only:
-        src_paths = [path for path in src_paths if ct.sanity.is_png_path(path)]
-    else:
-        src_paths = [
-            path
-            for path in src_paths
-            if ct.sanity.is_jpg_path(path) or ct.sanity.is_png_path(path)
-        ]
+    src_paths += args.input
+    src_paths = [
+        path
+        for path in src_paths
+        if ct.sanity.is_jpg_path(path) or ct.sanity.is_png_path(path)
+    ]
     src_paths = [path.resolve().absolute() for path in src_paths]
     missing_paths = [path for path in src_paths if not path.is_file()]
     if not src_paths:
@@ -80,77 +74,45 @@ def entry_point(parser, args):
     if missing_paths:
         raise ValueError(f"Missing files: {missing_paths}")
 
-    # Handle PNG file's alpha channel.
-    src_paths_with_alpha = []
-    png_paths = [src_path for src_path in src_paths if ct.sanity.is_png_path(src_path)]
-    for src_path in png_paths:
-        im = ct.io.imread(src_path, alpha_mode="keep")
-        if im.shape[2] == 4:
-            src_paths_with_alpha.append(src_path)
-    if len(src_paths_with_alpha) > 0:
-        # Skip PNG files with alpha channel if flatten is not specified.
-        if not args.flatten_alpha_channel:
-            src_paths = [
-                src_path
-                for src_path in src_paths
-                if src_path not in src_paths_with_alpha
-            ]
-
     # Compute dst_paths.
     dst_paths = []
     for src_path in src_paths:
-        if ct.sanity.is_jpg_path(src_path):
+        # Determine output extension.
+        if args.format == "jpg":
+            output_ext = ".jpg"
+        else:  # args.format == "png"
+            output_ext = ".png"
+
+        # Check if this is a format conversion or same format compression.
+        src_is_jpg = ct.sanity.is_jpg_path(src_path)
+        src_is_png = ct.sanity.is_png_path(src_path)
+
+        if (src_is_jpg and args.format == "jpg") or (
+            src_is_png and args.format == "png"
+        ):
+            # Same format: preserve original extension (e.g., .JPG, .jpeg).
             dst_path = src_path
         else:
-            dst_path = src_path.with_suffix(".jpg")
-        if not args.inplace:
-            dst_path = dst_path.parent / f"compressed_{dst_path.name}"
-        dst_paths.append(dst_path)
+            # Format conversion: use standard extension (.jpg or .png).
+            dst_path = src_path.with_suffix(output_ext)
 
-    # Check update_texts_in_dir.
-    if args.update_texts_in_dir is not None:
-        update_texts_in_dir = Path(args.update_texts_in_dir)
-        if not update_texts_in_dir.is_dir():
-            raise ValueError(
-                f"update_texts_in_dir must be a directory, "
-                f"but got {update_texts_in_dir}"
-            )
-        text_paths = get_all_text_paths(update_texts_in_dir)
+        if not args.inplace:
+            dst_path = dst_path.parent / f"processed_{dst_path.name}"
+        dst_paths.append(dst_path)
 
     # Print summary.
     pwd = Path.cwd().resolve().absolute()
-    print(f"[Candidate files]")
+    print("[Candidate files]")
     for src_path, dst_path in zip(src_paths, dst_paths):
         print(f"  - src: {Path(os.path.relpath(path=src_path, start=pwd))}")
         print(f"    dst: {Path(os.path.relpath(path=dst_path, start=pwd))}")
-    if len(src_paths_with_alpha) > 0:
-        if args.flatten_alpha_channel:
-            print("[PNG files with alpha channel (to be flattened)]")
-            for src_path in src_paths_with_alpha:
-                print(f"  - {Path(os.path.relpath(path=src_path, start=pwd))}")
-            f"They will be skipped."
-        else:
-            print("[PNG files with alpha channel (to be skipped)]")
-            for src_path in src_paths_with_alpha:
-                print(f"  - {Path(os.path.relpath(path=src_path, start=pwd))}")
-            print(
-                f"{len(src_paths_with_alpha)} PNG files have alpha channel. "
-                f"They will be skipped."
-            )
-    print(f"[To be updated]")
+    print("[To be updated]")
     inplace_str = "src will be deleted" if args.inplace else "src will be kept"
-    if args.update_texts_in_dir is not None:
-        print(f"  - num_images         : {len(src_paths)} files")
-        print(f"  - quality            : {args.quality}")
-        print(f"  - inplace            : {inplace_str}")
-        print(
-            f"  - update_texts_in_dir: {update_texts_in_dir} "
-            f"({len(text_paths)} files)"
-        )
-    else:
-        print(f"  - num_images: {len(src_paths)} files")
+    print(f"  - num_images: {len(src_paths)} files")
+    print(f"  - format    : {args.format}")
+    if args.format == "jpg":
         print(f"  - quality   : {args.quality}")
-        print(f"  - inplace   : {inplace_str}")
+    print(f"  - inplace   : {inplace_str}")
 
     # Compress images.
     if not ct.util.query_yes_no("Proceed?", default=False):
@@ -159,9 +121,10 @@ def entry_point(parser, args):
     stats = compress_images(
         src_paths=src_paths,
         dst_paths=dst_paths,
+        output_format=args.format,
         quality=args.quality,
         delete_src=args.inplace,
-        min_jpg_compression_ratio=args.min_jpg_compression_ratio,
+        skip_compression_ratio=args.skip_compression_ratio,
     )
 
     # Print stats.
@@ -169,12 +132,14 @@ def entry_point(parser, args):
     dst_sizes = [stat["dst_size"] for stat in stats]
     src_total_size_mb = sum(src_sizes) / 1024 / 1024
     dst_total_size_mb = sum(dst_sizes) / 1024 / 1024
-    compression_ratio = dst_total_size_mb / src_total_size_mb
+    compression_ratio = (
+        dst_total_size_mb / src_total_size_mb if src_total_size_mb > 0 else 0
+    )
     num_total = len(src_paths)
     num_direct_copy = len([stat for stat in stats if stat["is_direct_copy"]])
     num_compressed = num_total - num_direct_copy
 
-    print(f"[Summary]")
+    print("[Summary]")
     print(f"  - num_total        : {num_total}")
     print(f"  - num_direct_copy  : {num_direct_copy}")
     print(f"  - num_compressed   : {num_compressed}")
@@ -182,67 +147,14 @@ def entry_point(parser, args):
     print(f"  - dst_total_size_mb: {dst_total_size_mb:.2f} MB")
     print(f"  - compression_ratio: {compression_ratio:.2f}")
 
-    # Update text files.
-    src_paths = [stat["src_path"] for stat in stats if not stat["is_direct_copy"]]
-    dst_paths = [stat["dst_path"] for stat in stats if not stat["is_direct_copy"]]
-    if num_compressed > 0 and update_texts_in_dir is not None:
-        do_update_texts_in_dir(
-            src_paths=src_paths,
-            dst_paths=dst_paths,
-            root_dir=update_texts_in_dir,
-        )
-
-
-def do_update_texts_in_dir(src_paths, dst_paths, root_dir):
-    # Print update dict.
-    root_dir = root_dir.resolve().absolute()
-    replace_dict = {}
-    for src_path, dst_path in zip(src_paths, dst_paths):
-        src_path = src_path.relative_to(root_dir)
-        dst_path = dst_path.relative_to(root_dir)
-        replace_dict[str(src_path)] = str(dst_path)
-    keys = sorted(replace_dict.keys())
-    print(f"[With replace dict of {len(keys)} patterns]")
-    for key in keys:
-        print(f"  - {key} -> {replace_dict[key]}")
-
-    # Collect all text paths.
-    text_paths = get_all_text_paths(root_dir)
-    print(f"[Updating {len(text_paths)} text files]")
-    for text_path in text_paths:
-        print(f"  - {text_path}")
-
-    prompt = "Continue?"
-    if ct.util.query_yes_no(prompt, default=False):
-        pass
-    else:
-        print("Aborted.")
-        return 0
-
-    same_paths = []
-    updated_paths = []
-    for text_path in text_paths:
-        before_text = text_path.read_text()
-        replace_strings_in_file(path=text_path, replace_dict=replace_dict)
-        after_text = text_path.read_text()
-        if before_text == after_text:
-            same_paths.append(text_path)
-        else:
-            updated_paths.append(text_path)
-
-    print(f"[Summary]")
-    print(f"  - num_same   : {len(same_paths)}")
-    print(f"  - num_updated: {len(updated_paths)}")
-    for text_path in updated_paths:
-        print(f"    - {text_path}")
-
 
 def compress_image_and_return_stat(
     src_path: Path,
     dst_path: Path,
+    output_format: str,
     quality: int,
     delete_src: bool,
-    min_jpg_compression_ratio: float,
+    skip_compression_ratio: float,
 ):
     """
     Compress image and return stats.
@@ -254,12 +166,12 @@ def compress_image_and_return_stat(
         dst_path: Path to image.
             - Only ".jpg" or ".png" is supported.
             - Directory will be created if it does not exist.
+        output_format: Output format ("jpg" or "png").
         quality: Quality of the output JPEG image, 1-100. Default is 95.
+            Only applicable for JPG output.
         delete_src: If True, the src_path will be deleted.
-        min_jpg_compression_ratio: Minimum compression ratio for jpg->jpg
-            compression. If the compression ratio is above this value, the image
-            will not be compressed. This avoids compressing an image that is
-            already compressed.
+        skip_compression_ratio: Skip compression if the compression ratio is
+            above this value. Only applies to JPG->JPG compression.
 
     Returns:
         stat: A dictionary of stats.
@@ -269,36 +181,57 @@ def compress_image_and_return_stat(
                 "src_size": Size of the source image in bytes.
                 "dst_size": Size of the destination image in bytes.
                 "compression_ratio": Compression ratio.
-                "is_direct_copy": True if the image is already compressed.
+                "is_direct_copy": True if the image is skipped/copied directly.
             }
 
     Notes:
         - You should not use this to save a depth image (typically uint16).
         - Float image will get a range check to ensure it is in [0, 1].
+        - PNG -> JPG: Alpha channel is removed (flattened to white background).
+        - PNG -> PNG: Alpha channel is preserved.
     """
     stat = {}
 
     src_path = Path(src_path)
     dst_path = Path(dst_path)
-    if not ct.sanity.is_jpg_path(dst_path):
-        raise ValueError(f"dst_path must be a JPG file: {dst_path}")
     stat["src_path"] = src_path
     stat["dst_path"] = dst_path
 
-    # Read.
-    im = ct.io.imread(src_path)
+    # Read image with appropriate alpha handling.
+    src_is_png = ct.sanity.is_png_path(src_path)
+    src_is_jpg = ct.sanity.is_jpg_path(src_path)
+
+    if src_is_png and output_format == "jpg":
+        # PNG -> JPG: Remove alpha channel (flatten to white).
+        im = ct.io.imread(src_path, alpha_mode="white")
+    else:
+        # PNG -> PNG: Keep alpha channel.
+        # JPG -> JPG: No alpha channel.
+        # JPG -> PNG: No alpha channel.
+        im = ct.io.imread(src_path, alpha_mode="keep")
+
     src_size = src_path.stat().st_size
 
+    # Determine file suffix for temporary file.
+    temp_suffix = ".jpg" if output_format == "jpg" else ".png"
+
     # Write to a temporary file to get the file size.
-    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=True) as fp:
-        ct.io.imwrite(fp.name, im, quality=quality)
+    with tempfile.NamedTemporaryFile(suffix=temp_suffix, delete=True) as fp:
+        if output_format == "jpg":
+            ct.io.imwrite(fp.name, im, quality=quality)
+        else:  # output_format == "png"
+            ct.io.imwrite(fp.name, im)
+
         dst_size = Path(fp.name).stat().st_size
         compression_ratio = dst_size / src_size
 
         dst_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Check if we should skip compression for JPG->JPG.
         if (
-            ct.sanity.is_jpg_path(src_path)
-            and compression_ratio > min_jpg_compression_ratio
+            src_is_jpg
+            and output_format == "jpg"
+            and compression_ratio > skip_compression_ratio
         ):
             # The image is already compressed. Direct copy src_path to dst_path.
             # This avoids recompressing an image that is already compressed.
@@ -327,65 +260,36 @@ def compress_image_and_return_stat(
     return stat
 
 
-def get_all_text_paths(root_dir):
-    def is_text_file(path):
-        return path.is_file() and path.suffix in [".txt", ".md", ".tex"]
-
-    root_dir = Path(root_dir)
-    text_paths = list(root_dir.glob("**/*"))
-    text_paths = [text_path for text_path in text_paths if is_text_file(text_path)]
-    return text_paths
-
-
-def replace_strings_in_file(path, replace_dict):
-    """
-    Replace strings in a file.
-
-    Args:
-        path: Path to the file.
-        replace_dict: A dictionary of strings to be replaced.
-            - Keys are the strings to be replaced.
-            - Values are the strings to replace with.
-    """
-    with path.open() as f:
-        lines = f.readlines()
-    lines = [line.rstrip() for line in lines]
-    for i, line in enumerate(lines):
-        for src_str, dst_str in replace_dict.items():
-            lines[i] = lines[i].replace(src_str, dst_str)
-    with path.open("w") as f:
-        for line in lines:
-            f.write(f"{line}\n")
-
-
 def compress_images(
     src_paths,
     dst_paths,
+    output_format: str,
     quality: int,
     delete_src: bool,
-    min_jpg_compression_ratio: float,
+    skip_compression_ratio: float,
 ):
     """
-    Compress images (PNGs will be converted to JPGs)
+    Compress images.
 
     Args:
         src_paths: List of source image paths.
         dst_paths: List of destination image paths.
+        output_format: Output format ("jpg" or "png").
         quality: Quality of the output JPEG image, 1-100. Default is 95.
+            Only applicable for JPG output.
         delete_src: If True, the src_path will be deleted.
-        min_jpg_compression_ratio: Minimum compression ratio for jpg->jpg
-            compression. If the compression ratio is above this value, the image
-            will not be compressed. This avoids compressing an image that is
-            already compressed.
+        skip_compression_ratio: Skip compression if the compression ratio is
+            above this value. Only applies to JPG->JPG compression.
     """
     stats = []
     for src_path, dst_path in zip(src_paths, dst_paths):
         stat = compress_image_and_return_stat(
             src_path=src_path,
             dst_path=dst_path,
+            output_format=output_format,
             quality=quality,
             delete_src=delete_src,
-            min_jpg_compression_ratio=min_jpg_compression_ratio,
+            skip_compression_ratio=skip_compression_ratio,
         )
         stats.append(stat)
     return stats
