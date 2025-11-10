@@ -6,6 +6,7 @@ import shutil
 from rich.console import Console
 from rich.table import Table
 from rich import box
+from tqdm import tqdm
 
 
 def instantiate_parser(parser):
@@ -141,7 +142,7 @@ def print_file_table(console, file_ops, stats=None, show_results=False):
         for op in file_ops:
             table.add_row(
                 op["src_rel"],
-                op["dst_display"],
+                op["dst_rel"],
                 op["operation"],
                 f"{op['src_size_mb']:.2f} MB",
                 op["action"],
@@ -204,11 +205,7 @@ def entry_point(_parser, args):
 
         # Prepare display info.
         src_rel = str(Path(os.path.relpath(src_path, pwd)))
-        dst_display = (
-            dst_path.name
-            if src_path.parent == dst_path.parent
-            else str(Path(os.path.relpath(dst_path, pwd)))
-        )
+        dst_rel = str(Path(os.path.relpath(dst_path, pwd)))
         operation = get_operation_string(src_is_png, args.format, args.quality)
 
         if args.inplace:
@@ -225,7 +222,7 @@ def entry_point(_parser, args):
                 "src_path": src_path,
                 "dst_path": dst_path,
                 "src_rel": src_rel,
-                "dst_display": dst_display,
+                "dst_rel": dst_rel,
                 "operation": operation,
                 "src_size_mb": src_path.stat().st_size / 1024 / 1024,
                 "action": action,
@@ -253,16 +250,18 @@ def entry_point(_parser, args):
     # Process images.
     console.print("[bold cyan]Processing Files...[/bold cyan]\n")
     stats = []
-    for src_path, dst_path in zip(src_paths, dst_paths):
-        stat = compress_image(
-            src_path,
-            dst_path,
-            args.format,
-            args.quality,
-            args.inplace,
-            args.skip_compression_ratio,
-        )
-        stats.append(stat)
+    with tqdm(total=len(src_paths), desc="Processing", unit="file") as pbar:
+        for src_path, dst_path in zip(src_paths, dst_paths):
+            stat = compress_image(
+                src_path,
+                dst_path,
+                args.format,
+                args.quality,
+                args.inplace,
+                args.skip_compression_ratio,
+            )
+            stats.append(stat)
+            pbar.update(1)
 
     # Show results.
     print_file_table(console, file_ops, stats, show_results=True)
