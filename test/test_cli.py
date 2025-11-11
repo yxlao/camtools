@@ -45,3 +45,10 @@ def test_draw_bboxes():
         cmd="ct draw-bboxes --help",
         required_stdout="usage: ct draw-bboxes",
     )
+
+
+def test_compress_images():
+    _run_and_test_command(
+        cmd="ct compress-images --help",
+        required_stdout="usage: ct compress-images",
+    )

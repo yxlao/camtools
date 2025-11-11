@@ -1,4 +1,5 @@
 import pytest
+from functools import lru_cache
 import open3d as o3d
 
 
@@ -8,10 +9,11 @@ def pytest_configure(config):
     )
 
 
-@pytest.fixture
-def has_o3d_display():
+@lru_cache(maxsize=None)
+def _check_o3d_display():
     """
-    Fixture to check if Open3D visualization display is available.
+    Check if Open3D visualization display is available.
+    This function is memoized to only run once per test session.
     """
     try:
         vis = o3d.visualization.Visualizer()
@@ -25,7 +27,16 @@ def has_o3d_display():
         return False
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
+def has_o3d_display():
+    """
+    Fixture to check if Open3D visualization display is available.
+    Uses the memoized _check_o3d_display function.
+    """
+    return _check_o3d_display()
+
+
+@pytest.fixture
 def skip_no_o3d_display(request, has_o3d_display):
     """
     Automatically skip tests marked with skip_no_o3d_display when Open3D visualization
