@@ -25,7 +25,7 @@ def has_o3d_display():
         return False
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def skip_no_o3d_display(request, has_o3d_display):
     """
     Automatically skip tests marked with skip_no_o3d_display when Open3D visualization
