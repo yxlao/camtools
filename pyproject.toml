@@ -17,6 +17,7 @@ dependencies = [
   "scikit-image>=0.16.2",
   "tqdm>=4.60.0",
   "jaxtyping>=0.2.12",
+  "rich>=13.0.0",
 ]
 description = "CamTools: Camera Tools for Computer Vision."
 license = {text = "MIT"}
