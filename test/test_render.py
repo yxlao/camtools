@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 
 @pytest.mark.skip_no_o3d_display
-def test_render_geometries(visualize: bool):
+def test_render_geometries(skip_no_o3d_display, visualize: bool):
     """
     Test rendering of 3D geometries (sphere and box) using Open3D.
 
