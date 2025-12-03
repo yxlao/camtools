@@ -100,8 +100,15 @@ class BBoxer:
         # Initialize current rendered images (initially same as originals).
         self.current_rendered_images = list(self.original_images)
 
-        # Register fig and axes.
-        self.fig, self.axes = plt.subplots(1, len(self.original_images))
+        # Register fig and axes with reasonable initial size.
+        # Scale width based on number of images, but cap it to avoid excessive size.
+        num_images = len(self.original_images)
+        base_width_per_image = 8  # inches per image
+        fig_width = min(base_width_per_image * num_images, 24)  # Cap at 24 inches
+        fig_height = 8  # Fixed reasonable height
+        self.fig, self.axes = plt.subplots(
+            1, num_images, figsize=(fig_width, fig_height)
+        )
         if len(self.original_images) == 1:
             self.axes = [self.axes]
 
