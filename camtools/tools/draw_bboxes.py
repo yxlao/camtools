@@ -37,6 +37,11 @@ class BBoxer:
         self.axis_to_selector = dict()
         self.button_increase = None
         self.button_decrease = None
+        self.button_square_mode = None
+        self.checkbox_square_mode = None
+
+        # Square mode state.
+        self.square_mode = False
 
     def add_paths(self, paths: List[Path]) -> None:
         """
@@ -94,9 +99,13 @@ class BBoxer:
         # Register other handlers.
         self.fig.canvas.mpl_connect("key_press_event", self._on_keypress)
         self.fig.canvas.mpl_connect("close_event", self._on_close)
+        self.fig.canvas.mpl_connect("motion_notify_event", self._on_mouse_motion)
 
         # Create interactive buttons for line width control.
         self._create_linewidth_buttons()
+
+        # Create square mode toggle button.
+        self._create_square_mode_button()
 
         plt.show()
 
@@ -411,6 +420,9 @@ class BBoxer:
         elif event.key == "escape":
             self._print_key(event.key)
             self._close()
+        elif event.key == "s":
+            self._print_key(event.key)
+            self._toggle_square_mode()
 
     def _close(self):
         """
@@ -424,6 +436,47 @@ class BBoxer:
         """
         print("Closing...")
         self._save()
+
+    def _on_mouse_motion(self, event):
+        """
+        Callback function for mouse motion events.
+        Used to enforce square aspect ratio during interactive resizing.
+        """
+        if not self.square_mode:
+            return
+
+        # Check if any selector is active (being dragged)
+        for axis, selector in self.axis_to_selector.items():
+            if selector.active and event.inaxes == axis:
+                # Get current extents
+                extents = selector.extents  # (x0, x1, y0, y1)
+                x0, x1, y0, y1 = extents
+
+                width = x1 - x0
+                height = y1 - y0
+                size = min(abs(width), abs(height))
+
+                if size < 1e-6:
+                    return
+
+                # Preserve top-left corner, adjust bottom-right to maintain square
+                new_x1 = x0 + size if width >= 0 else x0 - size
+                new_y1 = y0 + size if height >= 0 else y0 - size
+
+                # Update selector extents
+                try:
+                    selector.extents = (x0, new_x1, y0, new_y1)
+                except:
+                    pass
+
+                # Update current rectangle display
+                if self.current_rectangle is not None:
+                    self.current_rectangle.set_xy((x0, y0))
+                    self.current_rectangle.set_width(size)
+                    self.current_rectangle.set_height(size)
+                    self.fig.canvas.draw_idle()
+
+                break
 
     def _increase_linewidth(self, event):
         """
@@ -518,6 +571,111 @@ class BBoxer:
         self.button_decrease = Button(ax_decrease, "-")
         self.button_decrease.on_clicked(self._decrease_linewidth)
 
+    def _toggle_square_mode(self):
+        """
+        Toggle square mode on/off.
+        """
+        self.square_mode = not self.square_mode
+
+        # If toggling to square mode and there's a current rectangle, convert it to square.
+        if self.square_mode and self.current_rectangle is not None:
+            bbox = self.current_rectangle.get_bbox()
+            x0, y0 = bbox.x0, bbox.y0
+            x1, y1 = bbox.x1, bbox.y1
+
+            width = x1 - x0
+            height = y1 - y0
+            size = min(abs(width), abs(height))
+
+            # Center the square on the original rectangle
+            center_x = (x0 + x1) / 2
+            center_y = (y0 + y1) / 2
+
+            new_x0 = center_x - size / 2
+            new_y0 = center_y - size / 2
+            new_x1 = center_x + size / 2
+            new_y1 = center_y + size / 2
+
+            self.current_rectangle = plt.Rectangle(
+                (new_x0, new_y0),
+                size,
+                size,
+                linewidth=self.linewidth,
+                edgecolor=self.edgecolor,
+                facecolor="none",
+            )
+
+            # Synchronize the selector's extents with the new square rectangle
+            # Find the visible selector (the one that corresponds to current_rectangle)
+            for axis, selector in self.axis_to_selector.items():
+                if selector.get_visible():
+                    # Update selector extents to match the square rectangle
+                    # extents format: (x0, x1, y0, y1)
+                    try:
+                        selector.extents = (new_x0, new_x1, new_y0, new_y1)
+                        # Force the selector to update its display
+                        selector.update()
+                    except Exception as e:
+                        # If updating extents fails, log but continue
+                        # The rectangle will still be updated via _redraw()
+                        pass
+                    break
+
+            self._redraw()
+
+        # Update button label.
+        if self.button_square_mode is not None:
+            self.button_square_mode.label.set_text(
+                "Square: ON" if self.square_mode else "Square: OFF"
+            )
+            self.fig.canvas.draw_idle()
+
+        mode_str = "enabled" if self.square_mode else "disabled"
+        self._print_msg(f"Square mode {mode_str}")
+
+    def _on_square_mode_button_click(self, event):
+        """
+        Callback function for square mode toggle button.
+        """
+        sys.stdout.flush()
+        self._print_button("Square mode")
+        self._toggle_square_mode()
+
+    def _create_square_mode_button(self):
+        """
+        Create interactive button for toggling square mode.
+        """
+        # Calculate the end position of line width buttons.
+        # This matches the calculation in _create_linewidth_buttons.
+        label_width = 0.12
+        label_spacing = 0.02
+        linewidth_button_width = 0.08
+        linewidth_button_spacing = 0.02
+        num_linewidth_buttons = 2
+
+        total_linewidth_width = (
+            label_width
+            + label_spacing
+            + num_linewidth_buttons * linewidth_button_width
+            + (num_linewidth_buttons - 1) * linewidth_button_spacing
+        )
+        linewidth_start_x = 0.5 - total_linewidth_width / 2
+        linewidth_end_x = linewidth_start_x + total_linewidth_width
+
+        # Square mode button dimensions.
+        button_width = 0.16  # Made wider to fit "Square: ON/OFF" text
+        button_height = 0.04
+        button_y = 0.02
+
+        # Add padding between line width buttons and square button.
+        padding = 0.04
+        button_x = linewidth_end_x + padding
+
+        # Create square mode button.
+        ax_square = self.fig.add_axes([button_x, button_y, button_width, button_height])
+        self.button_square_mode = Button(ax_square, "Square: OFF")
+        self.button_square_mode.on_clicked(self._on_square_mode_button_click)
+
     def _register_rectangle_selector(self, axis):
         """
         Register "on selector" event handler for a given axis.
@@ -527,14 +685,44 @@ class BBoxer:
             x1, y1 = eclick.xdata, eclick.ydata
             x2, y2 = erelease.xdata, erelease.ydata
 
-            rectanglet = plt.Rectangle(
-                (min(x1, x2), min(y1, y2)),
-                np.abs(x1 - x2),
-                np.abs(y1 - y2),
-                linewidth=self.linewidth,
-                edgecolor=self.edgecolor,
-                facecolor="none",
-            )
+            # If square mode is enabled, enforce square aspect ratio.
+            if self.square_mode:
+                width = np.abs(x2 - x1)
+                height = np.abs(y2 - y1)
+                size = min(width, height)
+
+                # Determine center point based on which direction we're dragging
+                if x2 > x1:
+                    center_x = x1 + width / 2
+                else:
+                    center_x = x1 - width / 2
+
+                if y2 > y1:
+                    center_y = y1 + height / 2
+                else:
+                    center_y = y1 - height / 2
+
+                # Create square rectangle centered on the drag
+                x0 = center_x - size / 2
+                y0 = center_y - size / 2
+
+                rectanglet = plt.Rectangle(
+                    (x0, y0),
+                    size,
+                    size,
+                    linewidth=self.linewidth,
+                    edgecolor=self.edgecolor,
+                    facecolor="none",
+                )
+            else:
+                rectanglet = plt.Rectangle(
+                    (min(x1, x2), min(y1, y2)),
+                    np.abs(x1 - x2),
+                    np.abs(y1 - y2),
+                    linewidth=self.linewidth,
+                    edgecolor=self.edgecolor,
+                    facecolor="none",
+                )
 
             # Hide other selectors.
             current_axis = eclick.inaxes
@@ -569,6 +757,7 @@ class BBoxer:
         print("Backspace: Remove current bounding box.")
         print("+ or =   : Increase line width (or use + button).")
         print("- or _   : Decrease line width (or use - button).")
+        print("s        : Toggle square mode (or use Square button).")
 
 
 def instantiate_parser(parser):
