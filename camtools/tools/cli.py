@@ -24,17 +24,17 @@ def main():
         help="Select one of these commands.\n\n",
     )
 
-    # ct crop-boarders
+    # ct crop-borders
     sub_parser = sub_parsers.add_parser(
-        "crop-boarders",
-        help="Crop boarders of images.\n"
+        "crop-borders",
+        help="Crop borders of images.\n"
         "```\n"
-        "ct crop-boarders *.png --pad_pixel 10 --skip_cropped --same_crop\n"
+        "ct crop-borders *.png --pad_pixel 10 --skip_cropped --same_crop\n"
         "```",
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    sub_parser = ct.tools.crop_boarders.instantiate_parser(sub_parser)
-    sub_parser.set_defaults(func=ct.tools.crop_boarders.entry_point)
+    sub_parser = ct.tools.crop_borders.instantiate_parser(sub_parser)
+    sub_parser.set_defaults(func=ct.tools.crop_borders.entry_point)
 
     # ct draw-bboxes
     sub_parser = sub_parsers.add_parser(

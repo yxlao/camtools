@@ -4,7 +4,7 @@ Crop white borders of an image.
 Example usage:
 
 ```python
-ct crop-boarders *.png --pad_pixel 10 --skip_cropped --same_crop
+ct crop-borders *.png --pad_pixel 10 --skip_cropped --same_crop
 ```
 """
 
@@ -128,7 +128,7 @@ def entry_point(parser, args):
 
         individual_croppings = ct.util.mt_loop(ct.image.compute_cropping, src_ims)
 
-        # Compute the minimum cropping boarders.
+        # Compute the minimum cropping borders.
         min_crop_u, min_crop_d, min_crop_l, min_crop_r = individual_croppings[0]
         for crop_u, crop_d, crop_l, crop_r in individual_croppings[1:]:
             min_crop_u = min(min_crop_u, crop_u)
@@ -145,7 +145,7 @@ def entry_point(parser, args):
             padding = int(max(h, w) * args.pad_ratio)
         paddings = [(padding, padding, padding, padding)] * len(src_ims)
     else:
-        # Compute cropping boarders.
+        # Compute cropping borders.
         croppings = ct.util.mt_loop(ct.image.compute_cropping, src_ims)
 
         # Compute paddings.

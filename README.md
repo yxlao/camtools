@@ -98,8 +98,8 @@ clear and easy-to-use APIs.
 5. Command-line tools `ct` (runs in terminal).
 
    ```bash
-   # Crop image boarders.
-   ct crop-boarders *.png --pad_pixel 10 --skip_cropped --same_crop
+   # Crop image borders.
+   ct crop-borders *.png --pad_pixel 10 --skip_cropped --same_crop
 
    # Draw synchronized bounding boxes interactively.
    ct draw-bboxes path/to/a.png path/to/b.png
