@@ -1,5 +1,6 @@
 import io
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Tuple
 
@@ -13,15 +14,65 @@ import camtools as ct
 import argparse
 
 
+@dataclass
+class BBoxerConfig:
+    """Configuration constants for BBoxer."""
+
+    # Drawing properties
+    default_linewidth: int = 1
+    default_edgecolor: str = "red"
+
+    # Mode defaults
+    default_square_mode: bool = True
+    default_enlarged_view_mode: bool = True
+
+    # Enlarged view settings
+    enlarged_view_scale_ratio: float = 0.75  # Fraction of shorter side (3/4)
+    enlarged_view_min_ratio: float = 0.1  # Minimum size as fraction of max (10%)
+    enlarged_view_step_ratio: float = 0.1  # Size adjustment step as fraction (10%)
+    enlarged_view_margin: int = 10  # Pixels from edge when placing enlarged view
+
+    # Dashed line settings
+    dash_length: int = 10  # Length of each dash in pixels
+
+    # Figure layout settings
+    base_width_per_image: int = 8  # Inches per image
+    max_fig_width: int = 24  # Maximum figure width in inches
+    fig_height: int = 8  # Figure height in inches
+
+    # Rectangle selector settings
+    min_span_pixels: int = 5  # Minimum span for rectangle selector
+
+    # Button layout settings
+    button_height: float = 0.04
+    button_small_width: float = 0.05  # For +/- buttons
+    button_medium_width: float = 0.15  # For toggle buttons
+    button_font_size: int = 8
+    button_spacing: float = 0.01
+    button_row1_y: float = 0.08  # Top row Y position
+    button_row2_y: float = 0.02  # Bottom row Y position
+    button_label_font_size: int = 9  # Font size for labels like "Line:" and "Zoom:"
+
+    # Layout adjustments
+    bottom_margin: float = 0.15  # Space reserved for buttons at bottom
+
+
 class BBoxer:
     """
     Draw bounding boxes on images.
     """
 
-    def __init__(self, linewidth=1, edgecolor="red"):
+    def __init__(self, linewidth=None, edgecolor=None, config=None):
+        # Configuration.
+        self.config = config if config is not None else BBoxerConfig()
+
         # Draw properties.
-        self.linewidth = linewidth
-        self.edgecolor = edgecolor
+        self.linewidth = (
+            linewidth if linewidth is not None else self.config.default_linewidth
+        )
+        self.edgecolor = (
+            edgecolor if edgecolor is not None else self.config.default_edgecolor
+        )
 
         # Input image paths.
         self.src_paths: List[Path] = []
@@ -49,8 +100,8 @@ class BBoxer:
         self.button_enlarged_size_decrease = None
 
         # Mode states.
-        self.square_mode = True  # On by default
-        self.enlarged_view_mode = True  # On by default
+        self.square_mode = self.config.default_square_mode
+        self.enlarged_view_mode = self.config.default_enlarged_view_mode
         self.enlarged_view_scale = None  # Will be set based on image size
 
     def add_paths(self, paths: List[Path]) -> None:
@@ -91,10 +142,12 @@ class BBoxer:
                     f"{im_src.shape} != {self.original_images[0].shape}"
                 )
 
-        # Set default enlarged view scale: 2/3 of shorter side.
+        # Set default enlarged view scale based on config ratio.
         im_h, im_w = self.original_images[0].shape[:2]
         shorter_side = min(im_h, im_w)
-        self.enlarged_view_scale = int(shorter_side * 2 / 3)
+        self.enlarged_view_scale = int(
+            shorter_side * self.config.enlarged_view_scale_ratio
+        )
         self.enlarged_view_scale_max = shorter_side
 
         # Initialize current rendered images (initially same as originals).
@@ -103,11 +156,11 @@ class BBoxer:
         # Register fig and axes with reasonable initial size.
         # Scale width based on number of images, but cap it to avoid excessive size.
         num_images = len(self.original_images)
-        base_width_per_image = 8  # inches per image
-        fig_width = min(base_width_per_image * num_images, 24)  # Cap at 24 inches
-        fig_height = 8  # Fixed reasonable height
+        fig_width = min(
+            self.config.base_width_per_image * num_images, self.config.max_fig_width
+        )
         self.fig, self.axes = plt.subplots(
-            1, num_images, figsize=(fig_width, fig_height)
+            1, num_images, figsize=(fig_width, self.config.fig_height)
         )
         if len(self.original_images) == 1:
             self.axes = [self.axes]
@@ -243,14 +296,14 @@ class BBoxer:
 
         return im_dst
 
-    @staticmethod
     def _overlay_rectangle_on_image_dashed(
+        self,
         im: np.ndarray,
         tl_xy: Tuple[int, int],
         br_xy: Tuple[int, int],
         linewidth_px: int,
         edgecolor: str,
-        dash_length: int = 10,
+        dash_length: int = None,
     ) -> np.ndarray:
         """
         Draw dashed rectangular bounding box on image using OpenCV.
@@ -263,6 +316,9 @@ class BBoxer:
             edgecolor: Color of bounding box line.
             dash_length: Length of each dash in pixels.
         """
+        if dash_length is None:
+            dash_length = self.config.dash_length
+
         if im.dtype != np.float32:
             raise ValueError(f"Invalid image dtype {im.dtype}.")
 
@@ -372,7 +428,7 @@ class BBoxer:
         in_top = center_y < h / 2
 
         # Place enlarged view in opposite quadrant (at corner)
-        margin = 10  # pixels from edge
+        margin = self.config.enlarged_view_margin
 
         if in_left and in_top:
             # Selected area is top-left → place enlarged view in bottom-right
@@ -448,7 +504,7 @@ class BBoxer:
 
                 if self.enlarged_view_mode:
                     # Draw dashed lines for the selected area (area being zoomed).
-                    im_rendered = BBoxer._overlay_rectangle_on_image_dashed(
+                    im_rendered = self._overlay_rectangle_on_image_dashed(
                         im=im_original,
                         tl_xy=tl_xy,
                         br_xy=br_xy,
@@ -673,7 +729,7 @@ class BBoxer:
         """
         sys.stdout.flush()
         self._print_button("Enlarged +")
-        step = int(self.enlarged_view_scale_max / 10)  # 10% increments
+        step = int(self.enlarged_view_scale_max * self.config.enlarged_view_step_ratio)
         if self.enlarged_view_scale < self.enlarged_view_scale_max:
             self.enlarged_view_scale = min(
                 self.enlarged_view_scale + step, self.enlarged_view_scale_max
@@ -695,8 +751,10 @@ class BBoxer:
         """
         sys.stdout.flush()
         self._print_button("Enlarged -")
-        step = int(self.enlarged_view_scale_max / 10)  # 10% increments
-        min_size = int(self.enlarged_view_scale_max / 10)  # Min 10% of max
+        step = int(self.enlarged_view_scale_max * self.config.enlarged_view_step_ratio)
+        min_size = int(
+            self.enlarged_view_scale_max * self.config.enlarged_view_min_ratio
+        )
         if self.enlarged_view_scale > min_size:
             self.enlarged_view_scale = max(self.enlarged_view_scale - step, min_size)
             self._print_msg(
@@ -715,16 +773,16 @@ class BBoxer:
         Create all interactive buttons in a clean layout.
         """
         # Adjust layout to make room for buttons at the bottom.
-        self.fig.subplots_adjust(bottom=0.15)
+        self.fig.subplots_adjust(bottom=self.config.bottom_margin)
 
-        # Button dimensions.
-        btn_h = 0.04
-        btn_small = 0.05  # For +/- buttons
-        btn_medium = 0.15  # For toggle buttons - increased to fit text better
-        btn_font_size = 8  # Font size for button labels
-        spacing = 0.01
-        y_row1 = 0.08  # Top row
-        y_row2 = 0.02  # Bottom row
+        # Button dimensions from config.
+        btn_h = self.config.button_height
+        btn_small = self.config.button_small_width
+        btn_medium = self.config.button_medium_width
+        btn_font_size = self.config.button_font_size
+        spacing = self.config.button_spacing
+        y_row1 = self.config.button_row1_y
+        y_row2 = self.config.button_row2_y
 
         # Calculate total width and center all buttons.
         # Row 1: Line width label + +/- + spacing + Enlarged size label + +/-
@@ -750,7 +808,7 @@ class BBoxer:
             ha="center",
             va="center",
             transform=ax_lw_label.transAxes,
-            fontsize=9,
+            fontsize=self.config.button_label_font_size,
         )
         ax_lw_label.set_axis_off()
         x += 0.08 + spacing
@@ -778,7 +836,7 @@ class BBoxer:
             ha="center",
             va="center",
             transform=ax_es_label.transAxes,
-            fontsize=9,
+            fontsize=self.config.button_label_font_size,
         )
         ax_es_label.set_axis_off()
         x += 0.10 + spacing
@@ -951,8 +1009,8 @@ class BBoxer:
             on_selector,
             useblit=False,
             button=[1],
-            minspanx=5,
-            minspany=5,
+            minspanx=self.config.min_span_pixels,
+            minspany=self.config.min_span_pixels,
             spancoords="pixels",
             interactive=True,
         )
