@@ -26,19 +26,20 @@ class BBoxer:
         # Input image paths.
         self.src_paths: List[Path] = []
 
-        # Bounding boxes.
-        self.current_rectangle = None  # Only one copy of this.
-        self.confirmed_rectangles = []  # Only one copy of this.
-        self.axes_owned_rectangles = []  # MRectangles are duplicated in axes.
+        # Original images (never modified).
+        self.original_images = []
+
+        # Bounding box - only one at a time.
+        self.current_bbox = None  # Tuple: (x0, y0, x1, y1) or None
 
         # Matplotlib objects.
         self.fig = None
         self.axes = []
+        self.axis_images = []  # Store image objects for updating
         self.axis_to_selector = dict()
         self.button_increase = None
         self.button_decrease = None
         self.button_square_mode = None
-        self.checkbox_square_mode = None
 
         # Square mode state.
         self.square_mode = False
@@ -59,35 +60,37 @@ class BBoxer:
             1. Load images. Images must have the same dimensions and 3 channels.
             2. Display images simultaneously, side-by-side.
             3. Interactively draw bounding boxes on images.
-            4. Save images with bounding boxes to disk (with hard-coded paths).
+            4. Press Enter to save and quit.
         """
         BBoxer._print_help_message()
 
         if len(self.src_paths) == 0:
             raise ValueError("No input images.")
 
-        # Load.
-        im_srcs = []
+        # Load and store original images.
         for src_path in self.src_paths:
             im_src = ct.io.imread(src_path)
             if im_src.ndim != 3 or im_src.shape[2] != 3:
                 raise ValueError(f"Invalid image shape {im_src.shape}.")
-            im_srcs.append(im_src)
+            self.original_images.append(im_src)
 
         # Check all images are of the same shape.
-        for im_src in im_srcs:
-            if im_src.shape != im_srcs[0].shape:
+        for im_src in self.original_images:
+            if im_src.shape != self.original_images[0].shape:
                 raise ValueError(
                     "Images must have the same shape "
-                    f"{im_src.shape} != {im_srcs[0].shape}"
+                    f"{im_src.shape} != {self.original_images[0].shape}"
                 )
 
         # Register fig and axes.
-        self.fig, self.axes = plt.subplots(1, len(im_srcs))
-        if len(im_srcs) == 1:
+        self.fig, self.axes = plt.subplots(1, len(self.original_images))
+        if len(self.original_images) == 1:
             self.axes = [self.axes]
-        for i, (axis, im_src) in enumerate(zip(self.axes, im_srcs)):
-            axis.imshow(im_src)
+
+        # Display images and store image objects for later updates.
+        for i, (axis, im_src) in enumerate(zip(self.axes, self.original_images)):
+            img_obj = axis.imshow(im_src)
+            self.axis_images.append(img_obj)
             axis.set_title(self.src_paths[i].name)
             axis.set_axis_off()
         plt.tight_layout()
@@ -108,34 +111,6 @@ class BBoxer:
         self._create_square_mode_button()
 
         plt.show()
-
-    @staticmethod
-    def _bbox_str(bbox: matplotlib.transforms.Bbox) -> str:
-        """
-        A better matplotlib.transforms.Bbox.__str__()`
-        """
-        return f"Bbox({bbox.x0:.2f}, {bbox.y0:.2f}, {bbox.x1:.2f}, {bbox.y1:.2f})"
-
-    @staticmethod
-    def _copy_rectangle(
-        rectangle: matplotlib.patches.Rectangle,
-        linestyle: str = None,
-        linewidth: int = None,
-        edgecolor=None,
-    ) -> matplotlib.patches.Rectangle:
-        """
-        Copy rectangle with new properties.
-        """
-        new_rectangle = matplotlib.patches.Rectangle(
-            xy=(rectangle.xy[0], rectangle.xy[1]),
-            width=rectangle.get_width(),
-            height=rectangle.get_height(),
-            linestyle=linestyle if linestyle is not None else rectangle.get_linestyle(),
-            linewidth=linewidth if linewidth is not None else rectangle.get_linewidth(),
-            edgecolor=edgecolor if edgecolor is not None else rectangle.get_edgecolor(),
-            facecolor=rectangle.get_facecolor(),
-        )
-        return new_rectangle
 
     @staticmethod
     def _overlay_rectangle_on_image(
@@ -248,82 +223,77 @@ class BBoxer:
 
     def _redraw(self):
         """
-        Triggers redraw of all axis and rectangles.
+        Redraw all images with the current bounding box using OpenCV rendering.
+        This shows the exact final output that will be saved.
         """
-        # Clear all visible rectangles.
-        for rectangle in self.axes_owned_rectangles:
-            rectangle.remove()
-        self.axes_owned_rectangles.clear()
-
-        # Draw confirmed rectangles.
-        for rectangle in self.confirmed_rectangles:
-            for axis in self.axes:
-                rectangle_ = axis.add_patch(
-                    BBoxer._copy_rectangle(
-                        rectangle,
-                        linestyle="-",
-                        linewidth=self.linewidth,
-                        edgecolor=self.edgecolor,
-                    )
-                )
-                self.axes_owned_rectangles.append(rectangle_)
-
-        # Draw current rectangle.
-        if self.current_rectangle is not None:
-            for axis in self.axes:
-                rectangle_ = axis.add_patch(
-                    BBoxer._copy_rectangle(
-                        self.current_rectangle,
-                        linestyle="--",
-                        linewidth=self.linewidth,
-                        edgecolor=self.edgecolor,
-                    )
-                )
-                self.axes_owned_rectangles.append(rectangle_)
-
-        # Ask matplotlib to redraw the current figure.
-        # No need to call self.fig.canvas.flush_events().
-        self.fig.canvas.draw()
-
-    def _save(self) -> None:
-        """
-        Save images with bounding boxes to disk. This function is called by the
-        matplotlib event handler when the figure is closed.
-
-        If self.confirmed_rectangles is empty, then no image will be saved.
-        """
-        if len(self.confirmed_rectangles) == 0:
-            print("Make sure to press Enter to confirm bounding boxes.")
-            print("No bounding box to save. Exiting.")
-            return
-
-        # Get the axis image shape in pixels.
-        im_shape = self.axes[0].get_images()[0].get_array().shape
-        im_height = im_shape[0]
-
+        # Get linewidth in pixels for the actual image.
+        im_height = self.original_images[0].shape[0]
         axis = self.axes[0]
         bbox = axis.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
         axis_height = bbox.height * self.fig.dpi
-
-        # Get the linewidth in pixels.
         linewidth_px = self.linewidth * self.fig.dpi / 72.0
         linewidth_px = linewidth_px / axis_height * im_height
         linewidth_px = int(round(linewidth_px))
 
-        dst_paths = [p.parent / f"bbox_{p.stem}{p.suffix}" for p in self.src_paths]
-        for src_path, dst_path in zip(self.src_paths, dst_paths):
-            im_dst = ct.io.imread(src_path)
-            for rectangle in self.confirmed_rectangles:
-                bbox = rectangle.get_bbox()
-                tl_xy = (int(round(bbox.x0)), int(round(bbox.y0)))
-                br_xy = (int(round(bbox.x1)), int(round(bbox.y1)))
-                im_dst = BBoxer._overlay_rectangle_on_image(
-                    im=im_dst,
+        # Render each image with the bounding box (if any).
+        for i, (img_obj, im_original) in enumerate(
+            zip(self.axis_images, self.original_images)
+        ):
+            if self.current_bbox is None:
+                # No bbox - show original image.
+                im_display = im_original
+            else:
+                # Draw bbox on image using OpenCV.
+                x0, y0, x1, y1 = self.current_bbox
+                tl_xy = (int(round(x0)), int(round(y0)))
+                br_xy = (int(round(x1)), int(round(y1)))
+                im_display = BBoxer._overlay_rectangle_on_image(
+                    im=im_original,
                     tl_xy=tl_xy,
                     br_xy=br_xy,
                     linewidth_px=linewidth_px,
                     edgecolor=self.edgecolor,
                 )
+
+            # Update the displayed image.
+            img_obj.set_data(im_display)
+
+        # Redraw the canvas.
+        self.fig.canvas.draw()
+
+    def _save(self) -> None:
+        """
+        Save images with bounding box to disk.
+
+        If no bounding box is defined, no image will be saved.
+        """
+        if self.current_bbox is None:
+            print("No bounding box to save. Exiting.")
+            return
+
+        # Get linewidth in pixels.
+        im_height = self.original_images[0].shape[0]
+        axis = self.axes[0]
+        bbox = axis.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
+        axis_height = bbox.height * self.fig.dpi
+        linewidth_px = self.linewidth * self.fig.dpi / 72.0
+        linewidth_px = linewidth_px / axis_height * im_height
+        linewidth_px = int(round(linewidth_px))
+
+        # Save each image with the bounding box.
+        dst_paths = [p.parent / f"bbox_{p.stem}{p.suffix}" for p in self.src_paths]
+        x0, y0, x1, y1 = self.current_bbox
+        tl_xy = (int(round(x0)), int(round(y0)))
+        br_xy = (int(round(x1)), int(round(y1)))
+
+        for im_original, dst_path in zip(self.original_images, dst_paths):
+            im_dst = BBoxer._overlay_rectangle_on_image(
+                im=im_original,
+                tl_xy=tl_xy,
+                br_xy=br_xy,
+                linewidth_px=linewidth_px,
+                edgecolor=self.edgecolor,
+            )
             ct.io.imwrite(dst_path, im_dst)
             print(f"Saved {dst_path}")
 
@@ -363,47 +333,27 @@ class BBoxer:
 
         if event.key == "enter":
             self._print_key(event.key)
-            if self.current_rectangle is None:
-                self._print_msg("No new bounding boxes selected.")
+            if self.current_bbox is None:
+                self._print_msg("No bounding box to save.")
             else:
-                current_bbox = self.current_rectangle.get_bbox()
-                bbox_exists = False
-                for bbox in self.confirmed_rectangles:
-                    if current_bbox == bbox.get_bbox():
-                        bbox_exists = True
-                        break
-                if bbox_exists:
-                    self._print_msg("Bounding box already exists. Not saving.")
-                else:
-                    # Save to confirmed.
-                    self.confirmed_rectangles.append(
-                        BBoxer._copy_rectangle(self.current_rectangle)
-                    )
-                    bbox_str = BBoxer._bbox_str(self.current_rectangle.get_bbox())
-                    self._print_msg(f"Bounding box saved: {bbox_str}.")
-                    # Clear current.
-                    self.current_rectangle = None
-                    # Hide all rectangle selectors.
-                    for axis in self.axes:
-                        self.axis_to_selector[axis].set_visible(False)
-            self._redraw()
+                # Save and quit.
+                x0, y0, x1, y1 = self.current_bbox
+                bbox_str = f"Bbox({x0:.2f}, {y0:.2f}, {x1:.2f}, {y1:.2f})"
+                self._print_msg(f"Saving bounding box: {bbox_str}.")
+                self._close()
         elif event.key == "backspace":
             self._print_key(event.key)
-            if self.current_rectangle is not None:
-                bbox_str = BBoxer._bbox_str(self.current_rectangle.get_bbox())
-                self.current_rectangle = None
+            if self.current_bbox is not None:
+                x0, y0, x1, y1 = self.current_bbox
+                bbox_str = f"Bbox({x0:.2f}, {y0:.2f}, {x1:.2f}, {y1:.2f})"
+                self.current_bbox = None
                 # Hide all rectangle selectors.
                 for axis in self.axes:
                     self.axis_to_selector[axis].set_visible(False)
-                self._print_msg(f"Current bounding box removed: {bbox_str},")
+                self._print_msg(f"Bounding box removed: {bbox_str}")
+                self._redraw()
             else:
-                if len(self.confirmed_rectangles) > 0:
-                    last_rectangle = self.confirmed_rectangles.pop()
-                    bbox_str = BBoxer._bbox_str(last_rectangle.get_bbox())
-                    self._print_msg(f"Last bounding box removed: {bbox_str}")
-                else:
-                    self._print_msg("No bounding box to remove.")
-            self._redraw()
+                self._print_msg("No bounding box to remove.")
         elif event.key == "+" or event.key == "=":
             self._print_key(event.key)
             self.linewidth += 1
@@ -468,13 +418,6 @@ class BBoxer:
                     selector.extents = (x0, new_x1, y0, new_y1)
                 except:
                     pass
-
-                # Update current rectangle display
-                if self.current_rectangle is not None:
-                    self.current_rectangle.set_xy((x0, y0))
-                    self.current_rectangle.set_width(size)
-                    self.current_rectangle.set_height(size)
-                    self.fig.canvas.draw_idle()
 
                 break
 
@@ -577,17 +520,15 @@ class BBoxer:
         """
         self.square_mode = not self.square_mode
 
-        # If toggling to square mode and there's a current rectangle, convert it to square.
-        if self.square_mode and self.current_rectangle is not None:
-            bbox = self.current_rectangle.get_bbox()
-            x0, y0 = bbox.x0, bbox.y0
-            x1, y1 = bbox.x1, bbox.y1
+        # If toggling to square mode and there's a current bbox, convert it to square.
+        if self.square_mode and self.current_bbox is not None:
+            x0, y0, x1, y1 = self.current_bbox
 
             width = x1 - x0
             height = y1 - y0
             size = min(abs(width), abs(height))
 
-            # Center the square on the original rectangle
+            # Center the square on the original bbox
             center_x = (x0 + x1) / 2
             center_y = (y0 + y1) / 2
 
@@ -596,28 +537,15 @@ class BBoxer:
             new_x1 = center_x + size / 2
             new_y1 = center_y + size / 2
 
-            self.current_rectangle = plt.Rectangle(
-                (new_x0, new_y0),
-                size,
-                size,
-                linewidth=self.linewidth,
-                edgecolor=self.edgecolor,
-                facecolor="none",
-            )
+            self.current_bbox = (new_x0, new_y0, new_x1, new_y1)
 
-            # Synchronize the selector's extents with the new square rectangle
-            # Find the visible selector (the one that corresponds to current_rectangle)
+            # Synchronize the selector's extents with the new square bbox
             for axis, selector in self.axis_to_selector.items():
                 if selector.get_visible():
-                    # Update selector extents to match the square rectangle
-                    # extents format: (x0, x1, y0, y1)
                     try:
                         selector.extents = (new_x0, new_x1, new_y0, new_y1)
-                        # Force the selector to update its display
                         selector.update()
-                    except Exception as e:
-                        # If updating extents fails, log but continue
-                        # The rectangle will still be updated via _redraw()
+                    except:
                         pass
                     break
 
@@ -702,27 +630,21 @@ class BBoxer:
                 else:
                     center_y = y1 - height / 2
 
-                # Create square rectangle centered on the drag
+                # Create square bbox centered on the drag
                 x0 = center_x - size / 2
                 y0 = center_y - size / 2
+                x1_new = center_x + size / 2
+                y1_new = center_y + size / 2
 
-                rectanglet = plt.Rectangle(
-                    (x0, y0),
-                    size,
-                    size,
-                    linewidth=self.linewidth,
-                    edgecolor=self.edgecolor,
-                    facecolor="none",
-                )
+                self.current_bbox = (x0, y0, x1_new, y1_new)
             else:
-                rectanglet = plt.Rectangle(
-                    (min(x1, x2), min(y1, y2)),
-                    np.abs(x1 - x2),
-                    np.abs(y1 - y2),
-                    linewidth=self.linewidth,
-                    edgecolor=self.edgecolor,
-                    facecolor="none",
-                )
+                # Create bbox from drag coordinates
+                x0 = min(x1, x2)
+                y0 = min(y1, y2)
+                x1_new = max(x1, x2)
+                y1_new = max(y1, y2)
+
+                self.current_bbox = (x0, y0, x1_new, y1_new)
 
             # Hide other selectors.
             current_axis = eclick.inaxes
@@ -730,10 +652,7 @@ class BBoxer:
                 if axis != current_axis:
                     self.axis_to_selector[axis].set_visible(False)
 
-            # Set current rectangle.
-            self.current_rectangle = rectanglet
-
-            # Draw current rectangle and confirmed rectangles.
+            # Redraw with the new bbox using OpenCV rendering.
             self._redraw()
 
         # If not saved, the selector will go out-of-scope.
@@ -753,11 +672,13 @@ class BBoxer:
         """
         Print help messages of keyboard callbacks.
         """
-        print("Enter    : Save current bounding box.")
+        print("Drag     : Draw bounding box (releases mouse to see final result).")
+        print("Enter    : Save bounding box and quit.")
         print("Backspace: Remove current bounding box.")
         print("+ or =   : Increase line width (or use + button).")
         print("- or _   : Decrease line width (or use - button).")
         print("s        : Toggle square mode (or use Square button).")
+        print("Escape   : Quit without saving.")
 
 
 def instantiate_parser(parser):
