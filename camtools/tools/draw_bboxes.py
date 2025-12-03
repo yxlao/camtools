@@ -1,7 +1,7 @@
 import io
 import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import cv2
 import matplotlib
@@ -29,6 +29,10 @@ class BBoxer:
         # Original images (never modified).
         self.original_images = []
 
+        # Current rendered images (with bbox/enlarged view drawn).
+        # These are the exact images shown in preview and saved to disk.
+        self.current_rendered_images = []
+
         # Bounding box - only one at a time.
         self.current_bbox = None  # Tuple: (x0, y0, x1, y1) or None
 
@@ -37,14 +41,17 @@ class BBoxer:
         self.axes = []
         self.axis_images = []  # Store image objects for updating
         self.axis_to_selector = dict()
-        self.button_increase = None
-        self.button_decrease = None
+        self.button_linewidth_increase = None
+        self.button_linewidth_decrease = None
         self.button_square_mode = None
         self.button_enlarged_view = None
+        self.button_enlarged_size_increase = None
+        self.button_enlarged_size_decrease = None
 
         # Mode states.
         self.square_mode = True  # On by default
         self.enlarged_view_mode = True  # On by default
+        self.enlarged_view_scale = None  # Will be set based on image size
 
     def add_paths(self, paths: List[Path]) -> None:
         """
@@ -84,6 +91,15 @@ class BBoxer:
                     f"{im_src.shape} != {self.original_images[0].shape}"
                 )
 
+        # Set default enlarged view scale: 2/3 of shorter side.
+        im_h, im_w = self.original_images[0].shape[:2]
+        shorter_side = min(im_h, im_w)
+        self.enlarged_view_scale = int(shorter_side * 2 / 3)
+        self.enlarged_view_scale_max = shorter_side
+
+        # Initialize current rendered images (initially same as originals).
+        self.current_rendered_images = list(self.original_images)
+
         # Register fig and axes.
         self.fig, self.axes = plt.subplots(1, len(self.original_images))
         if len(self.original_images) == 1:
@@ -106,14 +122,8 @@ class BBoxer:
         self.fig.canvas.mpl_connect("close_event", self._on_close)
         self.fig.canvas.mpl_connect("motion_notify_event", self._on_mouse_motion)
 
-        # Create interactive buttons for line width control.
-        self._create_linewidth_buttons()
-
-        # Create square mode toggle button.
-        self._create_square_mode_button()
-
-        # Create enlarged view toggle button.
-        self._create_enlarged_view_button()
+        # Create all interactive buttons.
+        self._create_buttons()
 
         plt.show()
 
@@ -330,10 +340,15 @@ class BBoxer:
         cropped = im[crop_y0:crop_y1, crop_x0:crop_x1].copy()
         crop_h, crop_w = cropped.shape[:2]
 
-        # Enlarge by 2x (or fit to a reasonable size)
-        scale = 2.0
-        enlarged_w = int(crop_w * scale)
-        enlarged_h = int(crop_h * scale)
+        # Resize to target size based on self.enlarged_view_scale.
+        # The enlarged view's shorter side should match enlarged_view_scale.
+        crop_shorter = min(crop_h, crop_w)
+        if crop_shorter == 0:
+            return im
+
+        scale_factor = self.enlarged_view_scale / float(crop_shorter)
+        enlarged_w = int(crop_w * scale_factor)
+        enlarged_h = int(crop_h * scale_factor)
 
         # Resize the cropped area
         enlarged = cv2.resize(
@@ -391,17 +406,17 @@ class BBoxer:
 
         return im_result
 
-    def _redraw(self):
+    def _generate_current_images(self):
         """
-        Redraw all images with the current bounding box using OpenCV rendering.
-        This shows the exact final output that will be saved.
+        Generate the current rendered images based on the current bbox and settings.
+        This is the single source of truth for how images are rendered.
 
-        If enlarged view mode is on, also show an enlarged view of the selected area
-        in the opposite quadrant.
+        The generated images are stored in self.current_rendered_images and are:
+        1. Displayed in the preview
+        2. Saved to disk (exact same images)
         """
         # Get linewidth in pixels for the actual image.
         im_height = self.original_images[0].shape[0]
-        im_width = self.original_images[0].shape[1]
         axis = self.axes[0]
         bbox = axis.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
         axis_height = bbox.height * self.fig.dpi
@@ -409,13 +424,14 @@ class BBoxer:
         linewidth_px = linewidth_px / axis_height * im_height
         linewidth_px = int(round(linewidth_px))
 
+        # Clear previous rendered images.
+        self.current_rendered_images = []
+
         # Render each image with the bounding box (if any).
-        for i, (img_obj, im_original) in enumerate(
-            zip(self.axis_images, self.original_images)
-        ):
+        for im_original in self.original_images:
             if self.current_bbox is None:
                 # No bbox - show original image.
-                im_display = im_original
+                im_rendered = im_original
             else:
                 x0, y0, x1, y1 = self.current_bbox
                 tl_xy = (int(round(x0)), int(round(y0)))
@@ -423,7 +439,7 @@ class BBoxer:
 
                 if self.enlarged_view_mode:
                     # Draw dashed lines for the selected area (area being zoomed).
-                    im_display = BBoxer._overlay_rectangle_on_image_dashed(
+                    im_rendered = BBoxer._overlay_rectangle_on_image_dashed(
                         im=im_original,
                         tl_xy=tl_xy,
                         br_xy=br_xy,
@@ -432,12 +448,12 @@ class BBoxer:
                     )
 
                     # Create enlarged view and place in opposite quadrant.
-                    im_display = self._add_enlarged_view(
-                        im_display, tl_xy, br_xy, linewidth_px
+                    im_rendered = self._add_enlarged_view(
+                        im_rendered, tl_xy, br_xy, linewidth_px
                     )
                 else:
                     # Draw solid lines (final output mode).
-                    im_display = BBoxer._overlay_rectangle_on_image(
+                    im_rendered = BBoxer._overlay_rectangle_on_image(
                         im=im_original,
                         tl_xy=tl_xy,
                         br_xy=br_xy,
@@ -445,46 +461,43 @@ class BBoxer:
                         edgecolor=self.edgecolor,
                     )
 
-            # Update the displayed image.
-            img_obj.set_data(im_display)
+            self.current_rendered_images.append(im_rendered)
+
+    def _redraw(self):
+        """
+        Redraw all images by generating current images and displaying them.
+        The displayed images are exactly what will be saved.
+        """
+        # Generate the current rendered images (single source of truth).
+        self._generate_current_images()
+
+        # Update the displayed images.
+        for img_obj, im_rendered in zip(self.axis_images, self.current_rendered_images):
+            img_obj.set_data(im_rendered)
 
         # Redraw the canvas.
         self.fig.canvas.draw()
 
     def _save(self) -> None:
         """
-        Save images with bounding box to disk.
+        Save the current rendered images to disk.
 
-        If no bounding box is defined, no image will be saved.
+        The saved images are exactly what's shown in the preview (WYSIWYG).
+        No re-rendering is done here - we just save the pre-rendered images.
         """
         if self.current_bbox is None:
             print("No bounding box to save. Exiting.")
             return
 
-        # Get linewidth in pixels.
-        im_height = self.original_images[0].shape[0]
-        axis = self.axes[0]
-        bbox = axis.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
-        axis_height = bbox.height * self.fig.dpi
-        linewidth_px = self.linewidth * self.fig.dpi / 72.0
-        linewidth_px = linewidth_px / axis_height * im_height
-        linewidth_px = int(round(linewidth_px))
+        if not self.current_rendered_images:
+            print("No rendered images to save. Exiting.")
+            return
 
-        # Save each image with the bounding box.
+        # Save each rendered image.
         dst_paths = [p.parent / f"bbox_{p.stem}{p.suffix}" for p in self.src_paths]
-        x0, y0, x1, y1 = self.current_bbox
-        tl_xy = (int(round(x0)), int(round(y0)))
-        br_xy = (int(round(x1)), int(round(y1)))
 
-        for im_original, dst_path in zip(self.original_images, dst_paths):
-            im_dst = BBoxer._overlay_rectangle_on_image(
-                im=im_original,
-                tl_xy=tl_xy,
-                br_xy=br_xy,
-                linewidth_px=linewidth_px,
-                edgecolor=self.edgecolor,
-            )
-            ct.io.imwrite(dst_path, im_dst)
+        for im_rendered, dst_path in zip(self.current_rendered_images, dst_paths):
+            ct.io.imwrite(dst_path, im_rendered)
             print(f"Saved {dst_path}")
 
     def _print_key(self, key):
@@ -644,68 +657,143 @@ class BBoxer:
             )
         self._redraw()
 
-    def _create_linewidth_buttons(self):
+    def _increase_enlarged_size(self, event):
         """
-        Create interactive buttons for increasing and decreasing line width.
+        Callback function for increase enlarged view size button.
         """
-        # Position buttons at the bottom of the figure.
-        # Adjust layout to make room for buttons.
-        self.fig.subplots_adjust(bottom=0.1)
+        sys.stdout.flush()
+        self._print_button("Enlarged +")
+        step = int(self.enlarged_view_scale_max / 10)  # 10% increments
+        if self.enlarged_view_scale < self.enlarged_view_scale_max:
+            self.enlarged_view_scale = min(
+                self.enlarged_view_scale + step, self.enlarged_view_scale_max
+            )
+            self._print_msg(
+                f"Enlarged view size increased to: {self.enlarged_view_scale}px",
+                prefix="[ButtonPress] ",
+            )
+            self._redraw()
+        else:
+            self._print_msg(
+                f"Enlarged view size already at maximum: {self.enlarged_view_scale}px",
+                prefix="[ButtonPress] ",
+            )
 
-        # Button dimensions and positions (in figure coordinates).
-        button_width = 0.08
-        button_height = 0.04
-        button_y = 0.02
-        button_spacing = 0.02
-        label_width = 0.12
-        label_spacing = 0.02
+    def _decrease_enlarged_size(self, event):
+        """
+        Callback function for decrease enlarged view size button.
+        """
+        sys.stdout.flush()
+        self._print_button("Enlarged -")
+        step = int(self.enlarged_view_scale_max / 10)  # 10% increments
+        min_size = int(self.enlarged_view_scale_max / 10)  # Min 10% of max
+        if self.enlarged_view_scale > min_size:
+            self.enlarged_view_scale = max(self.enlarged_view_scale - step, min_size)
+            self._print_msg(
+                f"Enlarged view size decreased to: {self.enlarged_view_scale}px",
+                prefix="[ButtonPress] ",
+            )
+            self._redraw()
+        else:
+            self._print_msg(
+                f"Enlarged view size already at minimum: {self.enlarged_view_scale}px",
+                prefix="[ButtonPress] ",
+            )
 
-        # Calculate button positions (centered horizontally).
-        num_buttons = 2
-        total_width = (
-            label_width
-            + label_spacing
-            + num_buttons * button_width
-            + (num_buttons - 1) * button_spacing
+    def _create_buttons(self):
+        """
+        Create all interactive buttons in a clean layout.
+        """
+        # Adjust layout to make room for buttons at the bottom.
+        self.fig.subplots_adjust(bottom=0.15)
+
+        # Button dimensions.
+        btn_h = 0.04
+        btn_small = 0.05  # For +/- buttons
+        btn_medium = 0.12  # For toggle buttons
+        spacing = 0.01
+        y_row1 = 0.08  # Top row
+        y_row2 = 0.02  # Bottom row
+
+        # Calculate total width and center all buttons.
+        # Row 1: Line width label + +/- + spacing + Enlarged size label + +/-
+        row1_width = (
+            0.08 + btn_small * 2 + spacing * 3 + 0.10 + btn_small * 2 + spacing * 2
         )
-        start_x = 0.5 - total_width / 2
+        # Row 2: Square button + spacing + Enlarged button
+        row2_width = btn_medium * 2 + spacing
 
-        # Create text label.
-        ax_label = self.fig.add_axes([start_x, button_y, label_width, button_height])
-        ax_label.text(
+        # Start positions (centered).
+        row1_start = 0.5 - row1_width / 2
+        row2_start = 0.5 - row2_width / 2
+
+        # --- ROW 1: Line Width and Enlarged Size Controls ---
+        x = row1_start
+
+        # Line width label.
+        ax_lw_label = self.fig.add_axes([x, y_row1, 0.08, btn_h])
+        ax_lw_label.text(
             0.5,
             0.5,
-            "Line width:",
+            "Line:",
             ha="center",
             va="center",
-            transform=ax_label.transAxes,
-            fontsize=10,
+            transform=ax_lw_label.transAxes,
+            fontsize=9,
         )
-        ax_label.set_axis_off()
+        ax_lw_label.set_axis_off()
+        x += 0.08 + spacing
 
-        # Create increase button.
-        ax_increase = self.fig.add_axes(
-            [
-                start_x + label_width + label_spacing,
-                button_y,
-                button_width,
-                button_height,
-            ]
-        )
-        self.button_increase = Button(ax_increase, "+")
-        self.button_increase.on_clicked(self._increase_linewidth)
+        # Line width decrease button.
+        ax_lw_dec = self.fig.add_axes([x, y_row1, btn_small, btn_h])
+        self.button_linewidth_decrease = Button(ax_lw_dec, "-")
+        self.button_linewidth_decrease.on_clicked(self._decrease_linewidth)
+        x += btn_small + spacing
 
-        # Create decrease button.
-        ax_decrease = self.fig.add_axes(
-            [
-                start_x + label_width + label_spacing + button_width + button_spacing,
-                button_y,
-                button_width,
-                button_height,
-            ]
+        # Line width increase button.
+        ax_lw_inc = self.fig.add_axes([x, y_row1, btn_small, btn_h])
+        self.button_linewidth_increase = Button(ax_lw_inc, "+")
+        self.button_linewidth_increase.on_clicked(self._increase_linewidth)
+        x += btn_small + spacing * 3
+
+        # Enlarged size label.
+        ax_es_label = self.fig.add_axes([x, y_row1, 0.10, btn_h])
+        ax_es_label.text(
+            0.5,
+            0.5,
+            "Zoom:",
+            ha="center",
+            va="center",
+            transform=ax_es_label.transAxes,
+            fontsize=9,
         )
-        self.button_decrease = Button(ax_decrease, "-")
-        self.button_decrease.on_clicked(self._decrease_linewidth)
+        ax_es_label.set_axis_off()
+        x += 0.10 + spacing
+
+        # Enlarged size decrease button.
+        ax_es_dec = self.fig.add_axes([x, y_row1, btn_small, btn_h])
+        self.button_enlarged_size_decrease = Button(ax_es_dec, "-")
+        self.button_enlarged_size_decrease.on_clicked(self._decrease_enlarged_size)
+        x += btn_small + spacing
+
+        # Enlarged size increase button.
+        ax_es_inc = self.fig.add_axes([x, y_row1, btn_small, btn_h])
+        self.button_enlarged_size_increase = Button(ax_es_inc, "+")
+        self.button_enlarged_size_increase.on_clicked(self._increase_enlarged_size)
+
+        # --- ROW 2: Toggle Buttons ---
+        x = row2_start
+
+        # Square mode button.
+        ax_square = self.fig.add_axes([x, y_row2, btn_medium, btn_h])
+        self.button_square_mode = Button(ax_square, "Square: ON")
+        self.button_square_mode.on_clicked(self._on_square_mode_button_click)
+        x += btn_medium + spacing
+
+        # Enlarged view button.
+        ax_enlarged = self.fig.add_axes([x, y_row2, btn_medium, btn_h])
+        self.button_enlarged_view = Button(ax_enlarged, "Enlarged: ON")
+        self.button_enlarged_view.on_clicked(self._on_enlarged_view_button_click)
 
     def _toggle_square_mode(self):
         """
@@ -788,82 +876,6 @@ class BBoxer:
         sys.stdout.flush()
         self._print_button("Enlarged view")
         self._toggle_enlarged_view()
-
-    def _create_square_mode_button(self):
-        """
-        Create interactive button for toggling square mode.
-        """
-        # Calculate the end position of line width buttons.
-        # This matches the calculation in _create_linewidth_buttons.
-        label_width = 0.12
-        label_spacing = 0.02
-        linewidth_button_width = 0.08
-        linewidth_button_spacing = 0.02
-        num_linewidth_buttons = 2
-
-        total_linewidth_width = (
-            label_width
-            + label_spacing
-            + num_linewidth_buttons * linewidth_button_width
-            + (num_linewidth_buttons - 1) * linewidth_button_spacing
-        )
-        linewidth_start_x = 0.5 - total_linewidth_width / 2
-        linewidth_end_x = linewidth_start_x + total_linewidth_width
-
-        # Square mode button dimensions.
-        button_width = 0.16  # Made wider to fit "Square: ON/OFF" text
-        button_height = 0.04
-        button_y = 0.02
-
-        # Add padding between line width buttons and square button.
-        padding = 0.04
-        button_x = linewidth_end_x + padding
-
-        # Create square mode button.
-        ax_square = self.fig.add_axes([button_x, button_y, button_width, button_height])
-        self.button_square_mode = Button(ax_square, "Square: ON")  # Default is ON
-        self.button_square_mode.on_clicked(self._on_square_mode_button_click)
-
-    def _create_enlarged_view_button(self):
-        """
-        Create interactive button for toggling enlarged view mode.
-        """
-        # Calculate the end position of square mode button.
-        label_width = 0.12
-        label_spacing = 0.02
-        linewidth_button_width = 0.08
-        linewidth_button_spacing = 0.02
-        num_linewidth_buttons = 2
-
-        total_linewidth_width = (
-            label_width
-            + label_spacing
-            + num_linewidth_buttons * linewidth_button_width
-            + (num_linewidth_buttons - 1) * linewidth_button_spacing
-        )
-        linewidth_start_x = 0.5 - total_linewidth_width / 2
-        linewidth_end_x = linewidth_start_x + total_linewidth_width
-
-        # Square mode button.
-        square_button_width = 0.16
-        padding = 0.04
-        square_button_x = linewidth_end_x + padding
-        square_button_end_x = square_button_x + square_button_width
-
-        # Enlarged view button dimensions.
-        button_width = 0.16  # Made wider to fit "Enlarged: ON/OFF" text
-        button_height = 0.04
-        button_y = 0.02
-
-        # Add padding between square button and enlarged view button.
-        button_x = square_button_end_x + padding
-
-        # Create enlarged view button.
-        ax_enlarged = self.fig.add_axes(
-            [button_x, button_y, button_width, button_height]
-        )
-        self.button_enlarged_view = Button(ax_enlarged, "Enlarged: ON")  # Default is ON
-        self.button_enlarged_view.on_clicked(self._on_enlarged_view_button_click)
 
     def _register_rectangle_selector(self, axis):
         """
