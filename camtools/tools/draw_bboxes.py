@@ -7,7 +7,7 @@ import cv2
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.widgets import RectangleSelector
+from matplotlib.widgets import RectangleSelector, Button
 
 import camtools as ct
 import argparse
@@ -35,6 +35,8 @@ class BBoxer:
         self.fig = None
         self.axes = []
         self.axis_to_selector = dict()
+        self.button_increase = None
+        self.button_decrease = None
 
     def add_paths(self, paths: List[Path]) -> None:
         """
@@ -92,6 +94,9 @@ class BBoxer:
         # Register other handlers.
         self.fig.canvas.mpl_connect("key_press_event", self._on_keypress)
         self.fig.canvas.mpl_connect("close_event", self._on_close)
+
+        # Create interactive buttons for line width control.
+        self._create_linewidth_buttons()
 
         plt.show()
 
@@ -313,30 +318,44 @@ class BBoxer:
             ct.io.imwrite(dst_path, im_dst)
             print(f"Saved {dst_path}")
 
+    def _print_key(self, key):
+        """
+        Print keypress event in formatted way.
+        """
+        # Change the first letter to upper case.
+        key = key[0].upper() + key[1:]
+        print(f'[KeyPress] "{key}".')
+
+    def _print_button(self, button):
+        """
+        Print button press event in formatted way.
+        """
+        # Change the first letter to upper case.
+        button = button[0].upper() + button[1:]
+        print(f'[ButtonPress] "{button}".')
+
+    def _print_msg(self, *args, prefix="[KeyPress] ", **kwargs):
+        """
+        Print message with proper indentation to align with keypress/buttonpress output.
+        """
+        # Simulate sprintf
+        string_io = io.StringIO()
+        print(*args, file=string_io, **kwargs)
+        msg = string_io.getvalue()
+        string_io.close()
+        prefix_spaces = " " * len(prefix)
+        print(f"{prefix_spaces}{msg}", end="")
+
     def _on_keypress(self, event):
         """
         Callback function for keypress.
         """
         sys.stdout.flush()
 
-        def print_key(key):
-            # Change the first letter to upper case.
-            key = key[0].upper() + key[1:]
-            print(f'[Keypress] "{key}".')
-
-        def print_msg(*args, **kwargs):
-            # Simulate sprintf
-            string_io = io.StringIO()
-            print(*args, file=string_io, **kwargs)
-            msg = string_io.getvalue()
-            string_io.close()
-            prefix = " " * len("[Keypress] ")
-            print(f"{prefix}{msg}", end="")
-
         if event.key == "enter":
-            print_key(event.key)
+            self._print_key(event.key)
             if self.current_rectangle is None:
-                print_msg("No new bounding boxes selected.")
+                self._print_msg("No new bounding boxes selected.")
             else:
                 current_bbox = self.current_rectangle.get_bbox()
                 bbox_exists = False
@@ -345,14 +364,14 @@ class BBoxer:
                         bbox_exists = True
                         break
                 if bbox_exists:
-                    print_msg("Bounding box already exists. Not saving.")
+                    self._print_msg("Bounding box already exists. Not saving.")
                 else:
                     # Save to confirmed.
                     self.confirmed_rectangles.append(
                         BBoxer._copy_rectangle(self.current_rectangle)
                     )
                     bbox_str = BBoxer._bbox_str(self.current_rectangle.get_bbox())
-                    print_msg(f"Bounding box saved: {bbox_str}.")
+                    self._print_msg(f"Bounding box saved: {bbox_str}.")
                     # Clear current.
                     self.current_rectangle = None
                     # Hide all rectangle selectors.
@@ -360,37 +379,37 @@ class BBoxer:
                         self.axis_to_selector[axis].set_visible(False)
             self._redraw()
         elif event.key == "backspace":
-            print_key(event.key)
+            self._print_key(event.key)
             if self.current_rectangle is not None:
                 bbox_str = BBoxer._bbox_str(self.current_rectangle.get_bbox())
                 self.current_rectangle = None
                 # Hide all rectangle selectors.
                 for axis in self.axes:
                     self.axis_to_selector[axis].set_visible(False)
-                print_msg(f"Current bounding box removed: {bbox_str},")
+                self._print_msg(f"Current bounding box removed: {bbox_str},")
             else:
                 if len(self.confirmed_rectangles) > 0:
                     last_rectangle = self.confirmed_rectangles.pop()
                     bbox_str = BBoxer._bbox_str(last_rectangle.get_bbox())
-                    print_msg(f"Last bounding box removed: {bbox_str}")
+                    self._print_msg(f"Last bounding box removed: {bbox_str}")
                 else:
-                    print_msg("No bounding box to remove.")
+                    self._print_msg("No bounding box to remove.")
             self._redraw()
         elif event.key == "+" or event.key == "=":
-            print_key(event.key)
+            self._print_key(event.key)
             self.linewidth += 1
-            print_msg(f"Line width increased to: {self.linewidth}")
+            self._print_msg(f"Line width increased to: {self.linewidth}")
             self._redraw()
         elif event.key == "-" or event.key == "_":
-            print_key(event.key)
+            self._print_key(event.key)
             if self.linewidth > 1:
                 self.linewidth -= 1
-                print_msg(f"Line width decreased to: {self.linewidth}")
+                self._print_msg(f"Line width decreased to: {self.linewidth}")
             else:
-                print_msg(f"Line width already at minimum: {self.linewidth}")
+                self._print_msg(f"Line width already at minimum: {self.linewidth}")
             self._redraw()
         elif event.key == "escape":
-            print_key(event.key)
+            self._print_key(event.key)
             self._close()
 
     def _close(self):
@@ -405,6 +424,99 @@ class BBoxer:
         """
         print("Closing...")
         self._save()
+
+    def _increase_linewidth(self, event):
+        """
+        Callback function for increase line width button.
+        """
+        sys.stdout.flush()
+        self._print_button("+")
+        self.linewidth += 1
+        self._print_msg(
+            f"Line width increased to: {self.linewidth}", prefix="[ButtonPress] "
+        )
+        self._redraw()
+
+    def _decrease_linewidth(self, event):
+        """
+        Callback function for decrease line width button.
+        """
+        sys.stdout.flush()
+        self._print_button("-")
+        if self.linewidth > 1:
+            self.linewidth -= 1
+            self._print_msg(
+                f"Line width decreased to: {self.linewidth}", prefix="[ButtonPress] "
+            )
+        else:
+            self._print_msg(
+                f"Line width already at minimum: {self.linewidth}",
+                prefix="[ButtonPress] ",
+            )
+        self._redraw()
+
+    def _create_linewidth_buttons(self):
+        """
+        Create interactive buttons for increasing and decreasing line width.
+        """
+        # Position buttons at the bottom of the figure.
+        # Adjust layout to make room for buttons.
+        self.fig.subplots_adjust(bottom=0.1)
+
+        # Button dimensions and positions (in figure coordinates).
+        button_width = 0.08
+        button_height = 0.04
+        button_y = 0.02
+        button_spacing = 0.02
+        label_width = 0.12
+        label_spacing = 0.02
+
+        # Calculate button positions (centered horizontally).
+        num_buttons = 2
+        total_width = (
+            label_width
+            + label_spacing
+            + num_buttons * button_width
+            + (num_buttons - 1) * button_spacing
+        )
+        start_x = 0.5 - total_width / 2
+
+        # Create text label.
+        ax_label = self.fig.add_axes([start_x, button_y, label_width, button_height])
+        ax_label.text(
+            0.5,
+            0.5,
+            "Line width:",
+            ha="center",
+            va="center",
+            transform=ax_label.transAxes,
+            fontsize=10,
+        )
+        ax_label.set_axis_off()
+
+        # Create increase button.
+        ax_increase = self.fig.add_axes(
+            [
+                start_x + label_width + label_spacing,
+                button_y,
+                button_width,
+                button_height,
+            ]
+        )
+        self.button_increase = Button(ax_increase, "+")
+        self.button_increase.on_clicked(self._increase_linewidth)
+
+        # Create decrease button.
+        ax_decrease = self.fig.add_axes(
+            [
+                start_x + label_width + label_spacing + button_width + button_spacing,
+                button_y,
+                button_width,
+                button_height,
+            ]
+        )
+        self.button_decrease = Button(ax_decrease, "-")
+        self.button_decrease.on_clicked(self._decrease_linewidth)
 
     def _register_rectangle_selector(self, axis):
         """
@@ -455,8 +567,8 @@ class BBoxer:
         """
         print("Enter    : Save current bounding box.")
         print("Backspace: Remove current bounding box.")
-        print("+ or =   : Increase line width.")
-        print("- or _   : Decrease line width.")
+        print("+ or =   : Increase line width (or use + button).")
+        print("- or _   : Decrease line width (or use - button).")
 
 
 def instantiate_parser(parser):
