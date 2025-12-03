@@ -33,10 +33,10 @@ def test_ct():
     )
 
 
-def test_crop_boarders():
+def test_crop_borders():
     _run_and_test_command(
-        cmd="ct crop-boarders --help",
-        required_stdout="usage: ct crop-boarders",
+        cmd="ct crop-borders --help",
+        required_stdout="usage: ct crop-borders",
     )
 
 

@@ -10,7 +10,7 @@ from typing import Tuple, List, Optional, Union, Literal
 from jaxtyping import Float, UInt8, UInt16, Int
 
 
-def crop_white_boarders(
+def crop_white_borders(
     im: Float[np.ndarray, "h w 3"], padding: Tuple[int, int, int, int] = (0, 0, 0, 0)
 ) -> Float[np.ndarray, "h_cropped w_cropped 3"]:
     """
