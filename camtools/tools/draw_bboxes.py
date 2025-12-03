@@ -308,6 +308,7 @@ class BBoxer:
     def _add_enlarged_view(
         self,
         im: np.ndarray,
+        im_original: np.ndarray,
         tl_xy: Tuple[int, int],
         br_xy: Tuple[int, int],
         linewidth_px: int,
@@ -317,6 +318,7 @@ class BBoxer:
 
         Args:
             im: Image with dashed bbox already drawn. Must be float32.
+            im_original: Original image without any bbox drawn. Must be float32.
             tl_xy: Top-left corner of selected area, in (x, y).
             br_xy: Bottom-right corner of selected area, in (x, y).
             linewidth_px: Width of bounding box line, in pixels.
@@ -328,7 +330,7 @@ class BBoxer:
         x0, y0 = tl_xy
         x1, y1 = br_xy
 
-        # Extract the selected area
+        # Extract the selected area from the ORIGINAL image (without dashed lines)
         crop_x0 = max(0, x0)
         crop_y0 = max(0, y0)
         crop_x1 = min(w, x1)
@@ -337,7 +339,7 @@ class BBoxer:
         if crop_x1 <= crop_x0 or crop_y1 <= crop_y0:
             return im  # Invalid crop, return original
 
-        cropped = im[crop_y0:crop_y1, crop_x0:crop_x1].copy()
+        cropped = im_original[crop_y0:crop_y1, crop_x0:crop_x1].copy()
         crop_h, crop_w = cropped.shape[:2]
 
         # Resize to target size based on self.enlarged_view_scale.
@@ -448,8 +450,9 @@ class BBoxer:
                     )
 
                     # Create enlarged view and place in opposite quadrant.
+                    # Pass original image so the enlarged view doesn't include dashed lines.
                     im_rendered = self._add_enlarged_view(
-                        im_rendered, tl_xy, br_xy, linewidth_px
+                        im_rendered, im_original, tl_xy, br_xy, linewidth_px
                     )
                 else:
                     # Draw solid lines (final output mode).
@@ -710,7 +713,8 @@ class BBoxer:
         # Button dimensions.
         btn_h = 0.04
         btn_small = 0.05  # For +/- buttons
-        btn_medium = 0.12  # For toggle buttons
+        btn_medium = 0.15  # For toggle buttons - increased to fit text better
+        btn_font_size = 8  # Font size for button labels
         spacing = 0.01
         y_row1 = 0.08  # Top row
         y_row2 = 0.02  # Bottom row
@@ -747,12 +751,14 @@ class BBoxer:
         # Line width decrease button.
         ax_lw_dec = self.fig.add_axes([x, y_row1, btn_small, btn_h])
         self.button_linewidth_decrease = Button(ax_lw_dec, "-")
+        self.button_linewidth_decrease.label.set_fontsize(btn_font_size)
         self.button_linewidth_decrease.on_clicked(self._decrease_linewidth)
         x += btn_small + spacing
 
         # Line width increase button.
         ax_lw_inc = self.fig.add_axes([x, y_row1, btn_small, btn_h])
         self.button_linewidth_increase = Button(ax_lw_inc, "+")
+        self.button_linewidth_increase.label.set_fontsize(btn_font_size)
         self.button_linewidth_increase.on_clicked(self._increase_linewidth)
         x += btn_small + spacing * 3
 
@@ -773,12 +779,14 @@ class BBoxer:
         # Enlarged size decrease button.
         ax_es_dec = self.fig.add_axes([x, y_row1, btn_small, btn_h])
         self.button_enlarged_size_decrease = Button(ax_es_dec, "-")
+        self.button_enlarged_size_decrease.label.set_fontsize(btn_font_size)
         self.button_enlarged_size_decrease.on_clicked(self._decrease_enlarged_size)
         x += btn_small + spacing
 
         # Enlarged size increase button.
         ax_es_inc = self.fig.add_axes([x, y_row1, btn_small, btn_h])
         self.button_enlarged_size_increase = Button(ax_es_inc, "+")
+        self.button_enlarged_size_increase.label.set_fontsize(btn_font_size)
         self.button_enlarged_size_increase.on_clicked(self._increase_enlarged_size)
 
         # --- ROW 2: Toggle Buttons ---
@@ -787,12 +795,14 @@ class BBoxer:
         # Square mode button.
         ax_square = self.fig.add_axes([x, y_row2, btn_medium, btn_h])
         self.button_square_mode = Button(ax_square, "Square: ON")
+        self.button_square_mode.label.set_fontsize(btn_font_size)
         self.button_square_mode.on_clicked(self._on_square_mode_button_click)
         x += btn_medium + spacing
 
         # Enlarged view button.
         ax_enlarged = self.fig.add_axes([x, y_row2, btn_medium, btn_h])
         self.button_enlarged_view = Button(ax_enlarged, "Enlarged: ON")
+        self.button_enlarged_view.label.set_fontsize(btn_font_size)
         self.button_enlarged_view.on_clicked(self._on_enlarged_view_button_click)
 
     def _toggle_square_mode(self):
