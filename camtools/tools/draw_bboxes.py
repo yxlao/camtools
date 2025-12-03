@@ -40,9 +40,11 @@ class BBoxer:
         self.button_increase = None
         self.button_decrease = None
         self.button_square_mode = None
+        self.button_enlarged_view = None
 
-        # Square mode state.
-        self.square_mode = False
+        # Mode states.
+        self.square_mode = True  # On by default
+        self.enlarged_view_mode = True  # On by default
 
     def add_paths(self, paths: List[Path]) -> None:
         """
@@ -109,6 +111,9 @@ class BBoxer:
 
         # Create square mode toggle button.
         self._create_square_mode_button()
+
+        # Create enlarged view toggle button.
+        self._create_enlarged_view_button()
 
         plt.show()
 
@@ -221,13 +226,182 @@ class BBoxer:
 
         return im_dst
 
+    @staticmethod
+    def _overlay_rectangle_on_image_dashed(
+        im: np.ndarray,
+        tl_xy: Tuple[int, int],
+        br_xy: Tuple[int, int],
+        linewidth_px: int,
+        edgecolor: str,
+        dash_length: int = 10,
+    ) -> np.ndarray:
+        """
+        Draw dashed rectangular bounding box on image using OpenCV.
+
+        Args:
+            im: Image to draw bounding box on. Must be float32.
+            tl_xy: Top-left corner of bounding box, in (x, y).
+            br_xy: Bottom-right corner of bounding box, in (x, y).
+            linewidth_px: Width of bounding box line, in pixels.
+            edgecolor: Color of bounding box line.
+            dash_length: Length of each dash in pixels.
+        """
+        if im.dtype != np.float32:
+            raise ValueError(f"Invalid image dtype {im.dtype}.")
+
+        im_dst = np.copy(im)
+        color_rgb = matplotlib.colors.to_rgb(edgecolor)
+        color_bgr = tuple(reversed(color_rgb))
+
+        # Convert to uint8 for OpenCV drawing
+        im_uint8 = (im_dst * 255).astype(np.uint8)
+
+        x0, y0 = tl_xy
+        x1, y1 = br_xy
+
+        # Draw four sides with dashes
+        sides = [
+            ((x0, y0), (x1, y0)),  # Top
+            ((x1, y0), (x1, y1)),  # Right
+            ((x1, y1), (x0, y1)),  # Bottom
+            ((x0, y1), (x0, y0)),  # Left
+        ]
+
+        for (sx, sy), (ex, ey) in sides:
+            length = int(np.sqrt((ex - sx) ** 2 + (ey - sy) ** 2))
+            if length == 0:
+                continue
+
+            # Draw dashes along the line
+            for i in range(0, length, dash_length * 2):
+                # Calculate start and end points of this dash
+                t_start = i / float(length)
+                t_end = min((i + dash_length) / float(length), 1.0)
+
+                dash_sx = int(sx + t_start * (ex - sx))
+                dash_sy = int(sy + t_start * (ey - sy))
+                dash_ex = int(sx + t_end * (ex - sx))
+                dash_ey = int(sy + t_end * (ey - sy))
+
+                cv2.line(
+                    im_uint8,
+                    (dash_sx, dash_sy),
+                    (dash_ex, dash_ey),
+                    tuple(int(c * 255) for c in color_rgb),
+                    linewidth_px,
+                )
+
+        # Convert back to float32
+        im_dst = im_uint8.astype(np.float32) / 255.0
+        return im_dst
+
+    def _add_enlarged_view(
+        self,
+        im: np.ndarray,
+        tl_xy: Tuple[int, int],
+        br_xy: Tuple[int, int],
+        linewidth_px: int,
+    ) -> np.ndarray:
+        """
+        Add an enlarged view of the selected area in the opposite quadrant.
+
+        Args:
+            im: Image with dashed bbox already drawn. Must be float32.
+            tl_xy: Top-left corner of selected area, in (x, y).
+            br_xy: Bottom-right corner of selected area, in (x, y).
+            linewidth_px: Width of bounding box line, in pixels.
+
+        Returns:
+            Image with enlarged view added.
+        """
+        h, w = im.shape[:2]
+        x0, y0 = tl_xy
+        x1, y1 = br_xy
+
+        # Extract the selected area
+        crop_x0 = max(0, x0)
+        crop_y0 = max(0, y0)
+        crop_x1 = min(w, x1)
+        crop_y1 = min(h, y1)
+
+        if crop_x1 <= crop_x0 or crop_y1 <= crop_y0:
+            return im  # Invalid crop, return original
+
+        cropped = im[crop_y0:crop_y1, crop_x0:crop_x1].copy()
+        crop_h, crop_w = cropped.shape[:2]
+
+        # Enlarge by 2x (or fit to a reasonable size)
+        scale = 2.0
+        enlarged_w = int(crop_w * scale)
+        enlarged_h = int(crop_h * scale)
+
+        # Resize the cropped area
+        enlarged = cv2.resize(
+            cropped, (enlarged_w, enlarged_h), interpolation=cv2.INTER_LINEAR
+        )
+
+        # Determine which quadrant the selected area center is in
+        center_x = (x0 + x1) / 2
+        center_y = (y0 + y1) / 2
+
+        in_left = center_x < w / 2
+        in_top = center_y < h / 2
+
+        # Place enlarged view in opposite quadrant (at corner)
+        margin = 10  # pixels from edge
+
+        if in_left and in_top:
+            # Selected area is top-left → place enlarged view in bottom-right
+            paste_x = w - enlarged_w - margin
+            paste_y = h - enlarged_h - margin
+        elif not in_left and in_top:
+            # Selected area is top-right → place enlarged view in bottom-left
+            paste_x = margin
+            paste_y = h - enlarged_h - margin
+        elif in_left and not in_top:
+            # Selected area is bottom-left → place enlarged view in top-right
+            paste_x = w - enlarged_w - margin
+            paste_y = margin
+        else:
+            # Selected area is bottom-right → place enlarged view in top-left
+            paste_x = margin
+            paste_y = margin
+
+        # Ensure paste coordinates are within bounds
+        paste_x = max(0, min(paste_x, w - enlarged_w))
+        paste_y = max(0, min(paste_y, h - enlarged_h))
+
+        # Paste the enlarged view onto the image
+        im_result = np.copy(im)
+        im_result[paste_y : paste_y + enlarged_h, paste_x : paste_x + enlarged_w] = (
+            enlarged
+        )
+
+        # Draw solid red border around the enlarged view
+        enlarged_tl = (paste_x, paste_y)
+        enlarged_br = (paste_x + enlarged_w, paste_y + enlarged_h)
+        im_result = BBoxer._overlay_rectangle_on_image(
+            im=im_result,
+            tl_xy=enlarged_tl,
+            br_xy=enlarged_br,
+            linewidth_px=linewidth_px,
+            edgecolor="red",
+            squarecorners=True,
+        )
+
+        return im_result
+
     def _redraw(self):
         """
         Redraw all images with the current bounding box using OpenCV rendering.
         This shows the exact final output that will be saved.
+
+        If enlarged view mode is on, also show an enlarged view of the selected area
+        in the opposite quadrant.
         """
         # Get linewidth in pixels for the actual image.
         im_height = self.original_images[0].shape[0]
+        im_width = self.original_images[0].shape[1]
         axis = self.axes[0]
         bbox = axis.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
         axis_height = bbox.height * self.fig.dpi
@@ -243,17 +417,33 @@ class BBoxer:
                 # No bbox - show original image.
                 im_display = im_original
             else:
-                # Draw bbox on image using OpenCV.
                 x0, y0, x1, y1 = self.current_bbox
                 tl_xy = (int(round(x0)), int(round(y0)))
                 br_xy = (int(round(x1)), int(round(y1)))
-                im_display = BBoxer._overlay_rectangle_on_image(
-                    im=im_original,
-                    tl_xy=tl_xy,
-                    br_xy=br_xy,
-                    linewidth_px=linewidth_px,
-                    edgecolor=self.edgecolor,
-                )
+
+                if self.enlarged_view_mode:
+                    # Draw dashed lines for the selected area (area being zoomed).
+                    im_display = BBoxer._overlay_rectangle_on_image_dashed(
+                        im=im_original,
+                        tl_xy=tl_xy,
+                        br_xy=br_xy,
+                        linewidth_px=linewidth_px,
+                        edgecolor=self.edgecolor,
+                    )
+
+                    # Create enlarged view and place in opposite quadrant.
+                    im_display = self._add_enlarged_view(
+                        im_display, tl_xy, br_xy, linewidth_px
+                    )
+                else:
+                    # Draw solid lines (final output mode).
+                    im_display = BBoxer._overlay_rectangle_on_image(
+                        im=im_original,
+                        tl_xy=tl_xy,
+                        br_xy=br_xy,
+                        linewidth_px=linewidth_px,
+                        edgecolor=self.edgecolor,
+                    )
 
             # Update the displayed image.
             img_obj.set_data(im_display)
@@ -373,6 +563,9 @@ class BBoxer:
         elif event.key == "s":
             self._print_key(event.key)
             self._toggle_square_mode()
+        elif event.key == "e":
+            self._print_key(event.key)
+            self._toggle_enlarged_view()
 
     def _close(self):
         """
@@ -561,6 +754,25 @@ class BBoxer:
         mode_str = "enabled" if self.square_mode else "disabled"
         self._print_msg(f"Square mode {mode_str}")
 
+    def _toggle_enlarged_view(self):
+        """
+        Toggle enlarged view mode on/off.
+        """
+        self.enlarged_view_mode = not self.enlarged_view_mode
+
+        # Update button label.
+        if self.button_enlarged_view is not None:
+            self.button_enlarged_view.label.set_text(
+                "Enlarged: ON" if self.enlarged_view_mode else "Enlarged: OFF"
+            )
+            self.fig.canvas.draw_idle()
+
+        mode_str = "enabled" if self.enlarged_view_mode else "disabled"
+        self._print_msg(f"Enlarged view mode {mode_str}")
+
+        # Redraw to show/hide enlarged view
+        self._redraw()
+
     def _on_square_mode_button_click(self, event):
         """
         Callback function for square mode toggle button.
@@ -568,6 +780,14 @@ class BBoxer:
         sys.stdout.flush()
         self._print_button("Square mode")
         self._toggle_square_mode()
+
+    def _on_enlarged_view_button_click(self, event):
+        """
+        Callback function for enlarged view toggle button.
+        """
+        sys.stdout.flush()
+        self._print_button("Enlarged view")
+        self._toggle_enlarged_view()
 
     def _create_square_mode_button(self):
         """
@@ -601,8 +821,49 @@ class BBoxer:
 
         # Create square mode button.
         ax_square = self.fig.add_axes([button_x, button_y, button_width, button_height])
-        self.button_square_mode = Button(ax_square, "Square: OFF")
+        self.button_square_mode = Button(ax_square, "Square: ON")  # Default is ON
         self.button_square_mode.on_clicked(self._on_square_mode_button_click)
+
+    def _create_enlarged_view_button(self):
+        """
+        Create interactive button for toggling enlarged view mode.
+        """
+        # Calculate the end position of square mode button.
+        label_width = 0.12
+        label_spacing = 0.02
+        linewidth_button_width = 0.08
+        linewidth_button_spacing = 0.02
+        num_linewidth_buttons = 2
+
+        total_linewidth_width = (
+            label_width
+            + label_spacing
+            + num_linewidth_buttons * linewidth_button_width
+            + (num_linewidth_buttons - 1) * linewidth_button_spacing
+        )
+        linewidth_start_x = 0.5 - total_linewidth_width / 2
+        linewidth_end_x = linewidth_start_x + total_linewidth_width
+
+        # Square mode button.
+        square_button_width = 0.16
+        padding = 0.04
+        square_button_x = linewidth_end_x + padding
+        square_button_end_x = square_button_x + square_button_width
+
+        # Enlarged view button dimensions.
+        button_width = 0.16  # Made wider to fit "Enlarged: ON/OFF" text
+        button_height = 0.04
+        button_y = 0.02
+
+        # Add padding between square button and enlarged view button.
+        button_x = square_button_end_x + padding
+
+        # Create enlarged view button.
+        ax_enlarged = self.fig.add_axes(
+            [button_x, button_y, button_width, button_height]
+        )
+        self.button_enlarged_view = Button(ax_enlarged, "Enlarged: ON")  # Default is ON
+        self.button_enlarged_view.on_clicked(self._on_enlarged_view_button_click)
 
     def _register_rectangle_selector(self, axis):
         """
@@ -672,12 +933,13 @@ class BBoxer:
         """
         Print help messages of keyboard callbacks.
         """
-        print("Drag     : Draw bounding box (releases mouse to see final result).")
+        print("Drag     : Draw bounding box (release mouse to see result).")
         print("Enter    : Save bounding box and quit.")
         print("Backspace: Remove current bounding box.")
         print("+ or =   : Increase line width (or use + button).")
         print("- or _   : Decrease line width (or use - button).")
-        print("s        : Toggle square mode (or use Square button).")
+        print("s        : Toggle square mode (or use Square button, default: ON).")
+        print("e        : Toggle enlarged view (or use Enlarged button, default: ON).")
         print("Escape   : Quit without saving.")
 
 
