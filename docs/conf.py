@@ -118,8 +118,7 @@ def add_ga_javascript(app, pagename, templatename, context, doctree):
     Ref: https://github.com/sphinx-contrib/googleanalytics/blob/master/sphinxcontrib/googleanalytics.py
     """
     metatags = context.get("metatags", "")
-    metatags += (
-        """
+    metatags += """
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-FG59NQBWRW"></script>
     <script>
@@ -137,9 +136,7 @@ def add_ga_javascript(app, pagename, templatename, context, doctree):
             }
         });
     </script>
-    """
-        % release
-    )
+    """ % release
     context["metatags"] = metatags
 
 
