@@ -18,7 +18,6 @@ from . import solver
 from . import transform
 from . import util
 
-
 # Get package version for camtools
 try:
     # Python >= 3.8
