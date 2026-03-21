@@ -2,7 +2,7 @@ import io
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Tuple
+from typing import List, Tuple
 
 import cv2
 import matplotlib
@@ -324,7 +324,6 @@ class BBoxer:
 
         im_dst = np.copy(im)
         color_rgb = matplotlib.colors.to_rgb(edgecolor)
-        color_bgr = tuple(reversed(color_rgb))
 
         # Convert to uint8 for OpenCV drawing
         im_uint8 = (im_dst * 255).astype(np.uint8)
@@ -688,7 +687,7 @@ class BBoxer:
                 # Update selector extents
                 try:
                     selector.extents = (x0, new_x1, y0, new_y1)
-                except:
+                except Exception:
                     pass
 
                 break
@@ -901,7 +900,7 @@ class BBoxer:
                     try:
                         selector.extents = (new_x0, new_x1, new_y0, new_y1)
                         selector.update()
-                    except:
+                    except Exception:
                         pass
                     break
 

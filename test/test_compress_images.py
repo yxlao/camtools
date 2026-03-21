@@ -3,7 +3,6 @@ import tempfile
 from pathlib import Path
 import numpy as np
 import cv2
-import pytest
 
 
 def create_test_image_png(path: Path, with_alpha: bool = False):
@@ -222,7 +221,6 @@ def test_compress_images_jpg_to_jpg_inplace():
         # Create test JPG with .jpeg extension
         src_path = tmpdir / "image.jpeg"
         create_test_image_jpg(src_path)
-        orig_size = src_path.stat().st_size
 
         # Run command with --yes flag
         cmd = f"ct compress-images {src_path} --format jpg --inplace --yes"

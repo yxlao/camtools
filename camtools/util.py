@@ -8,7 +8,7 @@ try:
     from typing import ModuleType  # Python <3.10
 except ImportError:
     from types import ModuleType  # Python 3.10+
-from typing import Any, Callable, Iterable, Union, Optional
+from typing import Any, Callable, Iterable, Optional
 
 from functools import lru_cache
 from tqdm import tqdm
@@ -97,9 +97,9 @@ def query_yes_no(question: str, default: Optional[bool] = None) -> bool:
     """
     if default is None:
         prompt = "[y/n]"
-    elif default == True:
+    elif default:
         prompt = "[Y/n]"
-    elif default == False:
+    elif not default:
         prompt = "[y/N]"
     else:
         raise ValueError(f"Invalid default answer: '{default}'")

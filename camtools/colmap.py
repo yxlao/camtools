@@ -780,9 +780,7 @@ def read_colmap_to_Ks_Ts_names(data_dir):
             K[0, 2] = camera.params[2]
             K[1, 2] = camera.params[3]
         elif camera.model == "SIMPLE_RADIAL":
-            # f, cx, cy, k
-            k = camera.params[3]
-            # print(f"Warning: SIMPLE_RADIAL camera distortion {k} ignored.")
+            # f, cx, cy, k (distortion ignored)
             K[0, 0] = camera.params[0]
             K[1, 1] = camera.params[0]
             K[0, 2] = camera.params[1]

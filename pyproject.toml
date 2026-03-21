@@ -34,7 +34,9 @@ Homepage = "https://github.com/yxlao/camtools"
 
 [project.optional-dependencies]
 dev = [
-  "black>=22.1.0",
+  "black==24.2.0",
+  "ruff>=0.3.0",
+  "pre-commit>=3.0.0",
   "pytest>=6.2.2",
   "pytest-benchmark>=4.0.0",
   "ipdb",
@@ -53,3 +55,9 @@ torch = [
 
 [tool.setuptools]
 packages = ["camtools", "camtools.tools"]
+
+[tool.black]
+target-version = ["py310"]
+
+[tool.ruff.lint]
+ignore = ["F722", "F821", "E741"]

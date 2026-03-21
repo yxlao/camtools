@@ -314,7 +314,7 @@ def imread(
 
     # Sanity check.
     if im.dtype != np.float32:
-        raise ValueError(f"Internal Error. Image must float32.")
+        raise ValueError("Internal Error. Image must float32.")
 
     # This can be avoided.
     if im.min() > 1 or im.max() < 0:

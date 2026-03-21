@@ -11,7 +11,7 @@ ct compress-images *.png *.jpg
 #   no "processed_" prefix needed since extensions differ.
 # - Same format compression: Original extension preserved (e.g., .JPG -> .JPG, .jpeg -> .jpeg).
 #   Without --inplace, "processed_" prefix is added.
-# 
+#
 # png -> jpg (image.jpg created, image.png kept)
 ct compress-images image.png --format jpg
 # jpeg -> png (image.png created, image.jpeg kept)

@@ -1,22 +1,22 @@
 import logging
 
-from . import artifact
-from . import camera
-from . import colmap
-from . import colormap
-from . import convert
-from . import geometry
-from . import image
-from . import io
-from . import metric
-from . import normalize
-from . import project
-from . import raycast
-from . import render
-from . import sanity
-from . import solver
-from . import transform
-from . import util
+from . import artifact as artifact
+from . import camera as camera
+from . import colmap as colmap
+from . import colormap as colormap
+from . import convert as convert
+from . import geometry as geometry
+from . import image as image
+from . import io as io
+from . import metric as metric
+from . import normalize as normalize
+from . import project as project
+from . import raycast as raycast
+from . import render as render
+from . import sanity as sanity
+from . import solver as solver
+from . import transform as transform
+from . import util as util
 
 # Get package version for camtools
 try:
@@ -55,5 +55,5 @@ try:
             f"not support numpy {np_version}. You may upgrade open3d to >= 0.19.0 "
             f"or downgrade numpy to 1.x."
         )
-except Exception as e:
+except Exception:
     pass
