@@ -11,14 +11,14 @@ from tqdm import tqdm
 
 def instantiate_parser(parser):
     parser.description = (
-        "Compress and convert images between PNG and JPG formats.\n\n"
+        "Compress and convert images between PNG and JPG/JPEG formats.\n\n"
         "Default behavior:\n"
         "  - No --format specified: No changes made to any files.\n\n"
         "Format conversions:\n"
-        "  - PNG -> JPG: Alpha channel is removed (flattened to white background).\n"
+        "  - PNG -> JPG/JPEG: Alpha channel is removed (flattened to white background).\n"
         "  - PNG -> PNG: Alpha channel is preserved.\n"
-        "  - JPG -> JPG or PNG -> PNG: Original extension is preserved (e.g., .JPG, .jpeg).\n"
-        "  - Format conversion (PNG <-> JPG): Standard extension is used (.jpg or .png).\n\n"
+        "  - JPG -> JPG/JPEG or PNG -> PNG: Original extension is preserved (e.g., .JPG, .jpeg).\n"
+        "  - Format conversion (PNG <-> JPG/JPEG): Standard extension is used (.jpg, .jpeg, or .png).\n\n"
         "Output file naming:\n"
         "  - Format conversion without --inplace: Same name, different extension (e.g., image.png -> image.jpg).\n"
         "  - Same format compression without --inplace: 'processed_<filename>' prefix added.\n"
@@ -26,6 +26,8 @@ def instantiate_parser(parser):
         "Examples:\n"
         "  # Convert PNG to JPG with quality 90 (creates image.jpg, keeps image.png)\n"
         "  ct compress-images image.png --format jpg --quality 90\n\n"
+        "  # Convert PNG to JPEG with quality 90 (creates image.jpeg, keeps image.png)\n"
+        "  ct compress-images image.png --format jpeg --quality 90\n\n"
         "  # Compress JPG to JPG (creates processed_image.jpg, keeps image.jpg)\n"
         "  ct compress-images image.jpg --format jpg --quality 90\n\n"
         "  # Compress JPG inplace, skip if compression ratio > 0.9\n"
@@ -42,9 +44,9 @@ def instantiate_parser(parser):
     parser.add_argument(
         "--format",
         type=str,
-        choices=["jpg", "png"],
+        choices=["jpg", "jpeg", "png"],
         default=None,
-        help="Output format (jpg or png). If not specified, no processing is done.",
+        help="Output format (jpg, jpeg, or png). If not specified, no processing is done.",
     )
     parser.add_argument(
         "--inplace",
@@ -80,12 +82,14 @@ def get_operation_string(src_is_png, output_format, quality):
     """
     Get a short string describing the operation.
     """
-    if src_is_png and output_format == "jpg":
-        return f"PNG→JPG Q{quality}"
+    if src_is_png and output_format in ["jpg", "jpeg"]:
+        format_upper = output_format.upper()
+        return f"PNG→{format_upper} Q{quality}"
     elif not src_is_png and output_format == "png":
         return "JPG→PNG"
-    elif output_format == "jpg":
-        return f"JPG→JPG Q{quality}"
+    elif output_format in ["jpg", "jpeg"]:
+        format_upper = output_format.upper()
+        return f"JPG→{format_upper} Q{quality}"
     else:
         return "PNG→PNG"
 
@@ -163,10 +167,10 @@ def entry_point(_parser, args):
         print("No --format specified. No changes made to any files.")
         return 0
 
-    # Quality only works for JPG.
+    # Quality only works for JPG/JPEG.
     if args.quality != 95 and args.format == "png":
         raise ValueError(
-            "The --quality flag only works for JPG output format, not PNG."
+            "The --quality flag only works for JPG/JPEG output format, not PNG."
         )
 
     # Collect and validate source paths.
@@ -192,7 +196,7 @@ def entry_point(_parser, args):
         src_is_jpg = ct.sanity.is_jpg_path(src_path)
 
         # Determine destination path.
-        is_same_format = (src_is_jpg and args.format == "jpg") or (
+        is_same_format = (src_is_jpg and args.format in ["jpg", "jpeg"]) or (
             src_is_png and args.format == "png"
         )
 
@@ -201,7 +205,12 @@ def entry_point(_parser, args):
             dst_path = src_path
         else:
             # Format conversion: use standard extension.
-            dst_path = src_path.with_suffix(".jpg" if args.format == "jpg" else ".png")
+            if args.format == "jpg":
+                dst_path = src_path.with_suffix(".jpg")
+            elif args.format == "jpeg":
+                dst_path = src_path.with_suffix(".jpeg")
+            else:
+                dst_path = src_path.with_suffix(".png")
 
         # Add prefix only for same-format compression without inplace.
         # Format conversions don't need prefix since extensions differ.
@@ -241,7 +250,7 @@ def entry_point(_parser, args):
 
     # Print summary.
     summary = f"[bold]{len(src_paths)}[/bold] file(s) | Format: [bold]{args.format.upper()}[/bold]"
-    if args.format == "jpg":
+    if args.format in ["jpg", "jpeg"]:
         summary += f" | Quality: [bold]{args.quality}[/bold] | Skip ratio: [bold]{args.skip_compression_ratio}[/bold]"
     summary += f" | Inplace: [bold]{'Yes' if args.inplace else 'No'}[/bold]"
     console.print(f"\n{summary}\n")
@@ -318,7 +327,7 @@ def compress_image(
     src_is_jpg = ct.sanity.is_jpg_path(src_path)
 
     # Read image.
-    if src_is_png and output_format == "jpg":
+    if src_is_png and output_format in ["jpg", "jpeg"]:
         im = ct.io.imread(src_path, alpha_mode="white")  # Flatten alpha to white.
     else:
         im = ct.io.imread(src_path, alpha_mode="keep")  # Keep alpha for PNG->PNG.
@@ -326,9 +335,15 @@ def compress_image(
     src_size = src_path.stat().st_size
 
     # Write to temp file to check compression ratio.
-    suffix = ".jpg" if output_format == "jpg" else ".png"
+    if output_format == "jpeg":
+        suffix = ".jpeg"
+    elif output_format == "jpg":
+        suffix = ".jpg"
+    else:
+        suffix = ".png"
+
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=True) as fp:
-        if output_format == "jpg":
+        if output_format in ["jpg", "jpeg"]:
             ct.io.imwrite(fp.name, im, quality=quality)
         else:
             ct.io.imwrite(fp.name, im)
@@ -338,8 +353,12 @@ def compress_image(
 
         dst_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Skip compression if ratio is too high for JPG->JPG.
-        if src_is_jpg and output_format == "jpg" and ratio > skip_compression_ratio:
+        # Skip compression if ratio is too high for JPG->JPG/JPEG.
+        if (
+            src_is_jpg
+            and output_format in ["jpg", "jpeg"]
+            and ratio > skip_compression_ratio
+        ):
             if src_path != dst_path:
                 shutil.copy2(src_path, dst_path)
             is_direct_copy = True
