@@ -223,9 +223,7 @@ def im_depth_to_point_cloud(
     points_world = convert.from_homo(points_world)
 
     if to_image:
-        assert (
-            ignore_invalid == False
-        ), "ignore_invalid is ignored when to_image is True."
+        assert not ignore_invalid, "ignore_invalid is ignored when to_image is True."
         points_world = points_world.reshape((height, width, 3))
         if im_color is None:
             return points_world

@@ -293,7 +293,7 @@ The documentation is also automatically built by GitHub Actions on pull requests
   - This applies to PR's title and ultimately the commit messages in `main`.
   - The prefix shall be one of `build`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `test`.
   - Use lowercase.
-- Format your code with [black](https://github.com/psf/black). This will be enforced by the CI.
+- See :doc:`contributing <contributing>` for code formatting and pre-commit setup.
 
 ## Build with CamTools
 

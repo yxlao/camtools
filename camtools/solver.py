@@ -157,7 +157,7 @@ def closest_points_of_line_pairs(
     lhs = np.stack((src_ds, -dst_ds, mid_ds), axis=-1)
     rhs = dst_os - src_os
     results = np.linalg.solve(lhs, rhs)
-    src_ts, dst_ts, mid_ts = results[:, 0], results[:, 1], results[:, 2]
+    src_ts, dst_ts, _ = results[:, 0], results[:, 1], results[:, 2]
     src_ps = src_os + src_ts.reshape((-1, 1)) * src_ds
     dst_ps = dst_os + dst_ts.reshape((-1, 1)) * dst_ds
 
