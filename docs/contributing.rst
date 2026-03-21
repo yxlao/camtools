@@ -8,12 +8,12 @@ Contributing Guidelines
   - This applies to PR's title and ultimately the commit messages in ``main``.
   - The prefix shall be one of ``build``, ``ci``, ``docs``, ``feat``, ``fix``, ``perf``, ``refactor``, ``test``.
   - Use lowercase.
-- Code is automatically formatted by `pre-commit hooks <https://pre-commit.com/>`_ on every ``git commit``. Setup once with::
+- Code style is enforced by `pre-commit hooks <https://pre-commit.com/>`_ locally and by the **Lint** CI workflow on every push and PR. Hooks run: trailing-whitespace remover, end-of-file fixer, `black <https://github.com/psf/black>`_ (v24.2.0), and `ruff <https://github.com/astral-sh/ruff>`_ linter. Setup once with::
 
     pip install pre-commit
     pre-commit install
 
-  Hooks: trailing-whitespace remover, end-of-file fixer, `black <https://github.com/psf/black>`_, and `ruff <https://github.com/astral-sh/ruff>`_ linter. Run manually on all files with ``pre-commit run --all-files``.
+  Run manually on all files with ``pre-commit run --all-files``.
 
 Building Documentation
 ----------------------

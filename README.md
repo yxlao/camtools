@@ -13,7 +13,7 @@
   <a href="#installation"><strong>Installation</strong></a>
 </p>
 
-[![Formatter](https://github.com/yxlao/camtools/actions/workflows/formatter.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/formatter.yml)
+[![Lint](https://github.com/yxlao/camtools/actions/workflows/lint.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/lint.yml)
 [![Unit Test](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/unit_test.yml)
 [![PyPI](https://github.com/yxlao/camtools/actions/workflows/pypi.yml/badge.svg)](https://github.com/yxlao/camtools/actions/workflows/pypi.yml)
 [![PyPI](https://img.shields.io/pypi/v/camtools?style=flat&label=PyPI&logo=PyPI&logoColor=959DA5&labelColor=323940&color=808080)](https://pypi.org/project/camtools)

@@ -56,5 +56,8 @@ torch = [
 [tool.setuptools]
 packages = ["camtools", "camtools.tools"]
 
+[tool.black]
+target-version = ["py310"]
+
 [tool.ruff.lint]
 ignore = ["F722", "F821", "E741"]
