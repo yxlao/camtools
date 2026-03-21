@@ -3,12 +3,8 @@ build-backend = "setuptools.build_meta"
 requires = ["setuptools>=61.0"]
 
 [project]
-authors = [
-  {name = "Yixing Lao"},
-]
-classifiers = [
-  "Programming Language :: Python :: 3",
-]
+authors = [{ name = "Yixing Lao" }]
+classifiers = ["Programming Language :: Python :: 3"]
 dependencies = [
   "numpy>=1.15.0",
   "open3d>=0.16.0",
@@ -20,11 +16,11 @@ dependencies = [
   "rich>=13.0.0",
 ]
 description = "CamTools: Camera Tools for Computer Vision."
-license = {text = "MIT"}
+license = { text = "MIT" }
 name = "camtools"
 readme = "README.md"
 requires-python = ">=3.8.0"
-version = "0.1.7"
+version = "0.1.8"
 
 [project.scripts]
 ct = "camtools.tools.cli:main"
@@ -41,17 +37,8 @@ dev = [
   "pytest-benchmark>=4.0.0",
   "ipdb",
 ]
-docs = [
-  "sphinx",
-  "sphinx-rtd-theme",
-  "myst-parser",
-  "furo",
-  "tomli",
-]
-torch = [
-  "torch>=1.8.0",
-  "lpips>=0.1.4",
-]
+docs = ["sphinx", "sphinx-rtd-theme", "myst-parser", "furo", "tomli"]
+torch = ["torch>=1.8.0", "lpips>=0.1.4"]
 
 [tool.setuptools]
 packages = ["camtools", "camtools.tools"]
